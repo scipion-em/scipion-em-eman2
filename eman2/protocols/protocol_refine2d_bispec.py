@@ -38,10 +38,9 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
 from pyworkflow.utils import makePath, createLink, cleanPath
 
 
-from convert import createEmanProcess, writeSetOfParticles
-from constants import *
-from eman2 import getEmanProgram, validateVersion, isNewVersion, SCRATCHDIR
-
+import eman2
+from eman2.convert import createEmanProcess, writeSetOfParticles
+from eman2.constants import *
 
 
 class EmanProtRefine2DBispec(em.ProtClassify2D):
@@ -66,7 +65,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
 
     @classmethod
     def isDisabled(cls):
-        return not isNewVersion()
+        return not eman2.Plugin.isNewVersion()
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
@@ -277,7 +276,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
             self.skipctf.set(True)
 
         if not self.skipctf:
-            program = getEmanProgram('e2ctf.py')
+            program = eman2.Plugin.getEmanProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %d" % acq.getVoltage()
@@ -291,7 +290,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = getEmanProgram('e2buildsets.py')
+        program = eman2.Plugin.getEmanProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -315,7 +314,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
 
     def refineStep(self, args):
         """ Run the EMAN program to refine 2d. """
-        program = getEmanProgram('e2refine2d_bispec.py')
+        program = eman2.Plugin.getEmanProgram('e2refine2d_bispec.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -331,7 +330,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
     #--------------------------- INFO functions --------------------------------
     def _validate(self):
         errors = []
-        validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
 
         return errors
 
@@ -386,7 +385,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
                   'classiter': self.classIter.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': SCRATCHDIR
+                  'scratch': eman2.SCRATCHDIR
                   }
         args = args % params
 

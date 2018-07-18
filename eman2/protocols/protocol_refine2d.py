@@ -37,12 +37,9 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.utils.path import makePath, cleanPath, createLink
 
-
-from convert import (rowToAlignment, createEmanProcess,
-                     writeSetOfParticles, convertReferences)
-from constants import *
-from eman2 import getEmanProgram, validateVersion, isNewVersion, SCRATCHDIR
-
+import eman2
+from eman2.convert import (rowToAlignment, createEmanProcess,
+                           writeSetOfParticles, convertReferences)
 
 
 class EmanProtRefine2D(em.ProtClassify2D):
@@ -176,7 +173,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                       help='Will seed the k-means loop quickly, but may '
                            'produce less consistent results. Always use this '
                            'when generating >~ 100 classes.')
-        if isNewVersion():
+        if eman2.Plugin.isNewVersion():
             form.addParam('doAutomask', BooleanParam, default=False,
                           expertLevel=LEVEL_ADVANCED,
                           label='Automask class-averages?',
@@ -420,7 +417,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
 
         if not self.skipctf:
-            program = getEmanProgram('e2ctf.py')
+            program = eman2.Plugin.getEmanProgram('e2ctf.py')
             acq = partSet.getAcquisition()
             args = " --voltage %d" % acq.getVoltage()
             args += " --cs %f" % acq.getSphericalAberration()
@@ -433,7 +430,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = getEmanProgram('e2buildsets.py')
+        program = eman2.Plugin.getEmanProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -445,7 +442,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
 
     def refineStep(self, args):
         """ Run the EMAN program to refine 2d. """
-        program = getEmanProgram('e2refine2d.py')
+        program = eman2.Plugin.getEmanProgram('e2refine2d.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -461,7 +458,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
     #--------------------------- INFO functions --------------------------------------------
     def _validate(self):
         errors = []
-        validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
 
         return errors
 
@@ -520,7 +517,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         if self.classRefSf:
             args += " --classrefsf"
 
-        if isNewVersion() and self.doAutomask:
+        if eman2.Plugin.isNewVersion() and self.doAutomask:
             args += " --automask"
 
         for param in ['simcmp', 'simalign', 'simralign', 'classnormproc',
@@ -541,7 +538,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                   'classiter': self.classIter.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': SCRATCHDIR
+                  'scratch': eman2.SCRATCHDIR
                   }
         args = args % params
 

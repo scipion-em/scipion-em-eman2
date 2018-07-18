@@ -82,7 +82,7 @@ class EmanProtInitModel(ProtInitialVolume):
                            'initial models. Suggest using this option to '
                            'shrink the input particles by an integer amount '
                            'prior to reconstruction. Default = 1, no shrinking')
-        if eman2.isNewVersion():
+        if eman2.Plugin.isNewVersion():
             form.addParam('randOrient', BooleanParam, default=False,
                           expertLevel=LEVEL_ADVANCED,
                           label='Use random orientations?',
@@ -104,7 +104,7 @@ class EmanProtInitModel(ProtInitialVolume):
             args += ' --shrink=%(shrink)d'
         if not self._isHighSym():
             args += ' --tries=%(numberOfModels)d --iter=%(numberOfIterations)d'
-            if eman2.isNewVersion() and self.randOrient:
+            if eman2.Plugin.isNewVersion() and self.randOrient:
                 args += ' --randorient'
             if self.numberOfMpi > 1:
                 args += ' --parallel=mpi:%(mpis)d:%(scratch)s'
@@ -134,9 +134,9 @@ class EmanProtInitModel(ProtInitialVolume):
         """ Run the EMAN program to create the initial model. """
         cleanPattern(self._getExtraPath('initial_models'))
         if self._isHighSym():
-            program = eman2.getEmanProgram('e2initialmodel_hisym.py')
+            program = eman2.Plugin.getEmanProgram('e2initialmodel_hisym.py')
         else:
-            program = eman2.getEmanProgram('e2initialmodel.py')
+            program = eman2.Plugin.getEmanProgram('e2initialmodel.py')
 
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -163,7 +163,7 @@ class EmanProtInitModel(ProtInitialVolume):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        eman2.validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
         return errors
 
     def _summary(self):
@@ -192,7 +192,7 @@ class EmanProtInitModel(ProtInitialVolume):
                         }
 
     def _isHighSym(self):
-        return (eman2.getVersion() != '2.11' and
+        return (eman2.Plugin.getActiveVersion() != '2.11' and
                 self.symmetry.get() in ["oct", "tet", "icos"])
 
     def _getVolumes(self):

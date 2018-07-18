@@ -32,9 +32,10 @@ import pyworkflow.utils as pwutils
 from pyworkflow.em import CTFModel
 from pyworkflow.em.data import SetOfParticles
 from pyworkflow.em.protocol import ProtProcessParticles
-from eman2 import getEmanProgram, validateVersion, isNewVersion
-from constants import *
-from convert import writeSetOfParticles, iterLstFile, jsonToCtfModel
+
+import eman2
+from eman2.constants import *
+from eman2.convert import writeSetOfParticles, iterLstFile, jsonToCtfModel
 
 
 class EmanProtCTFAuto(ProtProcessParticles):
@@ -49,7 +50,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
     @classmethod
     def isDisabled(cls):
-        return not isNewVersion()
+        return not eman2.Plugin.isNewVersion()
 
     def __init__(self, **kwargs):
         ProtProcessParticles.__init__(self, **kwargs)
@@ -138,7 +139,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
     def runCTFStep(self, args):
         """ Run the EMAN e2ctf_auto.py program. """
-        program = getEmanProgram('e2ctf_auto.py')
+        program = eman2.Plugin.getEmanProgram('e2ctf_auto.py')
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfThreads=1)
 
@@ -177,7 +178,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
     def _validate(self):
         errors = []
         partSet = self._getInputParticles()
-        validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
         if partSet.isPhaseFlipped():
             errors.append('Input particles are already phase-flipped. '
                           'Please provide original raw particle images.')

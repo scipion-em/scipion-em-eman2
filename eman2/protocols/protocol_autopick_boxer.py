@@ -33,8 +33,8 @@ from pyworkflow.em.protocol import ProtParticlePickingAuto
 from pyworkflow.utils import makePath
 
 import eman2
-from convert import readSetOfCoordinates, convertReferences
-from constants import *
+from eman2.convert import readSetOfCoordinates, convertReferences
+from eman2.constants import *
 
 
 class EmanProtAutopick(ProtParticlePickingAuto):
@@ -46,7 +46,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
     @classmethod
     def isDisabled(cls):
-        return not eman2.isNewVersion()
+        return not eman2.Plugin.isNewVersion()
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
@@ -139,7 +139,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
             modes[self.boxerMode.get()], self.threshold.get())
 
         params += ' %s' % micFile
-        program = eman2.getBoxerCommand(eman2.getVersion())
+        program = eman2.Plugin.getBoxerCommand()
 
         self.runJob(program, params, cwd=self.getCoordsDir())
 
@@ -149,7 +149,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INFO functions --------------------------------
     def _validate(self):
         errors = []
-        eman2.validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
         if self.boxerMode.get() == AUTO_GAUSS:
             errors.append('Gauss mode is not implemented for new e2boxer yet.')
         if self.boxerMode.get() == AUTO_CONVNET:

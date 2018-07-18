@@ -35,9 +35,9 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
 from pyworkflow.utils.path import cleanPattern, makePath, createLink, exists
 from pyworkflow.em.data import Volume
 
-from eman2 import getEmanProgram, validateVersion, isNewVersion, SCRATCHDIR
-from convert import rowToAlignment, createEmanProcess, writeSetOfParticles
-from constants import *
+import eman2
+from eman2.convert import rowToAlignment, createEmanProcess, writeSetOfParticles
+from eman2.constants import *
 
 
 class EmanProtRefine(em.ProtRefine3D):
@@ -132,7 +132,7 @@ Major features of this program:
                       label='Number of iterations',
                       help='The total number of refinement iterations to '
                            'perform.')
-        if isNewVersion():
+        if eman2.Plugin.isNewVersion():
             form.addParam('tophat', EnumParam,
                           choices=['none', 'local', 'global'],
                           label="Tophat filter?", default=TOPHAT_NONE,
@@ -194,7 +194,7 @@ Major features of this program:
         form.addParam('m3dKeep', FloatParam, default='0.8',
                       label='Fraction of class-averages to use in 3-D map',
                       help='The fraction of slices to keep in reconstruction.')
-        if isNewVersion():
+        if eman2.Plugin.isNewVersion():
             form.addParam('useBispec', BooleanParam, default=False,
                           label='Use bispectra? (experimental)',
                           help='Will use bispectra for orientation '
@@ -221,7 +221,7 @@ Major features of this program:
                       help="<name>:<parm>=<value>:...  An arbitrary processor "
                            "(e2help.py processors -v2) to apply to the 3-D map "
                            "after each iteration. Default=none")
-        if isNewVersion():
+        if eman2.Plugin.isNewVersion():
             form.addParam('ampCorrect', EnumParam,
                           choices=['auto', 'strucfac', 'flatten', 'none'],
                           label="Amplitude correction:", default=AMP_AUTO,
@@ -275,7 +275,7 @@ Major features of this program:
         makePath(storePath)
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
         if not self.skipctf:
-            program = getEmanProgram('e2ctf.py')
+            program = eman2.Plugin.getEmanProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %d" % acq.getVoltage()
@@ -289,7 +289,7 @@ Major features of this program:
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = getEmanProgram('e2buildsets.py')
+        program = eman2.Plugin.getEmanProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -298,7 +298,7 @@ Major features of this program:
         """ Run the EMAN program to refine a volume. """
         if not self.doContinue:
             cleanPattern(self._getExtraPath('refine_01'))
-        program = getEmanProgram('e2refine_easy.py')
+        program = eman2.Plugin.getEmanProgram('e2refine_easy.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -327,7 +327,7 @@ Major features of this program:
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
 
         particles = self._getInputParticles()
         samplingRate = particles.getSamplingRate()
@@ -394,7 +394,7 @@ Major features of this program:
                   'm3dKeep': self.m3dKeep.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': SCRATCHDIR
+                  'scratch': eman2.SCRATCHDIR
                   }
         args = args % params
 
@@ -413,7 +413,7 @@ Major features of this program:
         if self.m3dPostProcess.get() != 'none':
             args += " --m3dpostprocess=%s" % self.m3dPostProcess.get()
 
-        if isNewVersion():
+        if eman2.Plugin.isNewVersion():
             args += " --ampcorrect=%s" % self.getEnumText('ampCorrect')
             if self.tophat != TOPHAT_NONE:
                 args += " --tophat=%s" % self.getEnumText('tophat')

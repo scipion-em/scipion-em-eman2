@@ -33,7 +33,7 @@ from pyworkflow.protocol.params import IntParam, FloatParam
 from pyworkflow.em.protocol import ProtParticlePickingAuto
 
 import eman2
-from convert import readSetOfCoordinates
+from eman2.convert import readSetOfCoordinates
 
 
 class SparxGaussianProtPicking(ProtParticlePickingAuto):
@@ -91,7 +91,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
         micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())
         params = ('--gauss_autoboxer=demoparms --write_dbbox --boxsize=%d %s'
                   % (self.boxSize, micFile))
-        program = eman2.getBoxerCommand(eman2.getVersion(), boxerVersion='old')
+        program = eman2.Plugin.getBoxerCommand(boxerVersion='old')
 
         self.runJob(program, params, cwd=self.getCoordsDir())
 
@@ -101,7 +101,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
     # --------------------------- INFO functions --------------------------------
     def _validate(self):
         errors = []
-        eman2.validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
         return errors
 
     # --------------------------- UTILS functions -------------------------------

@@ -1,8 +1,8 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -23,10 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-"""
-This module implement the first version of viewers using 
-around xmipp_showj visualization program.
-"""
+
 import os, math
 
 from pyworkflow.gui.project import ProjectWindow
@@ -34,7 +31,8 @@ import pyworkflow.gui.text as text
 from pyworkflow.gui.dialog import askYesNo, showInfo
 from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER,
                                WEB_DJANGO)
-from pyworkflow.em.packages.xmipp3.viewer import XmippViewer
+# FIXME Remove this dependency from xmipp3 plugin
+from xmipp3.viewers import XmippViewer
 import pyworkflow.em.showj as showj
 from pyworkflow.em.viewer import (ObjectView, DataView,
                                   ChimeraView, ChimeraClientView, ClassesView)
@@ -45,17 +43,12 @@ from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
                                         EnumParam, FloatParam, IntParam, BooleanParam)
 import pyworkflow.utils as pwutils
 
-from protocol_boxing import EmanProtBoxing
-from protocol_ctf import EmanProtCTFAuto
-from protocol_initialmodel import EmanProtInitModel
-from protocol_refine2d import EmanProtRefine2D
-from protocol_refine2d_bispec import EmanProtRefine2DBispec
-from protocol_refineasy import EmanProtRefine
-from protocol_tiltvalidate import EmanProtTiltValidate
-from constants import *
-from convert import loadJson
-from eman2 import getEmanProgram
-
+import eman2
+from eman2.constants import *
+from eman2.convert import loadJson
+from eman2.protocols import (
+    EmanProtBoxing, EmanProtCTFAuto, EmanProtInitModel, EmanProtRefine2D,
+    EmanProtRefine2DBispec, EmanProtRefine, EmanProtTiltValidate)
 
 
 class EmanViewer(XmippViewer):
@@ -759,7 +752,7 @@ class TiltValidateViewer(ProtocolViewer):
         return xplotter
 
     def _showEmanPlot(self, paramName=None):
-        program = getEmanProgram('e2tiltvalidate.py')
+        program = eman2.Plugin.getEmanProgram('e2tiltvalidate.py')
         args = "--path=TiltValidate_01 --radcut=%0.2f --gui --planethres=%0.2f" % (
             self.radcut.get(), self.planethres.get())
         if self.colozaxis:
@@ -885,7 +878,7 @@ class CtfViewer(ProtocolViewer):
         return views
 
     def _showEmanCtf(self, paramName=None):
-        program = getEmanProgram('e2ctf.py')
+        program = eman2.Plugin.getEmanProgram('e2ctf.py')
         args = '--allparticles --minptcl=0 --minqual=0'
         args += ' --gui --constbfactor=-1.0 --sf=auto'
 

@@ -187,7 +187,7 @@ class TestEmanRefine2D(TestEmanBase):
         cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
 
     def test_Refine2DEman(self):
-        if not isNewVersion():
+        if not eman2.Plugin.isNewVersion():
             raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print "Run Eman Refine 2D"
         protRefine = self.newProtocol(EmanProtRefine2D,
@@ -206,7 +206,7 @@ class TestEmanRefine2DBispec(TestEmanBase):
         cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
 
     def test_Refine2DBispecEman(self):
-        if not isNewVersion():
+        if not eman2.Plugin.isNewVersion():
             raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print "Run Eman Refine 2D bispec"
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
@@ -285,7 +285,7 @@ class TestEmanCtfAuto(TestEmanBase):
         cls.protImport = cls.runImportParticlesStar(cls.partsFn, 3.5)
 
     def test_CtfAutoEman(self):
-        if not isNewVersion():
+        if not eman2.Plugin.isNewVersion():
             raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print "Run Eman CTF Auto"
         protCtf = self.newProtocol(EmanProtCTFAuto,
@@ -311,7 +311,7 @@ class TestEmanAutopick(TestEmanBase):
         cls.protImportAvg = cls.runImportAverages(cls.avgFn, 4.4)
 
     def test_AutopickEman(self):
-        if not isNewVersion():
+        if not eman2.Plugin.isNewVersion():
             raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print "Run Eman auto picking"
         protPick = self.newProtocol(EmanProtAutopick,

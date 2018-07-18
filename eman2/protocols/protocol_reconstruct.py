@@ -33,9 +33,9 @@ from pyworkflow.utils.path import cleanPattern, makePath
 from pyworkflow.em.data import Volume
 from pyworkflow.em.protocol import ProtReconstruct3D
 
-from eman2 import getEmanProgram, validateVersion
-from convert import writeSetOfParticles
-from constants import *
+import eman2
+from eman2.convert import writeSetOfParticles
+from eman2.constants import *
 
 
 class EmanProtReconstruct(ProtReconstruct3D):
@@ -194,7 +194,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
         makePath(storePath)
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
         if not self.skipctf:
-            program = getEmanProgram('e2ctf.py')
+            program = eman2.Plugin.getEmanProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %3d" % acq.getVoltage()
@@ -208,7 +208,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfThreads=1)
 
-        program = getEmanProgram('e2buildsets.py')
+        program = eman2.Plugin.getEmanProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
@@ -216,9 +216,9 @@ class EmanProtReconstruct(ProtReconstruct3D):
         """ Run the EMAN program to reconstruct a volume. """
         cleanPattern(self._getFileName("volume"))
         if self.useE2make3d:
-            program = getEmanProgram('e2make3d.py')
+            program = eman2.Plugin.getEmanProgram('e2make3d.py')
         else:
-            program = getEmanProgram('e2make3dpar.py')
+            program = eman2.Plugin.getEmanProgram('e2make3dpar.py')
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
     def createOutputStep(self):
@@ -232,7 +232,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
         if not self.useE2make3d and self.reconstructionMethod!= RECON_FOURIER:
             errors.append('e2make3dpar.py program can use only Fourier method '
                           'for reconstruction!')

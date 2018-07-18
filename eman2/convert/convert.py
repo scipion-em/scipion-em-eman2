@@ -41,7 +41,7 @@ from pyworkflow.em.data import Coordinate, Particle
 from pyworkflow.em.convert import ImageHandler
 import pyworkflow.em.metadata as md
 
-from eman2 import getEmanCommand, getEnviron
+import eman2
 
 
 def loadJson(jsonFn):

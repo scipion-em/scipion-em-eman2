@@ -30,9 +30,10 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam,
                                         BooleanParam, IntParam, LEVEL_ADVANCED)
 import pyworkflow.utils as pwutils
 from pyworkflow.em.protocol import ProtAnalysis3D
-from eman2 import getEmanProgram, validateVersion
-from constants import *
-from convert import writeSetOfParticles
+
+import eman2
+from eman2.constants import *
+from eman2.convert import writeSetOfParticles
 
 
 class EmanProtTiltValidate(ProtAnalysis3D):
@@ -201,14 +202,14 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                                 alignType=partAlign, suffix=suffix)
 
             setName = suffix.split('_')[1]
-            program = getEmanProgram('e2buildsets.py')
+            program = eman2.Plugin.getEmanProgram('e2buildsets.py')
             args = " particles/*%s.hdf --setname=%s --minhisnr=-1" % (
                 suffix, setName)
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
     def runValidateStep(self, args):
-        program = getEmanProgram('e2tiltvalidate.py')
+        program = eman2.Plugin.getEmanProgram('e2tiltvalidate.py')
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
     def createOutputStep(self):
@@ -217,7 +218,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
         self._validateDim(self.inputTiltPair.get().getUntilted(),
                           self.inputVolume.get(), errors,
                           'Input tilt pair particles', 'Input volume')

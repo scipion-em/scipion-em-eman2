@@ -31,14 +31,11 @@ import os
 
 import pyworkflow as pw
 from pyworkflow.em.wizard import EmWizard
-from protocol_autopick_sparx import SparxGaussianProtPicking
 from pyworkflow.em import CoordinatesObjectView
-from pyworkflow.utils import makePath, cleanPath
-from pyworkflow.utils.utils import readProperties
+from pyworkflow.utils import makePath, cleanPath, readProperties
 
-from convert import writeSetOfMicrographs
-from eman2 import getBoxerCommand, getVersion
-
+from eman2.convert import writeSetOfMicrographs
+from eman2.protocols import SparxGaussianProtPicking
 
 # ===============================================================================
 # PICKER
@@ -67,7 +64,8 @@ class SparxGaussianPickerWizard(EmWizard):
         pickerProps = os.path.join(coordsDir, 'picker.conf')
         f = open(pickerProps, "w")
         params = ['boxSize', 'lowerThreshold', 'higherThreshold', 'gaussWidth']
-        program = getBoxerCommand(getVersion(), boxerVersion='old')
+        program = eman2.Plugin.getBoxerCommand(boxerVersion='old')
+
         args = {
             "params": ','.join(params),
             "preprocess": "%s sxprocess.py" % pw.getScipionScript(),

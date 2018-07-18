@@ -1,8 +1,8 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -23,17 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-"""
-This package contains the protocols and data for EMAN2
-"""
 
-from bibtex import _bibtex # Load bibtex dict with references
-
-_logo = "eman2_logo.jpg"
-_references = ['Tang2007']
-EMAN_DIR_VAR = 'EMAN2DIR'
-
-from eman2 import *
 from protocol_boxing import EmanProtBoxing
 from protocol_ctf import EmanProtCTFAuto
 from protocol_initialmodel import EmanProtInitModel
@@ -44,19 +34,5 @@ from protocol_refineasy import EmanProtRefine
 from protocol_tiltvalidate import EmanProtTiltValidate
 from protocol_autopick_boxer import EmanProtAutopick
 from protocol_autopick_sparx import SparxGaussianProtPicking
-from viewer import (EmanViewer, Refine2DViewer,
-                    RefineEasyViewer, TiltValidateViewer, CtfViewer)
-from wizard import SparxGaussianPickerWizard
-_environ = getEnviron()
 
 
-def validateInstallation():
-    """ This function will be used to check if package is properly installed."""
-    missingPaths = ["%s: %s" % (var, _environ[var])
-                    for var in [EMAN_DIR_VAR]
-                    if not os.path.exists(_environ[var])]
-
-    if missingPaths:
-        return ["Missing variables:"] + missingPaths
-    else:
-        return [] # No errors

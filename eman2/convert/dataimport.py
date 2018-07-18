@@ -31,10 +31,10 @@ from pyworkflow.em.data import Coordinate, CTFModel
 from pyworkflow.em.data_tiltpairs import Angles
 from pyworkflow.em.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR,
                                     MDL_PICKING_PARTICLE_SIZE)
-from convert import loadJson, readCTFModel, readSetOfParticles
+from .convert import loadJson, readCTFModel, readSetOfParticles
 
 
-class EmanImport():
+class EmanImport:
 
     def __init__(self, protocol, lstFile):
         self.protocol = protocol

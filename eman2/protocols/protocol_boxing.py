@@ -35,9 +35,8 @@ from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.em.protocol import ProtParticlePicking
 from pyworkflow.protocol.params import BooleanParam, IntParam
 
-from eman2 import (isNewVersion, validateVersion, getVersion,
-                   getEmanProgram, getBoxerCommand)
-from convert import loadJson, readSetOfCoordinates
+import eman2
+from eman2.convert import loadJson, readSetOfCoordinates
 
 
 class EmanProtBoxing(ProtParticlePicking):
@@ -88,12 +87,12 @@ class EmanProtBoxing(ProtParticlePicking):
     # --------------------------- STEPS functions ------------------------------
     def launchBoxingGUIStep(self):
         # Print the eman version, useful to report bugs
-        self.runJob(getEmanProgram('e2version.py'), '')
+        self.runJob(eman2.Plugin.getEmanProgram('e2version.py'), '')
         useNewBoxer = self._useNewBoxer()
         # Program to execute and it arguments
         boxerVersion = 'old' if not useNewBoxer else 'new'
-        boxer = getBoxerCommand(getVersion(), boxerVersion=boxerVersion)
-        program = getEmanProgram(boxer)
+        boxer = eman2.Plugin.getBoxerCommand(boxerVersion=boxerVersion)
+        program = eman2.Plugin.getEmanProgram(boxer)
         arguments = "%(inputMics)s"
 
         if useNewBoxer:
@@ -141,7 +140,7 @@ class EmanProtBoxing(ProtParticlePicking):
                     # picking for the rest of mics
                     self._params['boxSize'] = gaussParsDict['boxsize']
                     # Run sxprocess.py to store parameters
-                    program = getEmanProgram("sxprocess.py")
+                    program = eman2.Plugin.getEmanProgram("sxprocess.py")
                     argsList = ["'%s'=%s:" % (key, val) for (key, val) in gaussParsDict.iteritems()]
                     args = 'demoparms --makedb ' + "".join(argsList)
                     # Remove last ":" to avoid error
@@ -152,17 +151,17 @@ class EmanProtBoxing(ProtParticlePicking):
                     # Now run e2boxer.py with stored parameters
                     arguments = "--gauss_autoboxer=demoparms --write_dbbox "
                     arguments += " --boxsize=%(boxSize)s " + "%(inputMics)s"
-                    boxer = getBoxerCommand(getVersion(), boxerVersion='old')
-                    program = getEmanProgram(boxer)
+                    boxer = eman2.Plugin.getBoxerCommand(boxerVersion='old')
+                    program = eman2.Plugin.getEmanProgram(boxer)
                     self._log.info('Launching: ' + program + ' ' + arguments % self._params)
                     self.runJob(program, arguments % self._params)
 
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        validateVersion(self, errors)
+        eman2.Plugin.validateVersion(self, errors)
 
-        if self.useNewBoxer and not isNewVersion():
+        if self.useNewBoxer and not eman2.Plugin.isNewVersion():
             errors.append('Your EMAN2 version does not support new boxer. '
                           'Please update your installation.')
 
