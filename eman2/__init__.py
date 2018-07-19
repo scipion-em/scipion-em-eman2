@@ -84,12 +84,12 @@ class Plugin:
 
     @classmethod
     def isNewVersion(cls):
-        return cls.getActiveVersion().startswith("2.")
+        return cls.getActiveVersion().startswith("2.1")
 
     @classmethod
     def getSupportedVersions(cls):
         """ Return the list of supported binary versions. """
-        return not cls.getActiveVersion().startswith("2.1")
+        return ['2.11', '2.12', '2.21']
 
     @classmethod
     def validateInstallation(cls):
