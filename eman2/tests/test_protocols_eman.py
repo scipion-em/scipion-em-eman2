@@ -324,5 +324,19 @@ class TestEmanAutopick(TestEmanBase):
 
 
 if __name__ == "__main__":
+    # TestEmanInitialModelMda
+    # TestEmanRefineEasy
+    """
+    class TestEmanBase(BaseTest):
+class TestEmanInitialModelMda(TestEmanBase):
+class TestEmanInitialModelGroel(TestEmanInitialModelMda):
+class TestEmanReconstruct(TestEmanBase):
+class TestEmanRefineEasy(TestEmanBase):
+class TestEmanRefine2D(TestEmanBase):
+class TestEmanRefine2DBispec(TestEmanBase):
+class TestEmanTiltValidate(TestEmanBase):
+class TestEmanCtfAuto(TestEmanBase):
+class TestEmanAutopick(TestEmanBase):
+"""
     suite = unittest.TestLoader().loadTestsFromTestCase(TestEmanRefineEasy)
     unittest.TextTestRunner(verbosity=2).run(suite)

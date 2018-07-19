@@ -1,9 +1,9 @@
 # coding: latin-1
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -25,10 +25,6 @@
 # *
 # **************************************************************************
 """
-Bibtex string file for Eman package.
-"""
-
-_bibtexStr = """
 @article{Tang2007,
 title = "EMAN2: An extensible image processing suite for electron microscopy ",
 journal = "JSB",
@@ -45,9 +41,3 @@ keywords = "EMAN, Single particle analysis , cryoEMTEM, Software, Image processi
 
 
 """
-
-
-
-from pyworkflow.utils import parseBibTex
-
-_bibtex = parseBibTex(_bibtexStr)  

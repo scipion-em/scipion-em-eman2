@@ -36,12 +36,15 @@ EMAN_DIR_VAR = 'EMAN2DIR'
 SCRATCHDIR = getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 
 
+def hello():
+    print ("a different hello from Eman2....")
+
 # The following class is required for Scipion to detect this Python module
 # as a Scipion Plugin. It needs to specify the PluginMeta __metaclass__
 # Some function related to the underlying package binaries need to be
 # implemented
 class Plugin:
-    __metaclass__ = pyworkflow.em.PluginMeta
+    #__metaclass__ = pyworkflow.em.PluginMeta
 
     @classmethod
     def getEnviron(cls):
@@ -84,7 +87,7 @@ class Plugin:
 
     @classmethod
     def isNewVersion(cls):
-        return cls.getActiveVersion().startswith("2.1")
+        return not cls.getActiveVersion().startswith("2.1")
 
     @classmethod
     def getSupportedVersions(cls):
@@ -139,3 +142,5 @@ class Plugin:
         new = emanVersion in ['2.11', '2.12'] or boxerVersion == 'new'
         return 'e2boxer.py' if new else 'e2boxer_old.py'
 
+
+pyworkflow.em.Domain.registerPlugin(__name__)
