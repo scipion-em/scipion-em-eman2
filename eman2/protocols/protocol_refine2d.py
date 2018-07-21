@@ -40,6 +40,7 @@ from pyworkflow.utils.path import makePath, cleanPath, createLink
 import eman2
 from eman2.convert import (rowToAlignment, createEmanProcess,
                            writeSetOfParticles, convertReferences)
+from eman2.constants import *
 
 
 class EmanProtRefine2D(em.ProtClassify2D):
