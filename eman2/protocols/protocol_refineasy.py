@@ -36,7 +36,7 @@ from pyworkflow.utils.path import cleanPattern, makePath, createLink, exists
 from pyworkflow.em.data import Volume
 
 import eman2
-from eman2.convert import rowToAlignment, createEmanProcess, writeSetOfParticles
+from eman2.convert import rowToAlignment, writeSetOfParticles
 from eman2.constants import *
 
 

@@ -148,8 +148,7 @@ class Plugin:
         """ Open a new Process with all EMAN environment (python...etc)
         that will server as an adaptor to use EMAN library
         """
-        print cls.__path__
-        program = join(cls.__path__, script)
+        program = join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args)
 
         print ("** Running: '%s'" % cmd)

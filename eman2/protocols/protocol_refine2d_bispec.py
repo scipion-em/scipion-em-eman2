@@ -39,7 +39,7 @@ from pyworkflow.utils import makePath, createLink, cleanPath
 
 
 import eman2
-from eman2.convert import createEmanProcess, writeSetOfParticles
+from eman2.convert import writeSetOfParticles
 from eman2.constants import *
 
 

@@ -38,8 +38,8 @@ from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.utils.path import makePath, cleanPath, createLink
 
 import eman2
-from eman2.convert import (rowToAlignment, createEmanProcess,
-                           writeSetOfParticles, convertReferences)
+from eman2.convert import (rowToAlignment, writeSetOfParticles,
+                           convertReferences)
 from eman2.constants import *
 
 
