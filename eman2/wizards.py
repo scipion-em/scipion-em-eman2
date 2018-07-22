@@ -34,6 +34,7 @@ from pyworkflow.em.wizard import EmWizard
 from pyworkflow.em import CoordinatesObjectView
 from pyworkflow.utils import makePath, cleanPath, readProperties
 
+import eman2
 from eman2.convert import writeSetOfMicrographs
 from eman2.protocols import SparxGaussianProtPicking
 

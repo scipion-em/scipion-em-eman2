@@ -33,7 +33,6 @@ import json
 import numpy
 import os
 
-import pyworkflow as pw
 import pyworkflow.em as em
 import pyworkflow.utils as pwutils
 from pyworkflow.em.data import Coordinate, Particle
