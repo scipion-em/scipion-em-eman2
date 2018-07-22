@@ -101,7 +101,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
     # --------------------------- INFO functions --------------------------------
     def _validate(self):
         errors = []
-        eman2.Plugin.validateVersion(self, errors)
+        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         return errors
 
     # --------------------------- UTILS functions -------------------------------

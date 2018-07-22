@@ -25,8 +25,9 @@
 # **************************************************************************
 
 import os
+import subprocess
 import pyworkflow.em
-from pyworkflow.utils import Environ, getEnvVariable
+from pyworkflow.utils import Environ, getEnvVariable, join
 
 
 _logo = "eman2_logo.jpg"
@@ -141,6 +142,22 @@ class Plugin:
         # returns boxer program depending on Eman version
         new = emanVersion in ['2.11', '2.12'] or boxerVersion == 'new'
         return 'e2boxer.py' if new else 'e2boxer_old.py'
+
+    @classmethod
+    def createEmanProcess(cls, script='e2converter.py', args=None, direc="."):
+        """ Open a new Process with all EMAN environment (python...etc)
+        that will server as an adaptor to use EMAN library
+        """
+        print cls.__path__
+        program = join(cls.__path__, script)
+        cmd = cls.getEmanCommand(program, args)
+
+        print ("** Running: '%s'" % cmd)
+        proc = subprocess.Popen(cmd, shell=True, env=cls.getEnviron(),
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, cwd=direc)
+
+        return proc
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)

@@ -459,7 +459,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
     #--------------------------- INFO functions --------------------------------------------
     def _validate(self):
         errors = []
-        eman2.Plugin.validateVersion(self, errors)
+        #eman2.Plugin.validateVersion(self, errors)   #FIXME
 
         return errors
 
@@ -645,7 +645,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         clsFn = self._getFileName("cls", run=numRun, iter=iterN)
         classesFn = self._getFileName("classes", run=numRun, iter=iterN)
 
-        proc = createEmanProcess(args='read %s %s %s %s 2d'
+        proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 2d'
                                  % (self._getParticlesStack(), clsFn, classesFn,
                                     self._getBaseName('results', iter=iterN)),
                                  direc=self._getExtraPath())

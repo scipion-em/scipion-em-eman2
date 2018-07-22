@@ -32,7 +32,6 @@ import glob
 import json
 import numpy
 import os
-import subprocess
 
 import pyworkflow as pw
 import pyworkflow.em as em
@@ -155,22 +154,6 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coordsSet.append(coord)
 
 
-def createEmanProcess(script='e2converter.py', args=None, direc="."):
-    """ Open a new Process with all EMAN environment (python...etc)
-    that will server as an adaptor to use EMAN library
-    """
-    program = pw.join('em', 'packages', 'eman2', script)
-    cmd = getEmanCommand(program, args)
-
-    #    gcmd = greenStr(cmd)
-    print ("** Running: '%s'" % cmd)
-    proc = subprocess.Popen(cmd, shell=True, env=getEnviron(),
-                            stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE, cwd=direc)
-
-    return proc
-
-
 def writeSetOfMicrographs(micSet, filename):
     """ Simplified function borrowed from xmipp. """
     mdata = md.MetaData()
@@ -229,7 +212,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
 
         fileName = ""
         a = 0
-        proc = createEmanProcess(args='write')
+        proc = eman2.Plugin.createEmanProcess(args='write')
 
         for i, part in iterParticlesByMic(partSet):
             micName = micId = part.getMicId()
@@ -276,7 +259,7 @@ def getImageDimensions(imageFile):
      not currently supported by the native image library (Xmipp).
      Underneath, it will call a script to do the job.
     """
-    proc = createEmanProcess('e2ih.py', args=imageFile)
+    proc = eman2.Plugin.createEmanProcess('e2ih.py', args=imageFile)
     return tuple(map(int, proc.stdout.readline().split()))
 
 
@@ -297,7 +280,7 @@ def convertImage(inputLoc, outputLoc):
         else:
             return loc
 
-    proc = createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
+    proc = eman2.Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
                                                         _getFn(outputLoc)))
     proc.wait()
 
@@ -398,7 +381,7 @@ def convertReferences(refSet, outputFn):
     """
     fileName = ""
     a = 0
-    proc = createEmanProcess(args='write')
+    proc = eman2.Plugin.createEmanProcess(args='write')
 
     for part in refSet:
         objDict = part.getObjDict()

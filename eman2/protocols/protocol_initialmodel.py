@@ -163,7 +163,7 @@ class EmanProtInitModel(ProtInitialVolume):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        eman2.Plugin.validateVersion(self, errors)
+        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         return errors
 
     def _summary(self):

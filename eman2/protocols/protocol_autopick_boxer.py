@@ -149,7 +149,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INFO functions --------------------------------
     def _validate(self):
         errors = []
-        eman2.Plugin.validateVersion(self, errors)
+        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         if self.boxerMode.get() == AUTO_GAUSS:
             errors.append('Gauss mode is not implemented for new e2boxer yet.')
         if self.boxerMode.get() == AUTO_CONVNET:

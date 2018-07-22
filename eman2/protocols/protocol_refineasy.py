@@ -327,7 +327,7 @@ Major features of this program:
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        eman2.Plugin.validateVersion(self, errors)
+        #eman2.Plugin.validateVersion(self, errors)   #FIXME
 
         particles = self._getInputParticles()
         samplingRate = particles.getSamplingRate()
@@ -515,7 +515,7 @@ Major features of this program:
 
         if not exists(angles) and exists(self._getFileName('clsEven',
                                                            run=numRun, iter=iterN)):
-            proc = createEmanProcess(args='read %s %s %s %s 3d'
+            proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 3d'
                                           % (self._getParticlesStack(), clsFn, classesFn,
                                              self._getBaseName('angles', iter=iterN)),
                                      direc=self._getExtraPath())

@@ -232,7 +232,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        eman2.Plugin.validateVersion(self, errors)
+        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         if not self.useE2make3d and self.reconstructionMethod!= RECON_FOURIER:
             errors.append('e2make3dpar.py program can use only Fourier method '
                           'for reconstruction!')

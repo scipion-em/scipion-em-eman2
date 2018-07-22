@@ -218,7 +218,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        eman2.Plugin.validateVersion(self, errors)
+        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         self._validateDim(self.inputTiltPair.get().getUntilted(),
                           self.inputVolume.get(), errors,
                           'Input tilt pair particles', 'Input volume')

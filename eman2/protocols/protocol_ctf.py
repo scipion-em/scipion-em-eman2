@@ -178,7 +178,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
     def _validate(self):
         errors = []
         partSet = self._getInputParticles()
-        eman2.Plugin.validateVersion(self, errors)
+        ##eman2.Plugin.validateVersion(self, errors)   #FIXME
         if partSet.isPhaseFlipped():
             errors.append('Input particles are already phase-flipped. '
                           'Please provide original raw particle images.')
