@@ -27,6 +27,9 @@
 This file contains constants related to EMAN2 protocols
 """
 
+
+EMAN2DIR = 'EMAN2DIR'
+
 #------------------ Constants values ------------------------------------------
 
 # ctf processing type
