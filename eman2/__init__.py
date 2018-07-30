@@ -46,6 +46,10 @@ class Plugin(pyworkflow.em.Plugin):
     _supportedVersions = ['2.11', '2.12', '2.21']
 
     @classmethod
+    def _defineVariables(cls):
+        cls._defineEmVar(EMAN2DIR, 'eman-2.21')
+
+    @classmethod
     def getEnviron(cls):
         """ Setup the environment variables needed to launch Eman. """
         isVersion21 = cls.getActiveVersion() in ['2.11', '2.12']
