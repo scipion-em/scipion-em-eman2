@@ -28,10 +28,12 @@
 from pyworkflow.tests import *
 import pyworkflow.em as pwem
 
+import eman2
 from eman2 import *
 from eman2.protocols import *
 
 try:
+    import xmipp3
     from xmipp3.protocols import XmippProtExtractParticlesPairs
 except Exception:
     xmipp3 = None
@@ -56,11 +58,13 @@ class TestEmanBase(BaseTest):
         """ Run an Import micrograph protocol. """
         # We have two options: passe the SamplingRate or the ScannedPixelSize + microscope magnification
         if not samplingRate is None:
-            cls.protImport = cls.newProtocol(pwem.ProtImportMicrographs, samplingRateMode=0, filesPath=pattern,
+            cls.protImport = cls.newProtocol(pwem.ProtImportMicrographs,
+                                             samplingRateMode=0, filesPath=pattern,
                                              samplingRate=samplingRate, magnification=magnification,
                                              voltage=voltage, sphericalAberration=sphericalAberration)
         else:
-            cls.protImport = cls.newProtocol(pwem.ProtImportMicrographs, samplingRateMode=1, filesPath=pattern,
+            cls.protImport = cls.newProtocol(pwem.ProtImportMicrographs,
+                                             samplingRateMode=1, filesPath=pattern,
                                              scannedPixelSize=scannedPixelSize,
                                              voltage=voltage, magnification=magnification,
                                              sphericalAberration=sphericalAberration)
@@ -262,8 +266,12 @@ class TestEmanTiltValidate(TestEmanBase):
                              "There was a problem with the import of coord pairs")
 
         print "Extracting particle pairs"
-        protExtractPairs = self.newProtocol(XmippProtExtractParticlesPairs,
-                                            downFactor=2.0, boxSize=128, doInvert=True)
+        protExtractPairs = self.newProtocol(
+            xmipp3.protocols.XmippProtExtractParticlesPairs,
+            downFactor=2.0,
+            boxSize=128,
+            doInvert=True)
+
         protExtractPairs.inputCoordinatesTiltedPairs.set(protImportCoords.outputCoordinatesTiltPair)
         self.launchProtocol(protExtractPairs)
         self.assertIsNotNone(protExtractPairs.outputParticlesTiltPair,
