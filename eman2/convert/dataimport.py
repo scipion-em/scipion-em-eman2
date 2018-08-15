@@ -36,7 +36,7 @@ from .convert import loadJson, readCTFModel, readSetOfParticles
 
 class EmanImport:
 
-    def __init__(self, protocol, lstFile):
+    def __init__(self, protocol, lstFile=''):
         self.protocol = protocol
         self._lstFile = lstFile
         self.copyOrLink = protocol.getCopyOrLink()
