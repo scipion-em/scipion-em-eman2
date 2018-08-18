@@ -43,7 +43,6 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
     For more information see http://sparx-em.org/sparxwiki/e2boxer
     """
     _label = 'sparx gaussian picker'
-    _lastUpdateVersion = VERSION_1_1
 
     def __init__(self, **kwargs):
         ProtParticlePickingAuto.__init__(self, **kwargs)
@@ -101,7 +100,6 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
     # --------------------------- INFO functions --------------------------------
     def _validate(self):
         errors = []
-        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         return errors
 
     # --------------------------- UTILS functions -------------------------------

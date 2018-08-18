@@ -40,7 +40,8 @@ from eman2.constants import *
 
 class EmanProtReconstruct(ProtReconstruct3D):
     """
-    This Protocol wraps *e2make3d.py* Eman2 program.
+    This protocol wraps *e2make3d.py* Eman2 program.
+
     Reconstructs 3D volumes using a set of 2D images.
     Euler angles are extracted from the 2D image headers
     and symmetry is imposed. Several reconstruction methods
@@ -232,7 +233,6 @@ class EmanProtReconstruct(ProtReconstruct3D):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         if not self.useE2make3d and self.reconstructionMethod!= RECON_FOURIER:
             errors.append('e2make3dpar.py program can use only Fourier method '
                           'for reconstruction!')

@@ -40,7 +40,7 @@ from eman2.convert import loadJson, readSetOfCoordinates
 
 
 class EmanProtBoxing(ProtParticlePicking):
-    """ Picks particles from a set of micrographs using eman2 boxer. """
+    """ Picks particles from a set of micrographs using EMAN2 e2boxer. """
     _label = 'boxer'
 
     def __init__(self, **args):
@@ -159,7 +159,6 @@ class EmanProtBoxing(ProtParticlePicking):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        #eman2.Plugin.validateVersion(self, errors)   #FIXME
 
         if self.useNewBoxer and not eman2.Plugin.isNewVersion():
             errors.append('Your EMAN2 version does not support new boxer. '

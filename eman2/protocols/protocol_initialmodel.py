@@ -38,8 +38,9 @@ import eman2
 
 class EmanProtInitModel(ProtInitialVolume):
     """
-    This Protocol wraps *e2initialmodel.py* Eman2 program which
-    will take a set of class-averages/projections and build a set
+    This protocol wraps *e2initialmodel.py* Eman2 program.
+
+    It will take a set of class-averages/projections and build a set
     of 3-D models suitable for use as initial models in single
     particle reconstruction. The output set is theoretically sorted
     in order of quality (best one is numbered 1), though it's best
@@ -77,7 +78,7 @@ class EmanProtInitModel(ProtInitialVolume):
                            'generate in search of a good one.')
         form.addParam('shrink', IntParam, default=1,
                       expertLevel=LEVEL_ADVANCED,
-                      label='shrink',
+                      label='Shrink factor',
                       help='Using a box-size >64 is not optimal for making '
                            'initial models. Suggest using this option to '
                            'shrink the input particles by an integer amount '
@@ -143,7 +144,6 @@ class EmanProtInitModel(ProtInitialVolume):
 
     def createOutputStep(self):
         classes2DSet = self.inputSet.get()
-        # volumes = EmanSetOfVolumes(self._getPath('scipion_volumes.json'))
         volumes = self._createSetOfVolumes()
         shrink = self.shrink.get()
         if isinstance(self.inputSet.get(), SetOfClasses2D):
@@ -163,7 +163,6 @@ class EmanProtInitModel(ProtInitialVolume):
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         return errors
 
     def _summary(self):
@@ -173,6 +172,8 @@ class EmanProtInitModel(ProtInitialVolume):
         else:
             summary.append("Input images: %s" % self.getObjectTag('inputSet'))
             summary.append("Output initial volumes: %s" % self.outputVolumes.getSize())
+            if self._isHighSym():
+                summary.append("Used e2initialmodel_hisym.py for high symmetry reconstruction.")
         return summary
 
     # --------------------------- UTILS functions ------------------------------

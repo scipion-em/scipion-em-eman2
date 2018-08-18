@@ -45,7 +45,7 @@ from eman2.constants import *
 
 class EmanProtRefine2D(em.ProtClassify2D):
     """
-    This Protocol wraps *e2refine2d.py* Eman2 program.
+    This protocol wraps *e2refine2d.py* Eman2 program.
 
     This program is used to produce reference-free class averages
     from a population of mixed, unaligned particle images. These averages
@@ -69,7 +69,6 @@ class EmanProtRefine2D(em.ProtClassify2D):
     multiple cores are not always active.
 """
     _label = 'refine 2D'
-    _lastUpdateVersion = VERSION_1_2
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
@@ -190,7 +189,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         line.addParam('centerType', EnumParam,
                       choices=['nocenter', 'xform.center',
                                'xform.centeracf', 'xform.centerofmass', 'None'],
-                      label="type", default=XFORM_CENTER,
+                      label="", default=XFORM_CENTER,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('centerParams', StringParam, default='',
                       label='params')
@@ -213,7 +212,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_CCC,
+                      label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simcmpParams', StringParam,
                       default='', label='params')
@@ -235,7 +234,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                                'rotational', 'rotational_iterative', 'rtf_exhaustive',
                                'rtf_slow_exhaustive', 'scale', 'symalign',
                                'symalignquat', 'translational', 'None'],
-                      label='type', default=ALN_ROTATE_TRANSLATE_TREE,
+                      label='', default=ALN_ROTATE_TRANSLATE_TREE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simalignParams', StringParam,
                       default='', label='params')
@@ -244,7 +243,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_CCC,
+                      label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simaligncmpParams', StringParam,
                       default='', label='params')
@@ -253,7 +252,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         line = group.addLine('simralign: ')
         line.addParam('simralignType', EnumParam,
                       choices=['None', 'refine'],
-                      label='type', default=RALN_NONE,
+                      label='', default=RALN_NONE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simralignParams', StringParam,
                       default='', label='params')
@@ -262,7 +261,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_DOT,
+                      label='', default=CMP_DOT,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simraligncmpParams', StringParam,
                       default='', label='params')
@@ -296,7 +295,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                                'ctf.weight.autofilt', 'ctfw.auto', 'iteration',
                                'localweight', 'mean', 'mean.tomo',
                                'minmax', 'sigma', 'weightedfourier'],
-                      label='Class averager type: ',
+                      label='Class averager: ',
                       default=AVG_CTF_WEIGHT_AUTOFILT,
                       display=EnumParam.DISPLAY_COMBO,
                       help='The averager used to generated class-averages')
@@ -311,7 +310,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                                'normalize.ramp.normvar', 'normalize.rows',
                                'normalize.toimage', 'normalize.unitlen',
                                'normalize.unitsum', 'None'],
-                      label='type',
+                      label='',
                       default=PROC_NORMALIZE_EDGEMEAN,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classnormprocParams', StringParam,
@@ -322,7 +321,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_CCC,
+                      label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classcmpParams', StringParam,
                       default='', label='params',
@@ -346,7 +345,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                                'rotational', 'rotational_iterative', 'rtf_exhaustive',
                                'rtf_slow_exhaustive', 'scale', 'symalign',
                                'symalignquat', 'translational', 'None'],
-                      label='type', default=ALN_ROTATE_TRANSLATE_TREE,
+                      label='', default=ALN_ROTATE_TRANSLATE_TREE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classalignParams', StringParam,
                       default='flip=0', label='params')
@@ -355,7 +354,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_CCC,
+                      label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classaligncmpParams', StringParam,
                       default='', label='params')
@@ -364,7 +363,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         line = group.addLine('classralign: ')
         line.addParam('classralignType', EnumParam,
                       choices=['None', 'refine'],
-                      label='type', default=RALN_NONE,
+                      label='', default=RALN_NONE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classralignParams', StringParam,
                       default='', label='params')
@@ -373,7 +372,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_CCC,
+                      label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classraligncmpParams', StringParam,
                       default='', label='params')
@@ -459,7 +458,6 @@ class EmanProtRefine2D(em.ProtClassify2D):
     #--------------------------- INFO functions --------------------------------------------
     def _validate(self):
         errors = []
-        #eman2.Plugin.validateVersion(self, errors)   #FIXME
 
         return errors
 

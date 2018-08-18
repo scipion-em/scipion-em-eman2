@@ -61,7 +61,6 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
     invariants derived from the bispectrum of each particle.
 """
     _label = 'refine 2D bispec'
-    _lastUpdateVersion = VERSION_1_2
 
     @classmethod
     def isDisabled(cls):
@@ -141,7 +140,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         line.addParam('centerType', EnumParam,
                       choices=['nocenter', 'xform.center',
                                'xform.centeracf', 'xform.centerofmass', 'None'],
-                      label="type", default=XFORM_CENTER,
+                      label="", default=XFORM_CENTER,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('centerParams', StringParam, default='',
                       label='params')
@@ -170,7 +169,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
                                'ctf.weight.autofilt', 'ctfw.auto', 'iteration',
                                'localweight', 'mean', 'mean.tomo',
                                'minmax', 'sigma', 'weightedfourier'],
-                      label='Class averager type: ',
+                      label='Class averager: ',
                       default=AVG_CTF_WEIGHT_AUTOFILT,
                       display=EnumParam.DISPLAY_COMBO,
                       help='The averager used to generated class-averages')
@@ -185,7 +184,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
                                'normalize.ramp.normvar', 'normalize.rows',
                                'normalize.toimage', 'normalize.unitlen',
                                'normalize.unitsum', 'None'],
-                      label='type',
+                      label='',
                       default=PROC_NORMALIZE_EDGEMEAN,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classnormprocParams', StringParam,
@@ -196,7 +195,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_CCC,
+                      label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classcmpParams', StringParam,
                       default='', label='params',
@@ -220,7 +219,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
                                'rotational', 'rotational_iterative', 'rtf_exhaustive',
                                'rtf_slow_exhaustive', 'scale', 'symalign',
                                'symalignquat', 'translational', 'None'],
-                      label='type', default=ALN_ROTATE_TRANSLATE_TREE,
+                      label='', default=ALN_ROTATE_TRANSLATE_TREE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classalignParams', StringParam,
                       default='flip=0', label='params')
@@ -229,7 +228,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_CCC,
+                      label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classaligncmpParams', StringParam,
                       default='', label='params')
@@ -238,7 +237,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         line = group.addLine('classralign: ')
         line.addParam('classralignType', EnumParam,
                       choices=['None', 'refine'],
-                      label='type', default=RALN_NONE,
+                      label='', default=RALN_NONE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classralignParams', StringParam,
                       default='', label='params')
@@ -247,7 +246,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
-                      label='type', default=CMP_CCC,
+                      label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classraligncmpParams', StringParam,
                       default='', label='params')
@@ -330,7 +329,6 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
     #--------------------------- INFO functions --------------------------------
     def _validate(self):
         errors = []
-        #eman2.Plugin.validateVersion(self, errors)   #FIXME
 
         return errors
 

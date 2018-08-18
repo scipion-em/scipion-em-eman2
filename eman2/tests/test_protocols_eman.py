@@ -319,7 +319,7 @@ class TestEmanAutopick(TestEmanBase):
         setupTestProject(cls)
         TestEmanBase.setData('igbmc_gempicker')
         cls.micsFn = cls.dataset.getFile('micrographs/*.mrc')
-        cls.avgFn = cls.dataset.getFile('templates/*.mrc')
+        cls.avgFn = cls.dataset.getFile('templates/templates_white.stk')
         cls.protImportMics = cls.runImportMicrograph(cls.micsFn,
                                                      samplingRate=4.4,
                                                      voltage=120,
@@ -335,6 +335,7 @@ class TestEmanAutopick(TestEmanBase):
         protPick = self.newProtocol(EmanProtAutopick,
                                     boxerMode=1,  # by_ref
                                     goodRefs=self.protImportAvg.outputAverages,
+                                    threshold=12.0,
                                     numberOfThreads=2)
         protPick.inputMicrographs.set(self.protImportMics.outputMicrographs)
         self.launchProtocol(protPick)

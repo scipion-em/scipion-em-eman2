@@ -83,18 +83,6 @@ class Plugin(pyworkflow.em.Plugin):
     def isNewVersion(cls):
         return not cls.getActiveVersion().startswith("2.1")
 
-    # FIXME: It is awkward to pass the protocol here
-    # it should be directly the validation
-    @classmethod
-    def validateVersion(protocol, errors):
-        """ Validate if eman version is set properly according
-         to installed version and the one set in the config file.
-         Params:
-            protocol: the input protocol calling to validate
-            errors: a list that will be used to add the error message.
-        """
-        protocol.validatePackageVersion(EMAN2DIR, errors)
-
     # FIXME: Generalize to getProgram
     @classmethod
     def getEmanProgram(cls, program):

@@ -46,7 +46,6 @@ class EmanProtCTFAuto(ProtProcessParticles):
     """
 
     _label = 'ctf auto'
-    _lastUpdateVersion = VERSION_1_2
 
     @classmethod
     def isDisabled(cls):
@@ -178,7 +177,6 @@ class EmanProtCTFAuto(ProtProcessParticles):
     def _validate(self):
         errors = []
         partSet = self._getInputParticles()
-        ##eman2.Plugin.validateVersion(self, errors)   #FIXME
         if partSet.isPhaseFlipped():
             errors.append('Input particles are already phase-flipped. '
                           'Please provide original raw particle images.')

@@ -327,7 +327,6 @@ Major features of this program:
     # --------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
-        #eman2.Plugin.validateVersion(self, errors)   #FIXME
 
         particles = self._getInputParticles()
         samplingRate = particles.getSamplingRate()
@@ -352,6 +351,10 @@ Major features of this program:
             if diff > 0:
                 summary.append("Warning!!! %d particles "
                                "were discarded during refinement." % diff)
+
+        summary.append("To see progress report, click "
+                       "*Analyze Results*  and choose *Show "
+                       "HTML report*.")
         return summary
 
     # --------------------------- UTILS functions ------------------------------

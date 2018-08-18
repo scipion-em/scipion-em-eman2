@@ -39,10 +39,9 @@ from eman2.constants import *
 
 class EmanProtAutopick(ProtParticlePickingAuto):
     """ Protocol to pick particles automatically in a set of micrographs
-    using EMAN2 boxer.
+    using new EMAN2 (versions 2.2+) e2boxer.
     """
     _label = 'boxer auto'
-    _lastUpdateVersion = VERSION_1_2
 
     @classmethod
     def isDisabled(cls):
@@ -149,7 +148,6 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INFO functions --------------------------------
     def _validate(self):
         errors = []
-        #eman2.Plugin.validateVersion(self, errors)   #FIXME
         if self.boxerMode.get() == AUTO_GAUSS:
             errors.append('Gauss mode is not implemented for new e2boxer yet.')
         if self.boxerMode.get() == AUTO_CONVNET:
