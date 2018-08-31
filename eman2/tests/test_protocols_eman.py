@@ -27,16 +27,12 @@
 
 from pyworkflow.tests import *
 import pyworkflow.em as pwem
+from pyworkflow.utils import importFromPlugin
 
 import eman2
 from eman2 import *
 from eman2.protocols import *
 
-try:
-    import xmipp3
-    from xmipp3.protocols import XmippProtExtractParticlesPairs
-except Exception:
-    xmipp3 = None
 
 
 class TestEmanBase(BaseTest):
@@ -54,9 +50,11 @@ class TestEmanBase(BaseTest):
         cls.vol = cls.dataset.getFile('volumes')
 
     @classmethod
-    def runImportMicrograph(cls, pattern, samplingRate, voltage, scannedPixelSize, magnification, sphericalAberration):
+    def runImportMicrograph(cls, pattern, samplingRate, voltage,
+                            scannedPixelSize, magnification, sphericalAberration):
         """ Run an Import micrograph protocol. """
-        # We have two options: passe the SamplingRate or the ScannedPixelSize + microscope magnification
+        # We have two options: passe the SamplingRate or
+        # the ScannedPixelSize + microscope magnification
         if not samplingRate is None:
             cls.protImport = cls.newProtocol(pwem.ProtImportMicrographs,
                                              samplingRateMode=0, filesPath=pattern,
@@ -130,14 +128,16 @@ class TestEmanInitialModelMda(TestEmanBase):
         cls.protImportAvg = cls.runImportAverages(cls.averages, 3.5)
 
     def test_initialmodel(self):
-        print "Run Initial model"
+        print("Run Initial model")
         protIniModel = self.newProtocol(EmanProtInitModel,
                                         symmetry=self.symmetry,
                                         numberOfIterations=self.numberOfIterations,
-                                        numberOfModels=self.numberOfModels, numberOfThreads=4)
+                                        numberOfModels=self.numberOfModels,
+                                        numberOfThreads=4)
         protIniModel.inputSet.set(self.protImportAvg.outputAverages)
         self.launchProtocol(protIniModel)
-        self.assertIsNotNone(protIniModel.outputVolumes, "There was a problem with eman initial model protocol")
+        self.assertIsNotNone(protIniModel.outputVolumes,
+                             "There was a problem with eman initial model protocol")
 
 
 class TestEmanInitialModelGroel(TestEmanInitialModelMda):
@@ -154,7 +154,7 @@ class TestEmanInitialModelGroel(TestEmanInitialModelMda):
 
 class TestEmanReconstruct(TestEmanBase):
     def test_ReconstructEman(self):
-        print "Import Set of particles with angles"
+        print("Import Set of particles with angles")
         prot1 = self.newProtocol(pwem.ProtImportParticles,
                                  objLabel='from scipion (to-reconstruct)',
                                  importFrom=pwem.ProtImportParticles.IMPORT_FROM_SCIPION,
@@ -164,11 +164,12 @@ class TestEmanReconstruct(TestEmanBase):
                                  )
         self.launchProtocol(prot1)
 
-        print "Run Eman Reconstruct"
+        print("Run Eman Reconstruct")
         protReconstruct = self.newProtocol(EmanProtReconstruct)
         protReconstruct.inputParticles.set(prot1.outputParticles)
         self.launchProtocol(protReconstruct)
-        self.assertIsNotNone(protReconstruct.outputVolume, "There was a problem with eman reconstruction protocol")
+        self.assertIsNotNone(protReconstruct.outputVolume,
+                             "There was a problem with eman reconstruction protocol")
 
 
 class TestEmanRefineEasy(TestEmanBase):
@@ -180,12 +181,16 @@ class TestEmanRefineEasy(TestEmanBase):
         cls.protImportVol = cls.runImportVolumes(cls.vol, 3.5)
 
     def test_RefineEasyEman(self):
-        print "Run Eman Refine Easy"
-        protRefine = self.newProtocol(EmanProtRefine, symmetry="d6", speed=6, numberOfIterations=1)
+        print("Run Eman Refine Easy")
+        protRefine = self.newProtocol(EmanProtRefine,
+                                      symmetry="d6",
+                                      speed=6,
+                                      numberOfIterations=1)
         protRefine.inputParticles.set(self.protImport.outputParticles)
         protRefine.input3DReference.set(self.protImportVol.outputVolume)
         self.launchProtocol(protRefine)
-        self.assertIsNotNone(protRefine.outputVolume, "There was a problem with eman refine easy protocol")
+        self.assertIsNotNone(protRefine.outputVolume,
+                             "There was a problem with eman refine easy protocol")
 
 
 class TestEmanRefine2D(TestEmanBase):
@@ -198,13 +203,14 @@ class TestEmanRefine2D(TestEmanBase):
     def test_Refine2DEman(self):
         if not eman2.Plugin.isNewVersion():
             raise Exception('This protocol exists only for EMAN2.21 or higher!')
-        print "Run Eman Refine 2D"
+        print("Run Eman Refine 2D")
         protRefine = self.newProtocol(EmanProtRefine2D,
                                       numberOfIterations=2, numberOfClassAvg=5,
                                       classIter=2, nbasisfp=3)
         protRefine.inputParticles.set(self.protImport.outputParticles)
         self.launchProtocol(protRefine)
-        self.assertIsNotNone(protRefine.outputClasses, "There was a problem with eman refine2d protocol")
+        self.assertIsNotNone(protRefine.outputClasses,
+                             "There was a problem with eman refine2d protocol")
 
 
 class TestEmanRefine2DBispec(TestEmanBase):
@@ -217,13 +223,14 @@ class TestEmanRefine2DBispec(TestEmanBase):
     def test_Refine2DBispecEman(self):
         if not eman2.Plugin.isNewVersion():
             raise Exception('This protocol exists only for EMAN2.21 or higher!')
-        print "Run Eman Refine 2D bispec"
+        print("Run Eman Refine 2D bispec")
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
                                       numberOfIterations=2, numberOfClassAvg=5,
                                       classIter=2, nbasisfp=5)
         protRefine.inputParticles.set(self.protImport.outputParticles)
         self.launchProtocol(protRefine)
-        self.assertIsNotNone(protRefine.outputClasses, "There was a problem with eman refine2d bispec protocol")
+        self.assertIsNotNone(protRefine.outputClasses,
+                             "There was a problem with eman refine2d bispec protocol")
 
 
 class TestEmanTiltValidate(TestEmanBase):
@@ -239,12 +246,7 @@ class TestEmanTiltValidate(TestEmanBase):
         cls.protImportVol = cls.runImportVolumes(cls.vol, 3.6)
 
     def test_RefineEman(self):
-
-        if xmipp3 is None:
-            print "xmipp3 plugin can not be loaded, skiping test_RefineEman..."
-            return
-
-        print "Importing micrograph pairs"
+        print("Importing micrograph pairs")
         protImportMicsPairs = self.newProtocol(pwem.ProtImportMicrographsTiltPairs,
                                                patternUntilted=self.micsUFn,
                                                patternTilted=self.micsTFn,
@@ -254,7 +256,7 @@ class TestEmanTiltValidate(TestEmanBase):
         self.assertIsNotNone(protImportMicsPairs.outputMicrographsTiltPair,
                              "There was a problem with the import of mic pairs")
 
-        print "Importing coordinate pairs"
+        print("Importing coordinate pairs")
         protImportCoords = self.newProtocol(pwem.ProtImportCoordinatesPairs,
                                             importFrom=2,  # from eman
                                             patternUntilted=self.patternU,
@@ -265,19 +267,20 @@ class TestEmanTiltValidate(TestEmanBase):
         self.assertIsNotNone(protImportCoords.outputCoordinatesTiltPair,
                              "There was a problem with the import of coord pairs")
 
-        print "Extracting particle pairs"
-        protExtractPairs = self.newProtocol(
-            xmipp3.protocols.XmippProtExtractParticlesPairs,
-            downFactor=2.0,
-            boxSize=128,
-            doInvert=True)
+        print("Extracting particle pairs")
+        XmippProtExtractParticlesPairs = importFromPlugin('xmipp3.protocols',
+                                                          'XmippProtExtractParticlesPairs')
+        protExtractPairs = self.newProtocol(XmippProtExtractParticlesPairs,
+                                            downFactor=2.0,
+                                            boxSize=128,
+                                            doInvert=True)
 
         protExtractPairs.inputCoordinatesTiltedPairs.set(protImportCoords.outputCoordinatesTiltPair)
         self.launchProtocol(protExtractPairs)
         self.assertIsNotNone(protExtractPairs.outputParticlesTiltPair,
                              "There was a problem with particle pair extraction")
 
-        print "Run Eman Tilt Validate"
+        print("Run Eman Tilt Validate")
         protValidate = self.newProtocol(EmanProtTiltValidate, symmetry="c4",
                                         maxtilt=60.0, delta=2.0, shrink=2,
                                         quaternion=True,
@@ -305,12 +308,13 @@ class TestEmanCtfAuto(TestEmanBase):
     def test_CtfAutoEman(self):
         if not eman2.Plugin.isNewVersion():
             raise Exception('This protocol exists only for EMAN2.21 or higher!')
-        print "Run Eman CTF Auto"
+        print("Run Eman CTF Auto")
         protCtf = self.newProtocol(EmanProtCTFAuto,
                                    numberOfThreads=3)
         protCtf.inputParticles.set(self.protImport.outputParticles)
         self.launchProtocol(protCtf)
-        self.assertIsNotNone(protCtf.outputParticles_flip_fullRes, "There was a problem with eman ctf auto protocol")
+        self.assertIsNotNone(protCtf.outputParticles_flip_fullRes,
+                             "There was a problem with eman ctf auto protocol")
 
 
 class TestEmanAutopick(TestEmanBase):
@@ -331,7 +335,7 @@ class TestEmanAutopick(TestEmanBase):
     def test_AutopickEman(self):
         if not eman2.Plugin.isNewVersion():
             raise Exception('This protocol exists only for EMAN2.21 or higher!')
-        print "Run Eman auto picking"
+        print("Run Eman auto picking")
         protPick = self.newProtocol(EmanProtAutopick,
                                     boxerMode=1,  # by_ref
                                     goodRefs=self.protImportAvg.outputAverages,
@@ -339,23 +343,5 @@ class TestEmanAutopick(TestEmanBase):
                                     numberOfThreads=2)
         protPick.inputMicrographs.set(self.protImportMics.outputMicrographs)
         self.launchProtocol(protPick)
-        self.assertIsNotNone(protPick.outputCoordinates, "There was a problem with eman boxer auto protocol")
-
-
-if __name__ == "__main__":
-    # TestEmanInitialModelMda
-    # TestEmanRefineEasy
-    """
-    class TestEmanBase(BaseTest):
-class TestEmanInitialModelMda(TestEmanBase):
-class TestEmanInitialModelGroel(TestEmanInitialModelMda):
-class TestEmanReconstruct(TestEmanBase):
-class TestEmanRefineEasy(TestEmanBase):
-class TestEmanRefine2D(TestEmanBase):
-class TestEmanRefine2DBispec(TestEmanBase):
-class TestEmanTiltValidate(TestEmanBase):
-class TestEmanCtfAuto(TestEmanBase):
-class TestEmanAutopick(TestEmanBase):
-"""
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestEmanRefineEasy)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+        self.assertIsNotNone(protPick.outputCoordinates,
+                             "There was a problem with e2boxer auto protocol")
