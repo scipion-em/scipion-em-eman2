@@ -62,7 +62,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
 
         self._updateFilenamesDict(myDict)
 
-    # --------------------------- DEFINE param functions -----------------------
+    # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('inputParticles', PointerParam,
@@ -180,14 +180,14 @@ class EmanProtReconstruct(ProtReconstruct3D):
 
         form.addParallelSection(threads=1, mpi=0)
 
-    # --------------------------- INSERT steps functions -----------------------
+    # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._insertFunctionStep('convertImagesStep')
         self._insertFunctionStep('reconstructVolumeStep', self._prepareParams())
         self._insertFunctionStep('createOutputStep')
 
-    # --------------------------- STEPS functions ------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def convertImagesStep(self):
         partSet = self.inputParticles.get()
         partAlign = partSet.getAlignment()
@@ -195,7 +195,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
         makePath(storePath)
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
         if not self.skipctf:
-            program = eman2.Plugin.getEmanProgram('e2ctf.py')
+            program = eman2.Plugin.getProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %3d" % acq.getVoltage()
@@ -209,7 +209,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfThreads=1)
 
-        program = eman2.Plugin.getEmanProgram('e2buildsets.py')
+        program = eman2.Plugin.getProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
@@ -217,9 +217,9 @@ class EmanProtReconstruct(ProtReconstruct3D):
         """ Run the EMAN program to reconstruct a volume. """
         cleanPattern(self._getFileName("volume"))
         if self.useE2make3d:
-            program = eman2.Plugin.getEmanProgram('e2make3d.py')
+            program = eman2.Plugin.getProgram('e2make3d.py')
         else:
-            program = eman2.Plugin.getEmanProgram('e2make3dpar.py')
+            program = eman2.Plugin.getProgram('e2make3dpar.py')
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
     def createOutputStep(self):
@@ -230,7 +230,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
         self._defineOutputs(outputVolume=vol)
         self._defineSourceRelation(self.inputParticles, vol)
 
-    # --------------------------- INFO functions -------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
         if not self.useE2make3d and self.reconstructionMethod!= RECON_FOURIER:
@@ -248,7 +248,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
             summary.append("Output volume: %s" % self.getObjectTag('outputVolume'))
         return summary
 
-    # --------------------------- UTILS functions ------------------------------
+    # --------------------------- UTILS functions -----------------------------
 
     def _prepareParams(self):
         args = "--input %(imgsFn)s --output %(outputVol)s --sym %(sym)s"

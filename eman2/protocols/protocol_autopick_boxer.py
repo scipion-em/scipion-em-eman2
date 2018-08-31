@@ -26,7 +26,6 @@
 
 import os
 
-from pyworkflow import VERSION_1_2
 from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         EnumParam, PointerParam)
 from pyworkflow.em.protocol import ProtParticlePickingAuto
@@ -59,7 +58,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     def __init__(self, **kwargs):
         ProtParticlePickingAuto.__init__(self, **kwargs)
 
-    # --------------------------- DEFINE param functions ------------------------
+    # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         ProtParticlePickingAuto._defineParams(self, form)
         form.addParam('boxSize', IntParam, default=128,
@@ -105,13 +104,13 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
         form.addParallelSection(threads=1, mpi=0)
 
-    # --------------------------- INSERT steps functions ------------------------
+    # --------------------------- INSERT steps functions ----------------------
     def _insertInitialSteps(self):
         self._createFilenameTemplates()
         initId = self._insertFunctionStep('convertInputStep')
         return [initId]
 
-    # --------------------------- STEPS functions -------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def convertInputStep(self):
         goodRefs = self.goodRefs.get() if self.goodRefs.hasValue() else None
         badRefs = self.badRefs.get() if self.badRefs.hasValue() else None
@@ -145,7 +144,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     def createOutputStep(self):
         pass
 
-    # --------------------------- INFO functions --------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
         if self.boxerMode.get() == AUTO_GAUSS:
@@ -156,7 +155,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
         return errors
 
-    # --------------------------- UTILS functions -------------------------------
+    # --------------------------- UTILS functions -----------------------------
     def getCoordsDir(self):
         return self._getExtraPath()
 

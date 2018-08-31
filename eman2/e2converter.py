@@ -96,12 +96,11 @@ def writeParticles():
             i = 0
             fnHdf = outputFile
 
-        imageData.write_image(outputFile, i, eman.EMUtil.ImageType.IMAGE_HDF, False)
+        imageData.write_image(outputFile, i,
+                              eman.EMUtil.ImageType.IMAGE_HDF, False)
         i += 1
-        print "OK"
         sys.stdout.flush()
         line = sys.stdin.readline()
-    print "DONE"
 
 
 def readParticles(inputParts, inputCls, inputClasses, outputTxt, alitype='3d'):
@@ -241,4 +240,4 @@ if __name__ == '__main__':
         else:
             raise Exception("e2converter: Unknown mode '%s'" % mode)
     else:
-        print "usage: %s outputFile" % os.path.basename(sys.argv[0])
+        print("usage: %s outputFile" % os.path.basename(sys.argv[0]))

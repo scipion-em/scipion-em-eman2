@@ -98,9 +98,11 @@ def showInitialRandomVolume(volumeSet, volId):
     showExtraFile(volumeSet, volId, '_init.hdf')
 
 
-ProjectWindow.registerObjectCommand(OBJCMD_CLASSAVG_PROJS, showClassAvgProjs)
+ProjectWindow.registerObjectCommand(OBJCMD_CLASSAVG_PROJS,
+                                    showClassAvgProjs)
 ProjectWindow.registerObjectCommand(OBJCMD_PROJS, showProjs)
-ProjectWindow.registerObjectCommand(OBJCMD_INITVOL, showInitialRandomVolume)
+ProjectWindow.registerObjectCommand(OBJCMD_INITVOL,
+                                    showInitialRandomVolume)
 
 
 class Refine2DViewer(ProtocolViewer):
@@ -307,9 +309,9 @@ Examples:
                 'showHtmlReport': self._showHtmlReport
                 }
 
-    # ===============================================================================
+    # =========================================================================
     # showImagesAngularAssignment
-    # ===============================================================================
+    # =========================================================================
 
     def _showImagesAngularAssignment(self, paramName=None):
         views = []
@@ -333,9 +335,9 @@ Examples:
                           other=inputParticlesId,
                           env=self._env, viewParams=viewParams)
 
-    # ===============================================================================
+    # =========================================================================
     # ShowVolumes
-    # ===============================================================================
+    # =========================================================================
     def _showVolumes(self, paramName=None):
         if self.displayVol == VOLUME_CHIMERA:
             return self._showVolumesChimera()
@@ -378,9 +380,9 @@ Examples:
         self.createVolumesSqlite(files, path, samplingRate)
         return [ObjectView(self._project, self.protocol.strId(), path)]
 
-    # ===============================================================================
+    # =========================================================================
     # showAngularDistribution
-    # ===============================================================================
+    # =========================================================================
     def _showAngularDistribution(self, paramName=None):
         views = []
 
@@ -469,9 +471,9 @@ Examples:
         else:
             return
 
-    # ===============================================================================
+    # =========================================================================
     # plotFSC
-    # ===============================================================================
+    # =========================================================================
     def _showFSC(self, paramName=None):
         threshold = self.resolutionThresholdFSC.get()
         gridsize = self._getGridSize(1)
@@ -562,9 +564,9 @@ Examples:
         else:
             self.showInfo('Your html report is not ready yet. Please try again in a minute.')
 
-    # ===============================================================================
+    # =========================================================================
     # Utils Functions
-    # ===============================================================================
+    # =========================================================================
     def _load(self):
         """ Load selected iterations and classes 3D for visualization mode. """
         self.protocol._createFilenameTemplates()
@@ -752,7 +754,7 @@ class TiltValidateViewer(ProtocolViewer):
         return xplotter
 
     def _showEmanPlot(self, paramName=None):
-        program = eman2.Plugin.getEmanProgram('e2tiltvalidate.py')
+        program = eman2.Plugin.getProgram('e2tiltvalidate.py')
         args = "--path=TiltValidate_01 --radcut=%0.2f --gui --planethres=%0.2f" % (
             self.radcut.get(), self.planethres.get())
         if self.colozaxis:
@@ -769,9 +771,9 @@ class TiltValidateViewer(ProtocolViewer):
 
         return []
 
-    # ===============================================================================
+    # =========================================================================
     # Utils Functions
-    # ===============================================================================
+    # =========================================================================
     def _load(self):
         """ Load selected iterations and classes 3D for visualization mode. """
         self.protocol._createFilenameTemplates()
@@ -878,7 +880,7 @@ class CtfViewer(ProtocolViewer):
         return views
 
     def _showEmanCtf(self, paramName=None):
-        program = eman2.Plugin.getEmanProgram('e2ctf.py')
+        program = eman2.Plugin.getProgram('e2ctf.py')
         args = '--allparticles --minptcl=0 --minqual=0'
         args += ' --gui --constbfactor=-1.0 --sf=auto'
 

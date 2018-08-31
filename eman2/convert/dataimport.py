@@ -99,7 +99,8 @@ class EmanImport:
     def getBoxSize(self, coordFile):
         """ Try to infer the box size from the given coordinate file.
         In the case of .box files, the size is the 3rd column
-        In the case of .json files, we will look for file e2boxercache/base.json
+        In the case of .json files, we will look for file
+        e2boxercache/base.json
         """
         if coordFile.endswith('.box'):
             md = MetaData()

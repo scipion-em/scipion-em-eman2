@@ -28,7 +28,6 @@
 
 import os
 
-from pyworkflow import VERSION_1_1
 from pyworkflow.protocol.params import IntParam, FloatParam
 from pyworkflow.em.protocol import ProtParticlePickingAuto
 
@@ -49,7 +48,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
         self.extraParams = ('pixel_input=1:pixel_output=1:invert_contrast'
                             '=True:use_variance=True')
 
-    # --------------------------- DEFINE param functions ------------------------
+    # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         ProtParticlePickingAuto._defineParams(self, form)
         form.addParam('boxSize', IntParam, default=100,
@@ -65,7 +64,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
                       label='Gauss Width',
                       help='Width of the Gaussian kernel used')
 
-    # --------------------------- INSERT steps functions ------------------------
+    # --------------------------- INSERT steps functions ----------------------
     def _insertInitialSteps(self):
         initId = self._insertFunctionStep('initSparxDb',
                                           self.lowerThreshold.get(),
@@ -73,7 +72,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
                                           self.boxSize.get(), self.gaussWidth.get())
         return [initId]
 
-    # --------------------------- STEPS functions -------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def initSparxDb(self, lowerThreshold, higherThreshold, boxSize, gaussWidth):
         args = {"lowerThreshold": lowerThreshold,
                 "higherThreshold": higherThreshold,
@@ -84,7 +83,8 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
         params += 'thr_hi=%(higherThreshold)s:boxsize=%(boxSize)s:'
         params += 'gauss_width=%(gaussWidth)s:%(extraParams)s'
 
-        self.runJob('sxprocess.py', params % args, cwd=self.getCoordsDir())
+        self.runJob(eman2.Plugin.getProgram('sxprocess.py'),
+                    params % args, cwd=self.getCoordsDir())
 
     def _pickMicrograph(self, mic, *args):
         micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())
@@ -97,12 +97,12 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
     def createOutputStep(self):
         pass
 
-    # --------------------------- INFO functions --------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
         return errors
 
-    # --------------------------- UTILS functions -------------------------------
+    # --------------------------- UTILS functions -----------------------------
     def getCoordsDir(self):
         return self._getExtraPath()
 

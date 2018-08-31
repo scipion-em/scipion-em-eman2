@@ -98,7 +98,7 @@ Major features of this program:
         # number and is restricted to only 2 digits.
         self._iterRegex = re.compile('threed_(\d{2})')
 
-    # --------------------------- DEFINE param functions -----------------------
+    # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('doContinue', BooleanParam, default=False,
@@ -238,7 +238,7 @@ Major features of this program:
                            "See e2refine_easy.py -h.")
         form.addParallelSection(threads=4, mpi=1)
 
-    # --------------------------- INSERT steps functions -----------------------
+    # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._createIterTemplates(self._getRun())
@@ -253,7 +253,7 @@ Major features of this program:
         self._insertFunctionStep('refineStep', args)
         self._insertFunctionStep('createOutputStep')
 
-    # --------------------------- STEPS functions ------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def createLinkSteps(self):
         continueRun = self.continueRun.get()
         prevPartDir = continueRun._getExtraPath("particles")
@@ -275,7 +275,7 @@ Major features of this program:
         makePath(storePath)
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
         if not self.skipctf:
-            program = eman2.Plugin.getEmanProgram('e2ctf.py')
+            program = eman2.Plugin.getProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %d" % acq.getVoltage()
@@ -289,7 +289,7 @@ Major features of this program:
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = eman2.Plugin.getEmanProgram('e2buildsets.py')
+        program = eman2.Plugin.getProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -298,7 +298,7 @@ Major features of this program:
         """ Run the EMAN program to refine a volume. """
         if not self.doContinue:
             cleanPattern(self._getExtraPath('refine_01'))
-        program = eman2.Plugin.getEmanProgram('e2refine_easy.py')
+        program = eman2.Plugin.getProgram('e2refine_easy.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -324,7 +324,7 @@ Major features of this program:
         self._defineOutputs(outputParticles=newPartSet)
         self._defineTransformRelation(self._getInputParticlesPointer(), newPartSet)
 
-    # --------------------------- INFO functions -------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
 
@@ -357,7 +357,7 @@ Major features of this program:
                        "HTML report*.")
         return summary
 
-    # --------------------------- UTILS functions ------------------------------
+    # --------------------------- UTILS functions -----------------------------
     def _prepareParams(self):
         args1 = " --input=%(imgsFn)s --model=%(volume)s"
         args2 = self._commonParams()

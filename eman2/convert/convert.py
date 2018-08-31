@@ -224,9 +224,11 @@ def writeSetOfParticles(partSet, path, **kwargs):
 
             suffix = kwargs.get('suffix', '')
             if hasMicName and (micName != str(micId)):
-                objDict['hdfFn'] = pwutils.join(path, "%s%s.hdf" % (micName, suffix))
+                objDict['hdfFn'] = pwutils.join(path,
+                                                "%s%s.hdf" % (micName, suffix))
             else:
-                objDict['hdfFn'] = pwutils.join(path, "mic_%06d%s.hdf" % (micId, suffix))
+                objDict['hdfFn'] = pwutils.join(path,
+                                                "mic_%06d%s.hdf" % (micId, suffix))
 
             alignType = kwargs.get('alignType')
 

@@ -26,7 +26,6 @@
 
 from pyworkflow.protocol.params import (FloatParam, EnumParam,
                                         BooleanParam)
-from pyworkflow import VERSION_1_2
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 import pyworkflow.utils as pwutils
 from pyworkflow.em import CTFModel
@@ -67,7 +66,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
         }
         self._updateFilenamesDict(myDict)
 
-    # --------------------------- DEFINE param functions -----------------------
+    # --------------------------- DEFINE param functions ----------------------
     def _defineProcessParams(self, form):
         form.addParam('type', EnumParam,
                       choices=['hires', 'midres', 'lores'],
@@ -120,7 +119,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
         form.addParallelSection(threads=1, mpi=0)
 
-    # --------------------------- INSERT steps functions -----------------------
+    # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._insertFunctionStep('convertImagesStep')
@@ -128,7 +127,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
         self._insertFunctionStep('runCTFStep', args)
         self._insertFunctionStep('createOutputStep')
 
-    # --------------------------- STEPS functions ------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def convertImagesStep(self):
         partSet = self._getInputParticles()
         partAlign = partSet.getAlignment()
@@ -138,7 +137,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
     def runCTFStep(self, args):
         """ Run the EMAN e2ctf_auto.py program. """
-        program = eman2.Plugin.getEmanProgram('e2ctf_auto.py')
+        program = eman2.Plugin.getProgram('e2ctf_auto.py')
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfThreads=1)
 
@@ -173,7 +172,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
         for _, out in self.iterOutputAttributes(SetOfParticles):
             self._defineSourceRelation(inputSet, out)
 
-    # --------------------------- INFO functions -------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
         partSet = self._getInputParticles()
@@ -192,6 +191,10 @@ class EmanProtCTFAuto(ProtProcessParticles):
     def _summary(self):
         summary = []
 
+        if self.hasAttribute('outputParticles_flip_bispec'):
+            summary.append('CTF estimation on particles completed, '
+                           'produced filtered particles and bispectra.')
+
         return summary
 
     def getSummary(self, key):
@@ -202,7 +205,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
         else:
             return "Phase flipped, low-pass filtered to %d A" % int(key)
 
-    # --------------------------- UTILS functions ------------------------------
+    # --------------------------- UTILS functions -----------------------------
 
     def _prepareParams(self):
         partSet = self._getInputParticles()

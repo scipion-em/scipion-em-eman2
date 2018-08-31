@@ -30,7 +30,6 @@ from os.path import exists
 from glob import glob
 
 import pyworkflow.em as em
-from pyworkflow import VERSION_1_2
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam,
                                         BooleanParam, LabelParam)
@@ -95,7 +94,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         #  number and is restricted to only 2 digits.
         self._iterRegex = re.compile('classes_(\d{2})')
 
-    #--------------------------- DEFINE param functions ------------------------
+    #--------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('doContinue', BooleanParam, default=False,
@@ -379,7 +378,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
 
         form.addParallelSection(threads=4, mpi=1)
 
-    #--------------------------- INSERT steps functions ------------------------
+    #--------------------------- INSERT steps functions -----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._createIterTemplates(self._getRun())
@@ -394,7 +393,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         self._insertFunctionStep('refineStep', args)
         self._insertFunctionStep('createOutputStep')
 
-    #--------------------------- STEPS functions -------------------------------
+    #--------------------------- STEPS functions ------------------------------
     def createLinkSteps(self):
         continueRun = self.continueRun.get()
         prevPartDir = continueRun._getExtraPath("particles")
@@ -417,7 +416,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
 
         if not self.skipctf:
-            program = eman2.Plugin.getEmanProgram('e2ctf.py')
+            program = eman2.Plugin.getProgram('e2ctf.py')
             acq = partSet.getAcquisition()
             args = " --voltage %d" % acq.getVoltage()
             args += " --cs %f" % acq.getSphericalAberration()
@@ -430,7 +429,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = eman2.Plugin.getEmanProgram('e2buildsets.py')
+        program = eman2.Plugin.getProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -442,7 +441,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
 
     def refineStep(self, args):
         """ Run the EMAN program to refine 2d. """
-        program = eman2.Plugin.getEmanProgram('e2refine2d.py')
+        program = eman2.Plugin.getProgram('e2refine2d.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -455,7 +454,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         self._defineOutputs(outputClasses=classes2D)
         self._defineSourceRelation(self.inputParticles, classes2D)
 
-    #--------------------------- INFO functions --------------------------------------------
+    #--------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
 
@@ -481,7 +480,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         methods += "into %d classes using e2refine2d.py " % self.numberOfClassAvg
         return [methods]
 
-    #--------------------------- UTILS functions --------------------------------------------
+    #--------------------------- UTILS functions ------------------------------
     def _prepareParams(self):
         args1 = " --input=%s" % self._getParticlesStack()
         if self.inputClassAvg.hasValue():

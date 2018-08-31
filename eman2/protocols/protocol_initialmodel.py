@@ -52,7 +52,7 @@ class EmanProtInitModel(ProtInitialVolume):
 
     _label = 'initial model'
 
-    # --------------------------- DEFINE param functions -----------------------
+    # --------------------------- DEFINE param functions ----------------------
 
     def _defineParams(self, form):
         form.addSection(label='Input')
@@ -91,7 +91,7 @@ class EmanProtInitModel(ProtInitialVolume):
                                'seeds by randomizing input orientations')
         form.addParallelSection(threads=8, mpi=1)
 
-    # --------------------------- INSERT steps functions -----------------------
+    # --------------------------- INSERT steps functions ----------------------
 
     def _insertAllSteps(self):
         self._prepareDefinition()
@@ -116,7 +116,7 @@ class EmanProtInitModel(ProtInitialVolume):
 
         self._insertFunctionStep('createInitialModelStep', args % self._params)
 
-    # --------------------------- STEPS functions ------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def createStackImgsStep(self):
 
         imgsFn = self._params['imgsFn']
@@ -135,9 +135,9 @@ class EmanProtInitModel(ProtInitialVolume):
         """ Run the EMAN program to create the initial model. """
         cleanPattern(self._getExtraPath('initial_models'))
         if self._isHighSym():
-            program = eman2.Plugin.getEmanProgram('e2initialmodel_hisym.py')
+            program = eman2.Plugin.getProgram('e2initialmodel_hisym.py')
         else:
-            program = eman2.Plugin.getEmanProgram('e2initialmodel.py')
+            program = eman2.Plugin.getProgram('e2initialmodel.py')
 
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -160,7 +160,7 @@ class EmanProtInitModel(ProtInitialVolume):
         self._defineOutputs(outputVolumes=volumes)
         self._defineSourceRelation(self.inputSet, volumes)
 
-    # --------------------------- INFO functions -------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
         return errors
@@ -176,7 +176,7 @@ class EmanProtInitModel(ProtInitialVolume):
                 summary.append("Used e2initialmodel_hisym.py for high symmetry reconstruction.")
         return summary
 
-    # --------------------------- UTILS functions ------------------------------
+    # --------------------------- UTILS functions -----------------------------
 
     def _prepareDefinition(self):
         imgsFn = self._getPath('representatives.stk')

@@ -23,9 +23,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-"""
-This module implement some wizards
-"""
 
 import os
 
@@ -38,9 +35,9 @@ import eman2
 from eman2.convert import writeSetOfMicrographs
 from eman2.protocols import SparxGaussianProtPicking
 
-# ===============================================================================
+# =============================================================================
 # PICKER
-# ===============================================================================
+# =============================================================================
 
 class SparxGaussianPickerWizard(EmWizard):
     _targets = [(SparxGaussianProtPicking, ['boxSize',
@@ -51,7 +48,7 @@ class SparxGaussianPickerWizard(EmWizard):
         autopickProt = form.protocol
         micSet = autopickProt.getInputMicrographs()
         if not micSet:
-            print 'must specify input micrographs'
+            print('must specify input micrographs')
             return
         project = autopickProt.getProject()
         coordsDir = project.getTmpPath(micSet.getName())

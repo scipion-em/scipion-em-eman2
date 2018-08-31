@@ -74,7 +74,7 @@ class EmanProtBoxing(ProtParticlePicking):
 
         form.addParallelSection(threads=1, mpi=0)
 
-    # --------------------------- INSERT steps functions -----------------------
+    # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self.inputMics = self.inputMicrographs.get()
         micList = [os.path.relpath(mic.getFileName(),
@@ -84,15 +84,15 @@ class EmanProtBoxing(ProtParticlePicking):
         # Launch Boxing GUI
         self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
 
-    # --------------------------- STEPS functions ------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def launchBoxingGUIStep(self):
         # Print the eman version, useful to report bugs
-        self.runJob(eman2.Plugin.getEmanProgram('e2version.py'), '')
+        self.runJob(eman2.Plugin.getProgram('e2version.py'), '')
         useNewBoxer = self._useNewBoxer()
         # Program to execute and it arguments
         boxerVersion = 'old' if not useNewBoxer else 'new'
         boxer = eman2.Plugin.getBoxerCommand(boxerVersion=boxerVersion)
-        program = eman2.Plugin.getEmanProgram(boxer)
+        program = eman2.Plugin.getProgram(boxer)
         arguments = "%(inputMics)s"
 
         if useNewBoxer:
@@ -117,6 +117,7 @@ class EmanProtBoxing(ProtParticlePicking):
 
     def check_gauss(self):
         if self._useNewBoxer():
+            # gauss picker is not implemented for Eman v.2.21 yet
             pass
         else:
             # Function to check if gaussian algorithm was used to pick
@@ -140,7 +141,7 @@ class EmanProtBoxing(ProtParticlePicking):
                     # picking for the rest of mics
                     self._params['boxSize'] = gaussParsDict['boxsize']
                     # Run sxprocess.py to store parameters
-                    program = eman2.Plugin.getEmanProgram("sxprocess.py")
+                    program = eman2.Plugin.getProgram("sxprocess.py")
                     argsList = ["'%s'=%s:" % (key, val) for (key, val) in gaussParsDict.iteritems()]
                     args = 'demoparms --makedb ' + "".join(argsList)
                     # Remove last ":" to avoid error
@@ -152,17 +153,17 @@ class EmanProtBoxing(ProtParticlePicking):
                     arguments = "--gauss_autoboxer=demoparms --write_dbbox "
                     arguments += " --boxsize=%(boxSize)s " + "%(inputMics)s"
                     boxer = eman2.Plugin.getBoxerCommand(boxerVersion='old')
-                    program = eman2.Plugin.getEmanProgram(boxer)
+                    program = eman2.Plugin.getProgram(boxer)
                     self._log.info('Launching: ' + program + ' ' + arguments % self._params)
                     self.runJob(program, arguments % self._params)
 
-    # --------------------------- INFO functions -------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
 
         if self.useNewBoxer and not eman2.Plugin.isNewVersion():
             errors.append('Your EMAN2 version does not support new boxer. '
-                          'Please update your installation.')
+                          'Please update your installation to EMAN 2.21 or newer.')
 
         return errors
 
@@ -182,7 +183,7 @@ class EmanProtBoxing(ProtParticlePicking):
                 'TIP: Activate "Invert Y coordinates" if you find it wrong.')
         return warnings
 
-    # --------------------------- UTILS functions ------------------------------
+    # --------------------------- UTILS functions -----------------------------
     def _runSteps(self, startIndex):
         # Redefine run to change to workingDir path
         # Change to protocol working directory

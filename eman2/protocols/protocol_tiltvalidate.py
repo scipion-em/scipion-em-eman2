@@ -58,7 +58,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
         }
         self._updateFilenamesDict(myDict)
 
-    # --------------------------- DEFINE param functions -----------------------
+    # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('inputVolume', PointerParam, pointerClass='Volume',
@@ -178,7 +178,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
 
         form.addParallelSection(threads=1, mpi=0)
 
-    # --------------------------- INSERT steps functions -----------------------
+    # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._insertFunctionStep('convertImagesStep')
@@ -186,14 +186,14 @@ class EmanProtTiltValidate(ProtAnalysis3D):
         self._insertFunctionStep('runValidateStep', args)
         self._insertFunctionStep('createOutputStep')
 
-    # --------------------------- STEPS functions ------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def convertImagesStep(self):
         part = self.inputTiltPair.get()
         partUnt = part.getUntilted()
         partTilt = part.getTilted()
         storePath = self._getExtraPath("particles")
         pwutils.makePath(storePath)
-        print "Converting input particle set.."
+        print("Converting input particle set..")
 
         for partSet, suffix in zip([partUnt, partTilt],
                                    ['_untilted_ptcls', '_tilted_ptcls']):
@@ -202,20 +202,20 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                                 alignType=partAlign, suffix=suffix)
 
             setName = suffix.split('_')[1]
-            program = eman2.Plugin.getEmanProgram('e2buildsets.py')
+            program = eman2.Plugin.getProgram('e2buildsets.py')
             args = " particles/*%s.hdf --setname=%s --minhisnr=-1" % (
                 suffix, setName)
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
     def runValidateStep(self, args):
-        program = eman2.Plugin.getEmanProgram('e2tiltvalidate.py')
+        program = eman2.Plugin.getProgram('e2tiltvalidate.py')
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
     def createOutputStep(self):
         pass
 
-    # --------------------------- INFO functions -------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
         self._validateDim(self.inputTiltPair.get().getUntilted(),
@@ -232,7 +232,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
 
         return summary
 
-    # --------------------------- UTILS functions ------------------------------
+    # --------------------------- UTILS functions -----------------------------
 
     def _prepareParams(self):
         args = " --untiltdata=%(untilt)s --tiltdata=%(tilt)s --volume=%(volume)s"

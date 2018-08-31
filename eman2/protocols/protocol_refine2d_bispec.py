@@ -30,7 +30,6 @@ from os.path import exists, basename, join
 from glob import glob
 
 import pyworkflow.em as em
-from pyworkflow import VERSION_1_2
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam,
@@ -72,7 +71,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         myDict = {
             'partSet': 'sets/inputSet.lst',
             'partFlipSet': 'sets/inputSet__ctf_flip.lst',
-            # the strange filename fix below is required for eman
+            # the strange filename below is required for buggy eman
             'partBispecSet': self._getExtraPath('sets/inputSet.lst__ctf_flip_bispec.lst'),
             'classes_scipion': self._getExtraPath('classes_scipion_it%(iter)02d.sqlite'),
             'classes': 'r2db_%(run)02d/classes_%(iter)02d.hdf',
@@ -90,7 +89,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         #  number and is restricted to only 2 digits.
         self._iterRegex = re.compile('classes_(\d{2})')
 
-    #--------------------------- DEFINE param functions ------------------------
+    #--------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('inputParticles', PointerParam, label="Input particles",
@@ -253,7 +252,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
 
         form.addParallelSection(threads=4, mpi=1)
 
-    #--------------------------- INSERT steps functions ------------------------
+    #--------------------------- INSERT steps functions -----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._createIterTemplates(currRun=1)
@@ -262,7 +261,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         self._insertFunctionStep('refineStep', args)
         self._insertFunctionStep('createOutputStep')
 
-    #--------------------------- STEPS functions -------------------------------
+    #--------------------------- STEPS functions ------------------------------
     def convertImagesStep(self):
         partSet = self._getInputParticles()
         partAlign = partSet.getAlignment()
@@ -271,11 +270,11 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
 
         if self.useInputBispec and self.inputBispec is not None:
-            print "Skipping CTF estimation since input bispectra were provided"
+            print("Skipping CTF estimation since input bispectra were provided")
             self.skipctf.set(True)
 
         if not self.skipctf:
-            program = eman2.Plugin.getEmanProgram('e2ctf.py')
+            program = eman2.Plugin.getProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %d" % acq.getVoltage()
@@ -289,7 +288,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = eman2.Plugin.getEmanProgram('e2buildsets.py')
+        program = eman2.Plugin.getProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -299,21 +298,21 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
             prot._createFilenameTemplates()
             bispec = prot.outputParticles_flip_bispec
             if not bispec.getSize() == partSet.getSize():
-                raise  Exception('Input particles and bispectra sets have different size!')
+                raise Exception('Input particles and bispectra sets have different size!')
             # link bispec hdf files and lst file
             pattern = prot._getExtraPath('particles/*__ctf_flip_bispec.hdf')
-            print "\nLinking bispectra input files..."
+            print("\nLinking bispectra input files...")
             for fn in sorted(glob(pattern)):
                 newFn = join(self._getExtraPath('particles'), basename(fn))
                 createLink(fn, newFn)
-                print "    %s -> %s" % (fn, newFn)
+                print("    %s -> %s" % (fn, newFn))
             lstFn = prot._getFileName('partSetFlipBispec')
             newLstFn = self._getFileName('partBispecSet')
             createLink(lstFn, newLstFn)
 
     def refineStep(self, args):
         """ Run the EMAN program to refine 2d. """
-        program = eman2.Plugin.getEmanProgram('e2refine2d_bispec.py')
+        program = eman2.Plugin.getProgram('e2refine2d_bispec.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -326,7 +325,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         self._defineOutputs(outputClasses=classes2D)
         self._defineSourceRelation(self.inputParticles, classes2D)
 
-    #--------------------------- INFO functions --------------------------------
+    #--------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
 
@@ -341,17 +340,19 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
             summary.append("Classified into *%d* classes." % self.numberOfClassAvg)
             summary.append("Output set: %s" % self.getObjectTag('outputClasses'))
 
-        summary.append('\n\n*Note:* output particles are not aligned when using this classification method.')
+        summary.append('\n\n*Note:* output particles are not '
+                       'aligned when using this classification method.')
         return summary
 
     def _methods(self):
         methods = "We classified input particles %s (%d items) " % (
             self.getObjectTag('inputParticles'),
             self._getInputParticles().getSize())
-        methods += "into %d classes using e2refine2d_bispec.py " % self.numberOfClassAvg
+        methods += "into %d classes using e2refine2d_bispec.py " %\
+                   self.numberOfClassAvg
         return [methods]
 
-    #--------------------------- UTILS functions -------------------------------
+    #--------------------------- UTILS functions ------------------------------
     def _prepareParams(self):
         args1 = " --input=%s" % self._getParticlesStack()
         args2 = self._commonParams()
