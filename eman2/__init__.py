@@ -33,7 +33,7 @@ import pyworkflow.utils as pwutils
 from .constants import EMAN2DIR
 
 
-_logo = "eman2_logo.jpg"
+_logo = "eman2_logo.png"
 _references = ['Tang2007']
 
 
