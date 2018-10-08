@@ -30,6 +30,11 @@ This file contains constants related to EMAN2 protocols
 
 EMAN2DIR = 'EMAN2DIR'
 
+# Supported versions
+V2_11 = '2.11'
+V2_12 = '2.12'
+V2_21 = '2.21'
+
 #------------------ Constants values ------------------------------------------
 
 # ctf processing type

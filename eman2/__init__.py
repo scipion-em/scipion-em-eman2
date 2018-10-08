@@ -30,7 +30,7 @@ import subprocess
 import pyworkflow.em
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2DIR
+from .constants import EMAN2DIR, V2_11, V2_12, V2_21
 
 
 _logo = "eman2_logo.png"
@@ -43,7 +43,7 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pyworkflow.em.Plugin):
     _homeVar = EMAN2DIR
     _pathVars = [EMAN2DIR]
-    _supportedVersions = ['2.11', '2.12', '2.21']
+    _supportedVersions = [V2_11, V2_12, V2_21]
 
     @classmethod
     def _defineVariables(cls):
@@ -103,7 +103,7 @@ class Plugin(pyworkflow.em.Plugin):
          If emanVersion is None, the current active version will be used.
         """
         emanVersion = emanVersion or cls.getActiveVersion()
-        new = emanVersion in ['2.11', '2.12'] or boxerVersion == 'new'
+        new = emanVersion in [V2_11, V2_12] or boxerVersion == 'new'
         return 'e2boxer.py' if new else 'e2boxer_old.py'
 
     @classmethod
@@ -120,6 +120,30 @@ class Plugin(pyworkflow.em.Plugin):
                                 stdout=subprocess.PIPE, cwd=direc)
 
         return proc
+
+    @classmethod
+    def defineBinaries(cls, env):
+        eman2_commands = [('./eman2-installer',
+                           'eman2.*rc')]
+
+        env.addPackage('eman', version='2.11',
+                       tar='eman2.11.linux64.tgz',
+                       commands=eman2_commands)
+
+        env.addPackage('eman', version='2.12',
+                       tar='eman2.12.linux64.tgz',
+                       commands=eman2_commands)
+
+        SW_EM = env.getEmFolder()
+
+        eman22_commands = [
+            ('./eman2.21.linux64.centos7.sh -b -p "%s/eman-2.21"' %
+             SW_EM, '%s/eman-2.21/bin/python' % SW_EM)]
+
+        env.addPackage('eman', version='2.21',
+                       tar='eman2.21.linux64.centos7.tgz',
+                       commands=eman22_commands,
+                       default=True)
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)
