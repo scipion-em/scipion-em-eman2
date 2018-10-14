@@ -82,20 +82,23 @@ class Plugin(pyworkflow.em.Plugin):
         return not cls.getActiveVersion().startswith("2.1")
 
     @classmethod
-    def getProgram(cls, program):
+    def getProgram(cls, program, python=False):
         """ Return the program binary that will be used. """
         program = os.path.join(cls.getHome('bin'), program)
 
-        if cls.isNewVersion():
-            python = cls.getHome('bin/python')
-        else:
-            python = cls.getHome('Python/bin/python')
+        if python:
+            if cls.isNewVersion():
+                python = cls.getHome('bin/python')
+            else:
+                python = cls.getHome('Python/bin/python')
 
-        return '%(python)s %(program)s ' % locals()
+            return '%(python)s %(program)s ' % locals()
+        else:
+            return '%(program)s ' % locals()
 
     @classmethod
-    def getEmanCommand(cls, program, args):
-        return cls.getProgram(program) + args
+    def getEmanCommand(cls, program, args, python=False):
+        return cls.getProgram(program, python) + args
 
     @classmethod
     def getBoxerCommand(cls, emanVersion=None, boxerVersion='new'):
@@ -104,7 +107,9 @@ class Plugin(pyworkflow.em.Plugin):
         """
         emanVersion = emanVersion or cls.getActiveVersion()
         new = emanVersion in [V2_11, V2_12] or boxerVersion == 'new'
-        return 'e2boxer.py' if new else 'e2boxer_old.py'
+        cmd = 'e2boxer.py' if new else 'e2boxer_old.py'
+
+        return os.path.join(cls.getHome('bin'), cmd)
 
     @classmethod
     def createEmanProcess(cls, script='e2converter.py', args=None, direc="."):
@@ -112,7 +117,7 @@ class Plugin(pyworkflow.em.Plugin):
         that will server as an adaptor to use EMAN library
         """
         program = os.path.join(__path__[0], script)
-        cmd = cls.getEmanCommand(program, args)
+        cmd = cls.getEmanCommand(program, args, python=True)
 
         print ("** Running: '%s'" % cmd)
         proc = subprocess.Popen(cmd, shell=True, env=cls.getEnviron(),
