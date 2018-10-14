@@ -680,7 +680,7 @@ Examples:
 
 
 class TiltValidateViewer(ProtocolViewer):
-    """ Visualization of Eman2 tilt validate protocol."""
+    """ Visualization of e2tiltvalidate results."""
 
     _targets = [EmanProtTiltValidate]
     _environments = [DESKTOP_TKINTER, WEB_DJANGO]
@@ -846,7 +846,7 @@ class TiltValidateViewer(ProtocolViewer):
 
 
 class CtfViewer(ProtocolViewer):
-    """ Visualization of Eman2 ctf auto protocol."""
+    """ Visualization of e2ctf_auto results."""
 
     _targets = [EmanProtCTFAuto]
     _environments = [DESKTOP_TKINTER, WEB_DJANGO]

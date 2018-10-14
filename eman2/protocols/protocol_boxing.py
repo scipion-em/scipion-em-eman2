@@ -40,7 +40,8 @@ from eman2.convert import loadJson, readSetOfCoordinates
 
 
 class EmanProtBoxing(ProtParticlePicking):
-    """ Picks particles from a set of micrographs using EMAN2 e2boxer. """
+    """ Semi-automated particle picker for SPA. Uses EMAN2 e2boxer.py.
+    """
     _label = 'boxer'
 
     def __init__(self, **args):

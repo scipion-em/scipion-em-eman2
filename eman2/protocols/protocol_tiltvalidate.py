@@ -38,8 +38,8 @@ from eman2.convert import writeSetOfParticles
 
 class EmanProtTiltValidate(ProtAnalysis3D):
     """
-    This protocol wraps the *e2tiltvalidate.py* Eman2 program,
-    that performs tilt validation using
+    This protocol wraps the *e2tiltvalidate.py* EMAN2 program.
+    It performs tilt validation using
     the method described in Rosenthal and Henderson, JMB (2003).
     """
 

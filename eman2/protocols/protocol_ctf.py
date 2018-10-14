@@ -39,8 +39,8 @@ from eman2.convert import writeSetOfParticles, iterLstFile, jsonToCtfModel
 
 class EmanProtCTFAuto(ProtProcessParticles):
     """
-    This protocol wraps the *e2ctf_auto.py* Eman2 program,
-    that automates the CTF fitting and structure factor
+    This protocol wraps *e2ctf_auto.py* EMAN2 program.
+    It automates the CTF fitting and structure factor
     generation process.
     """
 

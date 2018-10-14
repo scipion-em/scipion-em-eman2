@@ -37,8 +37,7 @@ from eman2.convert import readSetOfCoordinates
 
 class SparxGaussianProtPicking(ProtParticlePickingAuto):
     """
-    Protocol to pick particles automatically in a set of micrographs
-    using sparx gaussian picker.
+    Automated particle picker for SPA. Uses Sparx gaussian picker.
     For more information see http://sparx-em.org/sparxwiki/e2boxer
     """
     _label = 'sparx gaussian picker'

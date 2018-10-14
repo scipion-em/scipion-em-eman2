@@ -42,6 +42,8 @@ from eman2.constants import *
 
 class EmanProtRefine(em.ProtRefine3D):
     """
+    This protocol wraps *e2refine_easy.py* EMAN2 program.
+
 This is the primary single particle refinement program in EMAN2.1+.
 It replaces earlier programs such as e2refine.py and e2refine_evenodd.py.
 

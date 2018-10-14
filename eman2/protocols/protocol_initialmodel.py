@@ -38,7 +38,7 @@ import eman2
 
 class EmanProtInitModel(ProtInitialVolume):
     """
-    This protocol wraps *e2initialmodel.py* Eman2 program.
+    This protocol wraps *e2initialmodel.py* EMAN2 program.
 
     It will take a set of class-averages/projections and build a set
     of 3-D models suitable for use as initial models in single

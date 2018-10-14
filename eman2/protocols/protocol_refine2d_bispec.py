@@ -44,7 +44,7 @@ from eman2.constants import *
 
 class EmanProtRefine2DBispec(em.ProtClassify2D):
     """
-    This Protocol wraps *e2refine2d_bispec.py* Eman2 program.
+    This protocol wraps *e2refine2d_bispec.py* EMAN2 program.
 
     This program is used to produce reference-free class averages
     from a population of mixed, unaligned particle images. These averages

@@ -37,8 +37,7 @@ from eman2.constants import *
 
 
 class EmanProtAutopick(ProtParticlePickingAuto):
-    """ Protocol to pick particles automatically in a set of micrographs
-    using new EMAN2 (versions 2.2+) e2boxer.
+    """ Automated particle picker for SPA. Uses EMAN2 (versions 2.2+) e2boxer.py
     """
     _label = 'boxer auto'
 

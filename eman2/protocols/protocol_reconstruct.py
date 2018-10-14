@@ -40,7 +40,7 @@ from eman2.constants import *
 
 class EmanProtReconstruct(ProtReconstruct3D):
     """
-    This protocol wraps *e2make3d.py* Eman2 program.
+    This protocol wraps *e2make3d.py* EMAN2 program.
 
     Reconstructs 3D volumes using a set of 2D images.
     Euler angles are extracted from the 2D image headers
