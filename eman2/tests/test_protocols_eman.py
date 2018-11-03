@@ -86,11 +86,11 @@ class TestEmanBase(BaseTest):
         return cls.protImport
 
     @classmethod
-    def runImportParticlesStar(cls, pattern, samplingRate):
+    def runImportParticlesSqlite(cls, pattern, samplingRate):
         """ Run an Import particles protocol. """
         cls.protImport = cls.newProtocol(pwem.ProtImportParticles,
-                                         importFrom=3,
-                                         starFile=pattern, samplingRate=samplingRate)
+                                         importFrom=4,
+                                         sqliteFile=pattern, samplingRate=samplingRate)
         cls.launchProtocol(cls.protImport)
         # check that input images have been imported (a better way to do this?)
         if cls.protImport.outputParticles is None:
@@ -302,12 +302,12 @@ class TestEmanCtfAuto(TestEmanBase):
     def setUpClass(cls):
         setupTestProject(cls)
         TestEmanBase.setData('relion_tutorial')
-        cls.partsFn = cls.dataset.getFile('import2_data_star')
-        cls.protImport = cls.runImportParticlesStar(cls.partsFn, 3.5)
+        cls.partsFn = cls.dataset.getFile('import/case2/particles.sqlite')
+        cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_CtfAutoEman(self):
         if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol exists only for EMAN2.21 or higher!')
+            raise Exception('This protocol works only for EMAN2.21 or higher!')
         print("Run Eman CTF Auto")
         protCtf = self.newProtocol(EmanProtCTFAuto,
                                    numberOfThreads=3)
