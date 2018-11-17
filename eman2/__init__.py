@@ -30,7 +30,7 @@ import subprocess
 import pyworkflow.em
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2DIR, V2_11, V2_12, V2_21
+from .constants import EMAN2DIR, V2_12, V2_21
 
 
 _logo = "eman2_logo.png"
@@ -43,7 +43,7 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pyworkflow.em.Plugin):
     _homeVar = EMAN2DIR
     _pathVars = [EMAN2DIR]
-    _supportedVersions = [V2_11, V2_12, V2_21]
+    _supportedVersions = [V2_12, V2_21]
 
     @classmethod
     def _defineVariables(cls):
@@ -130,10 +130,6 @@ class Plugin(pyworkflow.em.Plugin):
     def defineBinaries(cls, env):
         eman2_commands = [('./eman2-installer',
                            'eman2.*rc')]
-
-        env.addPackage('eman', version='2.11',
-                       tar='eman2.11.linux64.tgz',
-                       commands=eman2_commands)
 
         env.addPackage('eman', version='2.12',
                        tar='eman2.12.linux64.tgz',

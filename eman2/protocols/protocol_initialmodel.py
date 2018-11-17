@@ -193,8 +193,7 @@ class EmanProtInitModel(ProtInitialVolume):
                         }
 
     def _isHighSym(self):
-        return (eman2.Plugin.getActiveVersion() != '2.11' and
-                self.symmetry.get() in ["oct", "tet", "icos"])
+        return self.symmetry.get() in ["oct", "tet", "icos"]
 
     def _getVolumes(self):
         if self._isHighSym():

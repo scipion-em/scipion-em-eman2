@@ -1,2 +1,3 @@
-30-August-2018 - New version of plugin version
+1.0.1 - deprecated EMAN 2.11 support
+1.0.0 - First plugin version
 
