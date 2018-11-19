@@ -106,7 +106,7 @@ class Plugin(pyworkflow.em.Plugin):
          If emanVersion is None, the current active version will be used.
         """
         emanVersion = emanVersion or cls.getActiveVersion()
-        new = emanVersion in [V2_11, V2_12] or boxerVersion == 'new'
+        new = emanVersion in [V2_12] or boxerVersion == 'new'
         cmd = 'e2boxer.py' if new else 'e2boxer_old.py'
 
         return os.path.join(cls.getHome('bin'), cmd)
