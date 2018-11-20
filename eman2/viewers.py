@@ -33,10 +33,9 @@ from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER,
                                WEB_DJANGO)
 # FIXME Remove this dependency from xmipp3 plugin
 from xmipp3.viewers import XmippViewer
-import pyworkflow.em.showj as showj
-from pyworkflow.em.viewer import (ObjectView, DataView,
+import pyworkflow.em.viewers.showj as showj
+from pyworkflow.em.viewers import (ObjectView, DataView, EmPlotter,
                                   ChimeraView, ChimeraClientView, ClassesView)
-from pyworkflow.em.plotter import EmPlotter
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.executor import StepExecutor
 from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
