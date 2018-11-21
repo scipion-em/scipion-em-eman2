@@ -28,7 +28,7 @@ import os
 
 import pyworkflow as pw
 from pyworkflow.em.wizard import EmWizard
-from pyworkflow.em import CoordinatesObjectView
+from pyworkflow.em.viewers import CoordinatesObjectView
 from pyworkflow.utils import makePath, cleanPath, readProperties
 
 import eman2
