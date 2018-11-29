@@ -29,6 +29,7 @@ This file contains constants related to EMAN2 protocols
 
 
 EMAN2DIR = 'EMAN2DIR'
+EMAN2_12DIR = 'EMAN2_12DIR'
 
 # Supported versions
 V2_12 = '2.12'
