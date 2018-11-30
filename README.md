@@ -1,4 +1,4 @@
-# EMAN2 plugin (after viewers and converts refactorization- no changes needed)
+# EMAN2 plugin
 
 This plugin allows to use EMAN2 programs within the Scipion framework.
 
