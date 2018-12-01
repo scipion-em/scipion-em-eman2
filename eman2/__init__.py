@@ -30,7 +30,7 @@ import subprocess
 import pyworkflow.em
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2DIR, EMAN2_12DIR, V2_12, V2_21
+from .constants import EMAN2DIR, V2_12, V2_21
 
 
 _logo = "eman2_logo.png"
