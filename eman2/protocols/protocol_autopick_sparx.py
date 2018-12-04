@@ -28,7 +28,7 @@
 
 import os
 
-from pyworkflow.protocol.params import IntParam, FloatParam
+from pyworkflow.protocol.params import IntParam, FloatParam, BooleanParam, PointerParam
 from pyworkflow.em.protocol import ProtParticlePickingAuto
 
 import eman2
@@ -50,8 +50,17 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         ProtParticlePickingAuto._defineParams(self, form)
+
+        form.addParam('bxSzFromCoor', BooleanParam, dafault=False,
+                      label='Use an input coordinates for box size')
         form.addParam('boxSize', IntParam, default=100,
+                      conditon='bxSzFromCoor==False',
                       label='Box Size', help='Box size in pixels')
+        form.addParam('coordsToBxSz', PointerParam, pointerClass='SetOfCoordinates',
+                      condition='bxSzFromCoor==True',
+                      label='Coordinates to extract the box size.',
+                      help='Coordinates to extract the box size. '
+                           'It can be an empty set.')
         line = form.addLine('Picker range',
                             help='CCF threshold range for automatic picking')
         line.addParam('lowerThreshold', FloatParam, default='1',
@@ -68,7 +77,8 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
         initId = self._insertFunctionStep('initSparxDb',
                                           self.lowerThreshold.get(),
                                           self.higherThreshold.get(),
-                                          self.boxSize.get(), self.gaussWidth.get())
+                                          self.getBoxSize(),
+                                          self.gaussWidth.get())
         return [initId]
 
     # --------------------------- STEPS functions -----------------------------
@@ -88,7 +98,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
     def _pickMicrograph(self, mic, *args):
         micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())
         params = ('--gauss_autoboxer=demoparms --write_dbbox --boxsize=%d %s'
-                  % (self.boxSize, micFile))
+                  % (self.getBoxSize(), micFile))
         program = eman2.Plugin.getBoxerCommand(boxerVersion='old')
 
         self.runJob(program, params, cwd=self.getCoordsDir())
@@ -110,5 +120,11 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
                 ProtParticlePickingAuto.getFiles(self))
 
     def readCoordsFromMics(self, workingDir, micList, coordSet):
-        coordSet.setBoxSize(self.boxSize.get())
+        coordSet.setBoxSize(self.getBoxSize())
         readSetOfCoordinates(workingDir, micList, coordSet, newBoxer=False)
+
+    def getBoxSize(self):
+        if self.bxSzFromCoor:
+            return self.coordsToBxSz.get().getBoxSize()
+        else:
+            return self.boxSize.get()
