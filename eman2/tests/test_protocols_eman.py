@@ -345,3 +345,15 @@ class TestEmanAutopick(TestEmanBase):
         self.launchProtocol(protPick)
         self.assertIsNotNone(protPick.outputCoordinates,
                              "There was a problem with e2boxer auto protocol")
+
+    def test_AutopickSparx(self):
+        print("Run Eman auto picking with gauss/sparx")
+        protPick2 = self.newProtocol(SparxGaussianProtPicking,
+                                     boxSize=50,
+                                     lowerThreshold=0.9,
+                                     higherThreshold=15,
+                                     gaussWidth=1.2)
+        protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
+        self.proj.launchProtocol(protPick2)
+        self.assertIsNotNone(protPick2.outputCoordinates,
+                             "There was a problem with e2boxer gauss auto protocol")

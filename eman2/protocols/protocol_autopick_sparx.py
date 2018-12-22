@@ -58,10 +58,11 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
                       label='Lower')
         line.addParam('higherThreshold', FloatParam, default='30',
                       label='Higher')
-
         form.addParam('gaussWidth', FloatParam, default='1',
                       label='Gauss Width',
                       help='Width of the Gaussian kernel used')
+
+        form.addParallelSection(threads=1, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertInitialSteps(self):
