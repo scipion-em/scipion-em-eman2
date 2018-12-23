@@ -71,7 +71,8 @@ class SparxGaussianPickerWizard(EmWizard):
 
         args = {
             "params": ','.join(params),
-            "preprocess": "%s sxprocess.py" % pw.getScipionScript(),
+            "preprocess": "%s %s" % (pw.getScipionScript(),
+                                     eman2.Plugin.getProgram('sxprocess.py')),
             "picker": "%s %s" % (pw.getScipionScript(), program),
             "convert": pw.join('apps', 'pw_convert.py'),
             'coordsDir': coordsDir,
