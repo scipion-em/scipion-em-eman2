@@ -349,10 +349,12 @@ class TestEmanAutopick(TestEmanBase):
     def test_AutopickSparx(self):
         print("Run Eman auto picking with gauss/sparx")
         protPick2 = self.newProtocol(SparxGaussianProtPicking,
-                                     boxSize=50,
-                                     lowerThreshold=0.9,
-                                     higherThreshold=15,
-                                     gaussWidth=1.2)
+                                     boxSize=128,
+                                     lowerThreshold=0.004,
+                                     higherThreshold=0.1,
+                                     gaussWidth=0.525,
+                                     useVarImg=False,
+                                     doInvert=True)
         protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
         self.proj.launchProtocol(protPick2)
         self.assertIsNotNone(protPick2.outputCoordinates,
