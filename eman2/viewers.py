@@ -31,9 +31,12 @@ import pyworkflow.gui.text as text
 from pyworkflow.gui.dialog import askYesNo, showInfo
 from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER,
                                WEB_DJANGO)
+# FIXME Remove this dependency from xmipp3 plugin
+from xmipp3.viewers import XmippViewer
 import pyworkflow.em.viewers.showj as showj
-from pyworkflow.em.viewers import (ObjectView, DataView, EmPlotter,
-                                  ChimeraView, ChimeraClientView, ClassesView, DataViewer)
+from pyworkflow.em.viewers import (ObjectView, DataView,
+                                  ChimeraView, ChimeraClientView, ClassesView)
+from pyworkflow.em.viewers import EmPlotter
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.executor import StepExecutor
 from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
@@ -43,13 +46,12 @@ import pyworkflow.utils as pwutils
 import eman2
 from eman2.constants import *
 from eman2.convert import loadJson
-from eman2.protocols import (EmanProtBoxing, EmanProtCTFAuto,
-                             EmanProtInitModel, EmanProtRefine2D,
-                             EmanProtRefine2DBispec, EmanProtRefine,
-                             EmanProtTiltValidate)
+from eman2.protocols import (
+    EmanProtBoxing, EmanProtCTFAuto, EmanProtInitModel, EmanProtRefine2D,
+    EmanProtRefine2DBispec, EmanProtRefine, EmanProtTiltValidate)
 
 
-class EmanViewer(DataViewer):
+class EmanViewer(XmippViewer):
     """ Wrapper to visualize different type of objects
     with the Xmipp program xmipp_showj
     """
@@ -61,7 +63,7 @@ class EmanViewer(DataViewer):
         if isinstance(obj, EmanProtBoxing):
             coords = obj.getCoords()
             if coords:
-                DataViewer._visualize(self, obj.outputCoordinates)
+                XmippViewer._visualize(self, obj.outputCoordinates)
 
         elif isinstance(obj, EmanProtInitModel):
             obj = obj.outputVolumes
@@ -76,7 +78,6 @@ class EmanViewer(DataViewer):
                                                       showj.VISIBLE: labels,
                                                       showj.RENDER: '_filename',
                                                       showj.OBJCMDS: objCommands}))
-            return self._views
 
 
 def showExtraFile(volumeSet, volId, suffix):
