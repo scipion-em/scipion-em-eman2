@@ -6,4 +6,4 @@ EMAN is a image processing suite for electron microscopy developed by [Steve Lud
 
 Supported versions of EMAN2: 2.12, 2.21
 
-![build status](http://heisenberg.cnb.csic.es:9980/badges/eman2_devel.svg "Build status")
+![build status](http://arquimedes.cnb.csic.es:9980/badges/eman2_devel.svg "Build status")
