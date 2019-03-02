@@ -202,7 +202,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
             newFn = pwutils.removeBaseExt(fn).split('__ctf')[0] + '.hdf'
             newFn = pwutils.join(path, newFn)
             pwutils.createLink(fn, newFn)
-            print "   %s -> %s" % (fn, newFn)
+            print("   %s -> %s" % (fn, newFn))
     else:
         firstCoord = partSet.getFirstItem().getCoordinate() or None
         hasMicName = False

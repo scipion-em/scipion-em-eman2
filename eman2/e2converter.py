@@ -99,7 +99,7 @@ def writeParticles():
         imageData.write_image(outputFile, i,
                               eman.EMUtil.ImageType.IMAGE_HDF, False)
         i += 1
-        print "OK" # it is necessary to add newline
+        print("OK") # it is necessary to add newline
         sys.stdout.flush()
         line = sys.stdin.readline()
 
@@ -241,4 +241,4 @@ if __name__ == '__main__':
         else:
             raise Exception("e2converter: Unknown mode '%s'" % mode)
     else:
-        print "usage: %s outputFile" % os.path.basename(sys.argv[0])
+        print("usage: %s outputFile" % os.path.basename(sys.argv[0]))
