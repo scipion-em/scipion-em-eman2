@@ -64,9 +64,15 @@ class SparxGaussianPickerWizard(EmWizard):
         params = ['boxSize', 'lowerThreshold', 'higherThreshold', 'gaussWidth']
         program = eman2.Plugin.getBoxerCommand(boxerVersion='old')
 
+        extraParams = "invert_contrast=%s:use_variance=%s:%s" % (
+            autopickProt.doInvert,
+            autopickProt.useVarImg,
+            autopickProt.extraParams)
+
         args = {
             "params": ','.join(params),
-            "preprocess": "%s sxprocess.py" % pw.getScipionScript(),
+            "preprocess": "%s %s" % (pw.getScipionScript(),
+                                     eman2.Plugin.getProgram('sxprocess.py')),
             "picker": "%s %s" % (pw.getScipionScript(), program),
             "convert": pw.join('apps', 'pw_convert.py'),
             'coordsDir': coordsDir,
@@ -75,21 +81,21 @@ class SparxGaussianPickerWizard(EmWizard):
             "lowerThreshold": autopickProt.lowerThreshold,
             "higherThreshold": autopickProt.higherThreshold,
             "gaussWidth": autopickProt.gaussWidth,
-            "extraParams": autopickProt.extraParams
+            "extraParams": extraParams
         }
 
         f.write("""
         parameters = %(params)s
         boxSize.value = %(boxSize)s
         boxSize.label = Box Size
-        boxSize.help = some help
+        boxSize.help = Box size in pixels
         lowerThreshold.value =  %(lowerThreshold)s
         lowerThreshold.label = Lower Threshold
-        lowerThreshold.help = some help
-        higherThreshold.help = some help
+        lowerThreshold.help = Lower Threshold
+        higherThreshold.help = Higher Threshold
         higherThreshold.value =  %(higherThreshold)s
         higherThreshold.label = Higher Threshold
-        gaussWidth.help = some help
+        gaussWidth.help = Width of the Gaussian kernel used
         gaussWidth.value =  %(gaussWidth)s
         gaussWidth.label = Gauss Width
         runDir = %(coordsDir)s

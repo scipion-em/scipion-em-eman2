@@ -28,7 +28,8 @@
 
 import os
 
-from pyworkflow.protocol.params import IntParam, FloatParam
+from pyworkflow.protocol.params import (IntParam, FloatParam,
+                                        BooleanParam, LEVEL_ADVANCED)
 from pyworkflow.em.protocol import ProtParticlePickingAuto
 
 import eman2
@@ -44,8 +45,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
 
     def __init__(self, **kwargs):
         ProtParticlePickingAuto.__init__(self, **kwargs)
-        self.extraParams = ('pixel_input=1:pixel_output=1:invert_contrast'
-                            '=True:use_variance=True')
+        self.extraParams = 'pixel_input=1:pixel_output=1'
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -58,32 +58,46 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
                       label='Lower')
         line.addParam('higherThreshold', FloatParam, default='30',
                       label='Higher')
-
         form.addParam('gaussWidth', FloatParam, default='1',
                       label='Gauss Width',
                       help='Width of the Gaussian kernel used')
+        form.addParam('useVarImg', BooleanParam, default=False,
+                      expertLevel=LEVEL_ADVANCED,
+                      label='Use variance image?')
+        form.addParam('doInvert', BooleanParam, default=True,
+                      expertLevel=LEVEL_ADVANCED,
+                      label='Invert contrast?',
+                      help='Picker expects particles to be white.')
+
+        form.addParallelSection(threads=1, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertInitialSteps(self):
         initId = self._insertFunctionStep('initSparxDb',
                                           self.lowerThreshold.get(),
                                           self.higherThreshold.get(),
-                                          self.boxSize.get(), self.gaussWidth.get())
+                                          self.boxSize.get(), self.gaussWidth.get(),
+                                          self.useVarImg, self.doInvert)
         return [initId]
 
     # --------------------------- STEPS functions -----------------------------
-    def initSparxDb(self, lowerThreshold, higherThreshold, boxSize, gaussWidth):
+    def initSparxDb(self, lowerThreshold, higherThreshold, boxSize,
+                    gaussWidth, useVarImg, doInvert):
         args = {"lowerThreshold": lowerThreshold,
                 "higherThreshold": higherThreshold,
                 "boxSize": boxSize,
                 "gaussWidth": gaussWidth,
+                "useVarImg": "true" if useVarImg else "false",
+                "doInvert": "true" if doInvert else "false",
                 "extraParams": self.extraParams}
         params = 'demoparms --makedb=thr_low=%(lowerThreshold)s:'
         params += 'thr_hi=%(higherThreshold)s:boxsize=%(boxSize)s:'
+        params += 'invert_contrast=%(doInvert)s:use_variance=%(useVarImg)s:'
         params += 'gauss_width=%(gaussWidth)s:%(extraParams)s'
 
         self.runJob(eman2.Plugin.getProgram('sxprocess.py'),
-                    params % args, cwd=self.getCoordsDir())
+                    params % args, cwd=self.getCoordsDir(),
+                    numberOfThreads=1)
 
     def _pickMicrograph(self, mic, *args):
         micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())
