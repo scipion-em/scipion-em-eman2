@@ -61,6 +61,6 @@ if __name__ == '__main__':
         else:  # just print dimensions
             nsize = eman.EMUtil.get_image_count(inputFile)
             emd = eman.EMData(inputFile, 0, True)
-            print emd.get_xsize(), emd.get_ysize(), emd.get_zsize(), nsize
+            print(emd.get_xsize(), emd.get_ysize(), emd.get_zsize(), nsize)
     else:
-        print "usage: %s inputFile [outputFile]" % os.path.basename(sys.argv[0])
+        print("usage: %s inputFile [outputFile]" % os.path.basename(sys.argv[0]))

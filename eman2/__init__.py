@@ -119,7 +119,7 @@ class Plugin(pyworkflow.em.Plugin):
         program = os.path.join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args, python=True)
 
-        print ("** Running: '%s'" % cmd)
+        print("** Running: '%s'" % cmd)
         proc = subprocess.Popen(cmd, shell=True, env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, cwd=direc)

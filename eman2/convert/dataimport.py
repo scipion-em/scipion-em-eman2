@@ -83,8 +83,8 @@ class EmanImport:
                 md.readPlain(fileName, "xcoor ycoor particleSize")
                 size = md.getValue(MDL_PICKING_PARTICLE_SIZE, md.firstObject())
                 if size is None:
-                    print ">>> WARNING: Error parsing coordinate file: %s" % fileName
-                    print "             Skipping this file."
+                    print(">>> WARNING: Error parsing coordinate file: %s" % fileName)
+                    print("             Skipping this file.")
                 else:
                     half = size / 2
                     for objId in md:
