@@ -908,6 +908,6 @@ class CtfViewer(ProtocolViewer):
 
     def _getOutputs(self):
         outputList = []
-        for attrName, _ in self.protocol.iterOutputEM():
+        for attrName, _ in self.protocol.iterOutputAttributes():
             outputList.append(attrName)
         return outputList
