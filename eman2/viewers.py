@@ -61,7 +61,7 @@ class EmanViewer(DataViewer):
         if isinstance(obj, EmanProtBoxing):
             coords = obj.getCoords()
             if coords:
-                DataViewer._visualize(self, obj.outputCoordinates)
+                return DataViewer._visualize(self, obj.outputCoordinates)
 
         elif isinstance(obj, EmanProtInitModel):
             obj = obj.outputVolumes
