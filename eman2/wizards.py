@@ -50,6 +50,11 @@ class SparxGaussianPickerWizard(EmWizard):
         if not micSet:
             print('must specify input micrographs')
             return
+
+        # ensuring a valid boxSize
+        if autopickProt.boxSize.get() is None:
+            autopickProt.boxSize.set(100)
+
         project = autopickProt.getProject()
         coordsDir = project.getTmpPath(micSet.getName())
 
