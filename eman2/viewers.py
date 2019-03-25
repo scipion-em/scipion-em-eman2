@@ -61,7 +61,7 @@ class EmanViewer(DataViewer):
         if isinstance(obj, EmanProtBoxing):
             coords = obj.getCoords()
             if coords:
-                DataViewer._visualize(self, obj.outputCoordinates)
+                return DataViewer._visualize(self, obj.outputCoordinates)
 
         elif isinstance(obj, EmanProtInitModel):
             obj = obj.outputVolumes
@@ -908,6 +908,6 @@ class CtfViewer(ProtocolViewer):
 
     def _getOutputs(self):
         outputList = []
-        for attrName, _ in self.protocol.iterOutputEM():
+        for attrName, _ in self.protocol.iterOutputAttributes():
             outputList.append(attrName)
         return outputList

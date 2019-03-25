@@ -334,7 +334,8 @@ class TestEmanAutopick(TestEmanBase):
 
     def test_AutopickEman(self):
         if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol exists only for EMAN2.21 or higher!')
+            print('This protocol exists only for EMAN2.21 or higher! Skipping test..')
+            return
         print("Run Eman auto picking")
         protPick = self.newProtocol(EmanProtAutopick,
                                     boxerMode=1,  # by_ref
@@ -357,7 +358,31 @@ class TestEmanAutopick(TestEmanBase):
                                          useVarImg=False,
                                          doInvert=True)
             protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
-            self.proj.launchProtocol(protPick2)
+            self.launchProtocol(protPick2)
+            self.assertIsNotNone(protPick2.outputCoordinates,
+                                 "There was a problem with e2boxer gauss auto protocol")
+        else:
+            print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
+
+    def test_AutopickSparxPointer(self):
+        if not eman2.Plugin.isNewVersion():
+            print("Simulating an automatic protocol to estimate the boxSize")
+            protAutoBoxSize = self.newProtocol(pwem.ProtOutputTest,
+                                               iBoxSize=64,  # output is twice
+                                               objLabel='auto boxsize simulator')
+            self.launchProtocol(protAutoBoxSize)
+
+            print("Run Eman auto picking with gauss/sparx")
+            protPick2 = self.newProtocol(SparxGaussianProtPicking,
+                                         lowerThreshold=0.004,
+                                         higherThreshold=0.1,
+                                         gaussWidth=0.525,
+                                         useVarImg=False,
+                                         doInvert=True)
+            protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
+            protPick2.boxSize.setPointer(pwem.Pointer(protAutoBoxSize,
+                                                      extended="oBoxSize"))
+            self.launchProtocol(protPick2)
             self.assertIsNotNone(protPick2.outputCoordinates,
                                  "There was a problem with e2boxer gauss auto protocol")
         else:

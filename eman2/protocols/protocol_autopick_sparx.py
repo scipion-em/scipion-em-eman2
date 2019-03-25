@@ -50,7 +50,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         ProtParticlePickingAuto._defineParams(self, form)
-        form.addParam('boxSize', IntParam, default=100,
+        form.addParam('boxSize', IntParam, default=100, allowsPointers=True,
                       label='Box Size', help='Box size in pixels')
         line = form.addLine('Picker range',
                             help='CCF threshold range for automatic picking')
