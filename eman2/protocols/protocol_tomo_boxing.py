@@ -30,82 +30,99 @@ from pyworkflow.object import String
 
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.em.protocol import EMProtocol
+from pyworkflow.em.protocol import ProtParticlePicking
 from pyworkflow.protocol.params import PointerParam
 import pyworkflow.utils as pwutils
+import pyworkflow.em as pwem
 
 import eman2
 from eman2.convert import loadJson
 
 
-class EmanProtTomoBoxing(EMProtocol):
-    """ Semi-automated particle picker for SPA. Uses EMAN2 e2boxer.py.
+from tomo.protocols.protocol_base import ProtTomoBase
+from tomo.objects import SetOfCoordinates3D, Coordinate3D, Tomogram, SetOfTomograms
+
+class EmanProtTomoBoxing(ProtParticlePicking, ProtTomoBase):
+    """ Manual picker for Tomo. Uses EMAN2 e2boxer.py.
     """
     _label = 'tomo boxer'
     OUTPUT_PREFIX = 'output3DCoordinates'
 
-    def __init__(self, **args):
-        EMProtocol.__init__(self, **args)
-        # The following attribute is only for testing
-        self.importFolder = String(args.get('importFolder', None))
+    def __init__(self, **kwargs):
+        ProtParticlePicking.__init__(self, **kwargs)
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
 
         form.addSection(label='Input')
-        form.addParam('inputVolume', PointerParam, label="Volume to compare", important=True,
-                      pointerClass='Volume',
-                      help='This volume will be compared to the reference volume.')
+        form.addParam('inputTomograms', PointerParam, label="Input Tomogram(s)", important=True,
+                      pointerClass='Tomogram, SetOfTomograms',
+                      help='Select the Tomogram or SetOfTomograms to be used during '
+                           'picking.')
 
+        # TODO: Does this make sense?
         form.addParallelSection(threads=1, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         # TODO
-        # input should be volume or set of volumes?
-        # should we ask for an option to hide file menu?
         # clean up eman tmp files?
-        # it looks like we can have different boxsizes for different classes, do we want to support it?
         # review input files? what is missing?
         # inverseY?
-        self.inputVol = self.inputVolume.get().getFileName()
-        self._params = {'inputVol': self.inputVol}
-        # Launch Boxing GUI
-        self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
 
-    # TODO
-    # Extracted from protocol_particles_picking
-    def __getOutputSuffix(self):
-        """ Get the name to be used for a new output.
-        For example: outputCoordiantes7.
-        It should take into account previous outputs
-        and number with a higher value.
+        for tomo in self._getTomograms():
+            # self._params = {'inputTomograms': self.inputTomo}
+            # Launch Boxing GUI
+            self._insertFunctionStep('launchBoxingGUIStep', {'inputTomograms': tomo.getFileName()},  interactive=True)
+
+    def _getTomograms(self):
+        """ Return a list with all input references.
+        (Could be one or more volumes. ).
         """
-        maxCounter = -1
-        for attrName, _ in self.iterOutputAttributes(SetOf3DCoordinates):
-            suffix = attrName.replace(self.OUTPUT_PREFIX, '')
-            try:
-                counter = int(suffix)
-            except:
-                counter = 1 # when there is not number assume 1
-            maxCounter = max(counter, maxCounter)
+        inputObj = self.inputTomograms.get()
 
-        return str(maxCounter+1) if maxCounter > 0 else '' # empty if not output
+        if isinstance(inputObj, Tomogram):
+            return [inputObj]
+        elif isinstance(inputObj, SetOfTomograms):
+            return [tomo.clone() for tomo in inputObj]
+        else:
+            raise Exception("Invalid input tomogram of class: %s"
+                            % inputObj.getClassName())
+
+
+    # def __getOutputSuffix(self):
+    #     """ Get the name to be used for a new output.
+    #     For example: outputCoordiantes7.
+    #     It should take into account previous outputs
+    #     and number with a higher value.
+    #     """
+    #     maxCounter = -1
+    #     for attrName, _ in self.iterOutputAttributes(SetOf3DCoordinates):
+    #         suffix = attrName.replace(self.OUTPUT_PREFIX, '')
+    #         try:
+    #             counter = int(suffix)
+    #         except:
+    #             counter = 1 # when there is not number assume 1
+    #         maxCounter = max(counter, maxCounter)
+    #
+    #     return str(maxCounter+1) if maxCounter > 0 else '' # empty if not output
+
+
 
     def _createOutput(self, outputDir):
-        inputVol = self.inputVolume.get()
-        suffix = self.__getOutputSuffix()
+        inputTomograms = self.inputTomograms.get()
+        suffix = self.__getOutputSuffix(className=SetOfCoordinates3D)
         outputName = self.OUTPUT_PREFIX + suffix
 
-        coord3DSet = self._createSetOfCoordinates(inputVol, suffix)
+        coord3DSet = self._createSetOf3DCoordinates(inputTomograms, suffix)
 
 
         # TODO
         # Extracted from eman2 convert
-        # Assumes single volume
         # read boxSize from info/project.json
-        jsonFnbase = pwutils.join(outputDir, 'info', 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputVolume.get().getFileName()))
+        jsonFnbase = pwutils.join(outputDir, 'info', 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomograms.get().getFileName()))
         jsonBoxDict = loadJson(jsonFnbase)
+        #Support box size
         size = int(jsonBoxDict["class_list"]["0"]["boxsize"])
 
         if jsonBoxDict.has_key("boxes_3d"):
@@ -114,9 +131,9 @@ class EmanProtTomoBoxing(EMProtocol):
             for box in boxes:
                 x, y, z = box[:3]
 
-                coord = Coordinate_3D()
+                coord = Coordinate3D()
                 coord.setPosition(x, y, z)
-                coord.setVolume(inputVol)
+                coord.setVolume(inputTomograms)
                 coord3DSet.append(coord)
 
         coord3DSet.setBoxSize(size)
@@ -124,16 +141,15 @@ class EmanProtTomoBoxing(EMProtocol):
 
         outputs = {outputName: coord3DSet}
         self._defineOutputs(**outputs)
-        self._defineSourceRelation(self.inputVolume, coord3DSet)
+        self._defineSourceRelation(self.inputTomograms, coord3DSet)
 
     # --------------------------- STEPS functions -----------------------------
-    def launchBoxingGUIStep(self):
-
+    def launchBoxingGUIStep(self, tomo):
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
 
-        arguments = "%(inputVol)s"
-        self._log.info('Launching: ' + program + ' ' + arguments % self._params)
-        self.runJob(program, arguments % self._params)
+        arguments = "%(inputTomograms)s"
+        self._log.info('Launching: ' + program + ' ' + arguments % tomo)
+        self.runJob(program, arguments % tomo)
 
         # Open dialog to request confirmation to create output
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
@@ -167,7 +183,7 @@ class EmanProtTomoBoxing(EMProtocol):
         # Redefine run to change to workingDir path
         # Change to protocol working directory
         self._enterWorkingDir()
-        EMProtocol._runSteps(self, startIndex)
+        ProtParticlePicking._runSteps(self, startIndex)
 
     def getSummary(self, coord3DSet):
         summary = []
