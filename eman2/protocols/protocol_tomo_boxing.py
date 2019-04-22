@@ -31,7 +31,6 @@ from pyworkflow.object import String
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.em.protocol import EMProtocol
-from pyworkflow.em.data import SetOf3DCoordinates, Coordinate_3D
 from pyworkflow.protocol.params import PointerParam
 import pyworkflow.utils as pwutils
 
