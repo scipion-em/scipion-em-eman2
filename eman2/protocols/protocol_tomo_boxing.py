@@ -87,30 +87,33 @@ class EmanProtTomoBoxing(ProtTomoBoxing):
                                   'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName()))
         jsonBoxDict = loadJson(jsonFnbase)
 
+        # Create a Set of 3D Coordinates per class
         coord3DSetDict = {}
+        coord3DMap = {}
         for key, classItem in jsonBoxDict["class_list"].iteritems():
             index = int(key)
             suffix = self._getOutputSuffix()
             coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
             coord3DSet.setBoxSize(int(classItem["boxsize"]))
             coord3DSet.setName(classItem["name"])
-            coord3DSetDict[index] = coord3DSet
 
+            name = self.OUTPUT_PREFIX + suffix
             args = {}
-            name = "output3DCoordinates%s" % (str(index + 1) if index > 0 else '')
             args[name] = coord3DSet
-            print args
             self._defineOutputs(**args)
             self._defineSourceRelation(self.inputTomogram, coord3DSet)
 
+            coord3DSetDict[index] = coord3DSet
+            coord3DMap[index] = name
+
+        # Populate Set of 3D Coordinates with 3D Coordinates
         self._readSetOfCoordinates3D(jsonBoxDict, self.inputTomo, coord3DSetDict)
 
+        # Update Outputs
         for index, coord3DSet in coord3DSetDict.iteritems():
-            name = "output3DCoordinates%s" % (str(index + 1) if index > 0 else '')
-
             coord3DSet.setObjComment(self.getSummary(coord3DSet))
-            print name
-            self._updateOutputSet(name, coord3DSet, state=coord3DSet.STREAM_CLOSED)
+            self._updateOutputSet(coord3DMap[index], coord3DSet, state=coord3DSet.STREAM_CLOSED)
+
 
     # --------------------------- STEPS functions -----------------------------
     def launchBoxingGUIStep(self, tomo):
@@ -128,7 +131,6 @@ class EmanProtTomoBoxing(ProtTomoBoxing):
             self._leaveDir()  # going back to project dir
             self._createOutput(self.getWorkingDir())
 
-    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
 
@@ -138,7 +140,6 @@ class EmanProtTomoBoxing(ProtTomoBoxing):
 
         return errors
 
-    # --------------------------- UTILS functions -----------------------------
     def _runSteps(self, startIndex):
         # Redefine run to change to workingDir path
         # Change to protocol working directory
@@ -157,7 +158,7 @@ class EmanProtTomoBoxing(ProtTomoBoxing):
 
         methodsMsgs.append("Input tomogram %s of dims %s."
                            % (self.getObjectTag('inputTomogram'),
-                              str(self.inputTomogram.get().getDims())))
+                              str(self.inputTomogram.get().getDim())))
 
         if self.getOutputsSize() >= 1:
             for key, output in self.iterOutputAttributes():
