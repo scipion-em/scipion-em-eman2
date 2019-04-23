@@ -1,10 +1,8 @@
 # **************************************************************************
 # *
-# * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca) [1]
-# * Authors:     Grigory Sharov (gsharov@mrc-lmb.cam.ac.uk) [2]
+# * Authors:     Adrian Quintana (adrian@eyeseetea.com) [1]
 # *
-# * [1] Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
-# * [2] MRC Laboratory of Molecular Biology (MRC-LMB)
+# * [1] EyeSeeTea Ltd, London, UK
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -26,128 +24,102 @@
 # *
 # **************************************************************************
 
-from pyworkflow.object import String
-
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.em.protocol import ProtParticlePicking
-from pyworkflow.protocol.params import PointerParam
-import pyworkflow.utils as pwutils
-import pyworkflow.em as pwem
+from pyworkflow.protocol.params import BooleanParam
+from pyworkflow import utils as pwutils
 
 import eman2
 from eman2.convert import loadJson
 
+from tomo.protocols.protocol_base import ProtTomoBoxing
+from tomo.objects import Coordinate3D
 
-from tomo.protocols.protocol_base import ProtTomoBase
-from tomo.objects import SetOfCoordinates3D, Coordinate3D, Tomogram, SetOfTomograms
 
-class EmanProtTomoBoxing(ProtParticlePicking, ProtTomoBase):
-    """ Manual picker for Tomo. Uses EMAN2 e2boxer.py.
+class EmanProtTomoBoxing(ProtTomoBoxing):
+    """ Manual picker for Tomo. Uses EMAN2 e2spt_boxer.py.
     """
     _label = 'tomo boxer'
-    OUTPUT_PREFIX = 'output3DCoordinates'
 
     def __init__(self, **kwargs):
-        ProtParticlePicking.__init__(self, **kwargs)
+        ProtTomoBoxing.__init__(self, **kwargs)
+
+    @classmethod
+    def isDisabled(cls):
+        return not eman2.Plugin.isNewVersion()
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
+        ProtTomoBoxing._defineParams(self, form)
 
-        form.addSection(label='Input')
-        form.addParam('inputTomograms', PointerParam, label="Input Tomogram(s)", important=True,
-                      pointerClass='Tomogram, SetOfTomograms',
-                      help='Select the Tomogram or SetOfTomograms to be used during '
-                           'picking.')
-
-        # TODO: Does this make sense?
-        form.addParallelSection(threads=1, mpi=0)
+        form.addParam('inMemory', BooleanParam, default=False,
+                      label='Read in Memory',
+                      help='This will read the entire tomogram into memory.'
+                           'Much faster, but you must have enough ram.')
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
-        # TODO
-        # clean up eman tmp files?
-        # review input files? what is missing?
-        # inverseY?
+        self.inputTomo = self.inputTomogram.get()
+        self._params = {'inputTomogram': self.inputTomo.getFileName()}
+        # Launch Boxing GUI
+        self._insertFunctionStep('launchBoxingGUIStep', self._params, interactive=True)
 
-        for tomo in self._getTomograms():
-            # self._params = {'inputTomograms': self.inputTomo}
-            # Launch Boxing GUI
-            self._insertFunctionStep('launchBoxingGUIStep', {'inputTomograms': tomo.getFileName()},  interactive=True)
+    def _readCoordinates3D(self, box, tomo, coord3DSet):
+        x, y, z = box[:3]
+        coord = Coordinate3D()
+        coord.setPosition(x, y, z)
+        coord.setVolume(tomo)
+        coord3DSet.append(coord)
 
-    def _getTomograms(self):
-        """ Return a list with all input references.
-        (Could be one or more volumes. ).
-        """
-        inputObj = self.inputTomograms.get()
-
-        if isinstance(inputObj, Tomogram):
-            return [inputObj]
-        elif isinstance(inputObj, SetOfTomograms):
-            return [tomo.clone() for tomo in inputObj]
-        else:
-            raise Exception("Invalid input tomogram of class: %s"
-                            % inputObj.getClassName())
-
-
-    # def __getOutputSuffix(self):
-    #     """ Get the name to be used for a new output.
-    #     For example: outputCoordiantes7.
-    #     It should take into account previous outputs
-    #     and number with a higher value.
-    #     """
-    #     maxCounter = -1
-    #     for attrName, _ in self.iterOutputAttributes(SetOf3DCoordinates):
-    #         suffix = attrName.replace(self.OUTPUT_PREFIX, '')
-    #         try:
-    #             counter = int(suffix)
-    #         except:
-    #             counter = 1 # when there is not number assume 1
-    #         maxCounter = max(counter, maxCounter)
-    #
-    #     return str(maxCounter+1) if maxCounter > 0 else '' # empty if not output
-
-
-
-    def _createOutput(self, outputDir):
-        inputTomograms = self.inputTomograms.get()
-        suffix = self.__getOutputSuffix(className=SetOfCoordinates3D)
-        outputName = self.OUTPUT_PREFIX + suffix
-
-        coord3DSet = self._createSetOf3DCoordinates(inputTomograms, suffix)
-
-
-        # TODO
-        # Extracted from eman2 convert
-        # read boxSize from info/project.json
-        jsonFnbase = pwutils.join(outputDir, 'info', 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomograms.get().getFileName()))
-        jsonBoxDict = loadJson(jsonFnbase)
-        #Support box size
-        size = int(jsonBoxDict["class_list"]["0"]["boxsize"])
-
+    def _readSetOfCoordinates3D(self, jsonBoxDict, tomo, coord3DSetDict):
         if jsonBoxDict.has_key("boxes_3d"):
             boxes = jsonBoxDict["boxes_3d"]
 
             for box in boxes:
-                x, y, z = box[:3]
+                classKey = box[5]
+                coord3DSet = coord3DSetDict[classKey]
+                coord3DSet.enableAppend()
 
-                coord = Coordinate3D()
-                coord.setPosition(x, y, z)
-                coord.setVolume(inputTomograms)
-                coord3DSet.append(coord)
+                self._readCoordinates3D(box, tomo, coord3DSet)
 
-        coord3DSet.setBoxSize(size)
-        coord3DSet.setObjComment(self.getSummary(coord3DSet))
+    def _createOutput(self, outputDir):
+        jsonFnbase = pwutils.join(outputDir, 'info',
+                                  'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName()))
+        jsonBoxDict = loadJson(jsonFnbase)
 
-        outputs = {outputName: coord3DSet}
-        self._defineOutputs(**outputs)
-        self._defineSourceRelation(self.inputTomograms, coord3DSet)
+        coord3DSetDict = {}
+        for key, classItem in jsonBoxDict["class_list"].iteritems():
+            index = int(key)
+            suffix = self._getOutputSuffix()
+            coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
+            coord3DSet.setBoxSize(int(classItem["boxsize"]))
+            coord3DSet.setName(classItem["name"])
+            coord3DSetDict[index] = coord3DSet
+
+            args = {}
+            name = "output3DCoordinates%s" % (str(index + 1) if index > 0 else '')
+            args[name] = coord3DSet
+            print args
+            self._defineOutputs(**args)
+            self._defineSourceRelation(self.inputTomogram, coord3DSet)
+
+        self._readSetOfCoordinates3D(jsonBoxDict, self.inputTomo, coord3DSetDict)
+
+        for index, coord3DSet in coord3DSetDict.iteritems():
+            name = "output3DCoordinates%s" % (str(index + 1) if index > 0 else '')
+
+            coord3DSet.setObjComment(self.getSummary(coord3DSet))
+            print name
+            self._updateOutputSet(name, coord3DSet, state=coord3DSet.STREAM_CLOSED)
 
     # --------------------------- STEPS functions -----------------------------
     def launchBoxingGUIStep(self, tomo):
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
 
-        arguments = "%(inputTomograms)s"
+        arguments = "%(inputTomogram)s"
+        if self.inMemory:
+            arguments += " --inmemory"
+
         self._log.info('Launching: ' + program + ' ' + arguments % tomo)
         self.runJob(program, arguments % tomo)
 
@@ -155,38 +127,62 @@ class EmanProtTomoBoxing(ProtParticlePicking, ProtTomoBase):
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
             self._leaveDir()  # going back to project dir
             self._createOutput(self.getWorkingDir())
+
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
 
+        if not eman2.Plugin.isNewVersion():
+            errors.append('Your EMAN2 version does not support the tomo boxer. '
+                          'Please update your installation to EMAN 2.21 or newer.')
 
         return errors
-
-    # def _warnings(self):
-    #     warnings = []
-    #     firstMic = self.inputMicrographs.get().getFirstItem()
-    #     fnLower = firstMic.getFileName().lower()
-    #
-    #     ext = getExt(fnLower)
-    #
-    #     if ext in ['.tif', '.dm3'] and not self.invertY.get():
-    #         warnings.append(
-    #             'We have seen a flip in Y when using %s files in EMAN2' % ext)
-    #         warnings.append(
-    #             'The generated coordinates may or may not be valid in Scipion.')
-    #         warnings.append(
-    #             'TIP: Activate "Invert Y coordinates" if you find it wrong.')
-    #     return warnings
 
     # --------------------------- UTILS functions -----------------------------
     def _runSteps(self, startIndex):
         # Redefine run to change to workingDir path
         # Change to protocol working directory
         self._enterWorkingDir()
-        ProtParticlePicking._runSteps(self, startIndex)
+        ProtTomoBoxing._runSteps(self, startIndex)
+
+    def getMethods(self, output):
+        msg = 'User picked %d particles ' % output.getSize()
+        msg += 'with a particle size of %s.' % output.getBoxSize()
+        return msg
+
+    def _methods(self):
+        methodsMsgs = []
+        if self.inputTomogram is None:
+            return ['Input tomogram not available yet.']
+
+        methodsMsgs.append("Input tomogram %s of dims %s."
+                           % (self.getObjectTag('inputTomogram'),
+                              str(self.inputTomogram.get().getDims())))
+
+        if self.getOutputsSize() >= 1:
+            for key, output in self.iterOutputAttributes():
+                msg = self.getMethods(output)
+                methodsMsgs.append("%s: %s" % (self.getObjectTag(output), msg))
+        else:
+            methodsMsgs.append(Message.TEXT_NO_OUTPUT_CO)
+
+        return methodsMsgs
 
     def getSummary(self, coord3DSet):
         summary = []
-        summary.append("Summary")
+        summary.append("Number of particles picked: %s" % coord3DSet.getSize())
+        summary.append("Particle size: %s" % coord3DSet.getBoxSize())
         return "\n".join(summary)
+
+    def _summary(self):
+        summary = []
+        if self.isFinished():
+            summary.append("Output 3D Coordinates not ready yet.")
+
+        if self.getOutputsSize() >= 1:
+            for key, output in self.iterOutputAttributes():
+                summary.append("*%s:* \n %s " % (key, output.getObjComment()))
+        else:
+            summary.append(Message.TEXT_NO_OUTPUT_CO)
+        return summary
 
