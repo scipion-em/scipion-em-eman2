@@ -32,17 +32,17 @@ from pyworkflow import utils as pwutils
 import eman2
 from eman2.convert import loadJson
 
-from tomo.protocols.protocol_base import ProtTomoBoxing
+from tomo.protocols import ProtTomoPicking
 from tomo.objects import Coordinate3D
 
 
-class EmanProtTomoBoxing(ProtTomoBoxing):
+class EmanProtTomoBoxing(ProtTomoPicking):
     """ Manual picker for Tomo. Uses EMAN2 e2spt_boxer.py.
     """
     _label = 'tomo boxer'
 
     def __init__(self, **kwargs):
-        ProtTomoBoxing.__init__(self, **kwargs)
+        ProtTomoPicking.__init__(self, **kwargs)
 
     @classmethod
     def isDisabled(cls):
@@ -50,7 +50,7 @@ class EmanProtTomoBoxing(ProtTomoBoxing):
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
-        ProtTomoBoxing._defineParams(self, form)
+        ProtTomoPicking._defineParams(self, form)
 
         form.addParam('inMemory', BooleanParam, default=False,
                       label='Read in Memory',
@@ -84,7 +84,8 @@ class EmanProtTomoBoxing(ProtTomoBoxing):
 
     def _createOutput(self, outputDir):
         jsonFnbase = pwutils.join(outputDir, 'info',
-                                  'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName()))
+                                  'extra-%s_info.json'
+                                  % pwutils.removeBaseExt(self.inputTomo.getFileName()))
         jsonBoxDict = loadJson(jsonFnbase)
 
         # Create a Set of 3D Coordinates per class
@@ -144,7 +145,7 @@ class EmanProtTomoBoxing(ProtTomoBoxing):
         # Redefine run to change to workingDir path
         # Change to protocol working directory
         self._enterWorkingDir()
-        ProtTomoBoxing._runSteps(self, startIndex)
+        ProtTomoPicking._runSteps(self, startIndex)
 
     def getMethods(self, output):
         msg = 'User picked %d particles ' % output.getSize()
