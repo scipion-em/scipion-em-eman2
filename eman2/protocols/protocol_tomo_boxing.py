@@ -33,7 +33,7 @@ import eman2
 from eman2.convert import loadJson
 
 from tomo.protocols import ProtTomoPicking
-from tomo.objects import Coordinate3D
+from tomo.objects import Coordinate3D, SetOfCoordinates3D
 
 
 class EmanProtTomoBoxing(ProtTomoPicking):
@@ -93,7 +93,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         coord3DMap = {}
         for key, classItem in jsonBoxDict["class_list"].iteritems():
             index = int(key)
-            suffix = self._getOutputSuffix()
+            suffix = self._getOutputSuffix(SetOfCoordinates3D)
             coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
             coord3DSet.setBoxSize(int(classItem["boxsize"]))
             coord3DSet.setName(classItem["name"])
