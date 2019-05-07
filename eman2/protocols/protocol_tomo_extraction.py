@@ -26,8 +26,6 @@
 
 
 from pyworkflow import utils as pwutils
-from pyworkflow.protocol.params import PointerParam
-from pyworkflow.protocol.constants import STATUS_FINISHED
 import pyworkflow.em as pwem
 import pyworkflow.protocol.params as params
 
@@ -57,7 +55,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
-        form.addParam('inputCoordinates', PointerParam, label="Input Coordinates", important=True,
+        form.addParam('inputCoordinates', params.PointerParam, label="Input Coordinates", important=True,
                       pointerClass='SetOfCoordinates3D',
                       help='Select the SetOfCoordinates3D.')
 
@@ -87,7 +85,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
                       help='Select the tomogram from which to extract.')
 
         form.addSection(label='Preprocess')
-        form.addParam('doInvert', params.BooleanParam, default=None,
+        form.addParam('doInvert', params.BooleanParam, default=False,
                       label='Invert contrast?',
                       help='Invert the contrast if your particles are black '
                            'over a white background.  Xmipp, Spider, Relion '
@@ -95,12 +93,12 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
                            'background. Frealign (up to v9.07) requires black '
                            'particles over a white background')
 
-        form.addParam('doNormalize', params.BooleanParam, default=True,
+        form.addParam('doNormalize', params.BooleanParam, default=False,
                       label='Normalize particles?',
                       help='Normalization processor applied to particles before extraction.')
         form.addParam('normproc', params.EnumParam,
                       choices=['normalize', 'normalize.edgemean'],
-                      label='',
+                      label='Normalize method',
                       condition='doNormalize',
                       default=PROC_NORMALIZE,
                       display=params.EnumParam.DISPLAY_COMBO,
@@ -108,25 +106,18 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
                         ' clear solvent background (i.e., they are not part of a '
                         'larger complex or embeded in a membrane)')
 
-        form.addParam('doRescale', params.BooleanParam, default=False,
-                      label='Coordinates Factor?',
-                      help='Specifies the factor by which to multiply the'
-                        'coordinates, so that they can be at the'
-                        'same scale as the tomogram.')
-
         form.addParam('cshrink', params.IntParam,
                       validators=[params.Positive],
-                      condition='doRescale',
+                      default=1,
                       label='Factor',
-                      help='For example, provide --cshrink=2 if the coordinates'
+                      help='Optionally specifies the factor by which to multiply the'
+                        'coordinates, so that they can be at the'
+                        'same scale as the tomogram.'
+                        'For example, provide --cshrink=2 if the coordinates'
                         'were determined in a binned-by-2 (shrunk-by-2)'
                         'tomogram, but you want to extract the subvolumes from'
                         'a tomogram without binning/shrinking (which should be'
                         '2x larger).')
-
-
-
-        # cshrink, normproc, invertedY
 
         form.addParallelSection(threads=4, mpi=1)
 
@@ -136,7 +127,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         return self.downsampleType == OTHER
 
     def getInputTomogram(self):
-        """ Return the micrographs associated to the SetOfCoordinates or
+        """ Return the tomogram associated to the SetOfCoordinates3D or
         Other micrographs. """
         if not self._micsOther():
             return self.inputCoordinates.get().getVolumes()
@@ -144,22 +135,32 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             return self.inputTomogram.get()
 
     def _insertAllSteps(self):
-
+        self._insertFunctionStep('writeSetOfCoordinates3D')
         self._insertFunctionStep('extractParticles')
         self._insertFunctionStep('createOutputStep')
+
+    def readSetOfTomograms(self, workDir, tomogramsSet):
+
+        subtomogram = SubTomogram()
+
+        imgh = pwem.ImageHandler()
+        x, y, z, n = imgh.getDimensions(workDir)
+        for index in range(1, n + 1):
+            subtomogram.cleanObjId()
+            subtomogram.setLocation(index, workDir)
+            tomogramsSet.append(subtomogram)
 
     def createOutputStep(self):
 
         suffix = self._getOutputSuffix(SetOfSubTomograms)
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(suffix)
-        subtomogram=SubTomogram()
-        subtomogram.setFileName(self._getExtraPath(pwutils.join('sptboxer_01', 'basename.hdf')))
-        subtomogram.setSamplingRate(self.getInputTomogram().getSamplingRate())
-        self.outputSubTomogramsSet.append(subtomogram)
+        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomogram().getSamplingRate())
+
+        self.readSetOfTomograms(self._getExtraPath(pwutils.join('sptboxer_01', 'basename.hdf')),
+                                self.outputSubTomogramsSet)
 
         self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
         self._defineSourceRelation(self.inputCoordinates, self.outputSubTomogramsSet)
-
 
     def writeSetOfCoordinates3D(self):
         self.coordsFileName = self._getExtraPath(
@@ -173,18 +174,18 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     # --------------------------- STEPS functions -----------------------------
     def extractParticles(self):
 
-        self.writeSetOfCoordinates3D()
-        self.boxSize = self.inputCoordinates.get().getBoxSize()
-
         args = '%s --coords %s --boxsize %d' % (
             self.getInputTomogram().getFileName(), pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'),
-            self.boxSize)
+            self.inputCoordinates.get().getBoxSize())
 
         if self.doInvert:
             args += ' --invert'
 
         if self.doNormalize:
-            args += ' --normproc '
+            args += ' --normproc %s' % self.getEnumText('normproc')
+
+        if self.cshrink > 1:
+            args += ' --cshrink %d' % self.cshrink
 
         program = eman2.Plugin.getProgram('e2spt_boxer.py')
         self.runJob(program, args,
@@ -199,14 +200,12 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         return errors
 
-
     def _methods(self):
         methodsMsgs = []
 
-
-        if self.getStatus() == STATUS_FINISHED:
-            msg = ("A total of %d particles of size %d were extracted"
-                   % (self.outputSubTomogramsSet.getDim(), self.boxSize))
+        if self.getOutputsSize() >= 1:
+            msg = ("A total of %s subtomograms of size %s were extracted"
+                   % (str(self.inputCoordinates.get().getSize()), self.inputCoordinates.get().getBoxSize()))
 
             if self._micsOther():
                 msg += (" from another set of micrographs: %s"
@@ -215,29 +214,30 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             msg += " using coordinates %s" % self.getObjectTag('inputCoordinates')
             msg += self.methodsVar.get('')
             methodsMsgs.append(msg)
+        else:
+            methodsMsgs.append("Set of Subtomograms not ready yet")
 
-        # if self.doInvert:
-        #     methodsMsgs.append("Inverted contrast on images.")
-        # if self._doDownsample():
-        #     methodsMsgs.append("Particles downsampled by a factor of %0.2f."
-        #                        % self.downFactor)
-        # if self.doNormalize:
-        #     methodsMsgs.append("Particles were normalised.")
+        if self.doInvert:
+             methodsMsgs.append("Inverted contrast on images.")
+        if self.cshrink > 1:
+            methodsMsgs.append("Coordinates multiple by factor %d."
+                               % self.cshrink)
+        if self.doNormalize:
+            methodsMsgs.append("Particles were normalised. Using normalization method %s") % self.getEnumText('normproc')
 
         return methodsMsgs
-
 
     def _summary(self):
         summary = []
         summary.append("Micrographs source: %s"
                        % self.getEnumText("downsampleType"))
-        summary.append("Particle box size: %d" % self.boxSize)
 
-        if not hasattr(self, 'outputSubTomogramsSet'):
-            summary.append("Output subtomograms not ready yet.")
+        if self.getOutputsSize() >= 1:
+            summary.append("Particle box size: %s" % self.inputCoordinates.get().getBoxSize())
+            summary.append("Subtomogram extracted: %s" %
+                           self.inputCoordinates.get().getSize())
         else:
-            summary.append("Subtomograms extracted: %d" %
-                           self.outputSubTomogramsSet.getDim())
+            summary.append("Output subtomograms not ready yet.")
 
         return summary
 
