@@ -67,19 +67,17 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
                       choices=['same as picking', 'other'],
                       default=0, important=True,
                       display=params.EnumParam.DISPLAY_HLIST,
-                      label='Micrographs source',
-                      help='By default the particles will be extracted '
-                           'from the micrographs used in the picking '
+                      label='Tomogram source',
+                      help='By default the subtomograms will be extracted '
+                           'from the tomogram used in the picking '
                            'step ( _same as picking_ option ). \n'
                            'If you select _other_ option, you must provide '
-                           'a different set of micrographs to extract from. \n'
+                           'a different tomogram to extract from. \n'
                            '*Note*: In the _other_ case, ensure that provided '
-                           'micrographs and coordinates are related '
-                           'by micName or by micId. Difference in pixel size '
-                           'will be handled automatically.')
+                           'tomogram and coordinates are related ')
 
         form.addParam('inputTomogram', params.PointerParam,
-                      pointerClass='SetOfMicrographs',
+                      pointerClass='Tomogram',
                       condition='downsampleType != %s' % SAME_AS_PICKING,
                       important=True, label='Input tomogram',
                       help='Select the tomogram from which to extract.')
@@ -87,15 +85,15 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         form.addSection(label='Preprocess')
         form.addParam('doInvert', params.BooleanParam, default=False,
                       label='Invert contrast?',
-                      help='Invert the contrast if your particles are black '
+                      help='Invert the contrast if your tomogram is black '
                            'over a white background.  Xmipp, Spider, Relion '
                            'and Eman require white particles over a black '
                            'background. Frealign (up to v9.07) requires black '
                            'particles over a white background')
 
         form.addParam('doNormalize', params.BooleanParam, default=False,
-                      label='Normalize particles?',
-                      help='Normalization processor applied to particles before extraction.')
+                      label='Normalize subtomogram?',
+                      help='Normalization processor applied to subtomograms before extraction.')
         form.addParam('normproc', params.EnumParam,
                       choices=['normalize', 'normalize.edgemean'],
                       label='Normalize method',
