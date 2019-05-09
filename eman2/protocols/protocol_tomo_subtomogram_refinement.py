@@ -109,8 +109,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def _insertAllSteps(self):
         #TODO: Get the basename.hdf from the inputSetOfSubTomogram
-        #self._insertFunctionStep('convertInputStep')
-        print('#--------------- convertInputStep -----------------------')
+        #self._insertFunctionStep('convertInputStep') 
         self._insertFunctionStep('refinementSubtomogram')
         #TODO: Set and show the output
         #self._insertFunctionStep('createOutputStep')
