@@ -27,18 +27,12 @@
 # **************************************************************************
 from types import NoneType
 
-from xmipp3.convert import writeSetOfParticles
-
 import pyworkflow.protocol.params as params
 import pyworkflow.em as pwem
 
 from tomo.protocols import ProtTomoBase
-from pyworkflow.protocol import STEPS_PARALLEL, join
-from pprint import pprint
+from pyworkflow.protocol import STEPS_PARALLEL
 import eman2
-from eman2.constants import *
-
-from tomo.objects import SetOfSubTomograms, SubTomogram
 
 SAME_AS_PICKING = 0
 class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
