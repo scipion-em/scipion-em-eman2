@@ -109,7 +109,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def _insertAllSteps(self):
         #TODO: Get the basename.hdf from the inputSetOfSubTomogram
-        #self._insertFunctionStep('convertInputStep') 
+        #self._insertFunctionStep('convertInputStep')
         self._insertFunctionStep('refinementSubtomogram')
         #TODO: Set and show the output
         #self._insertFunctionStep('createOutputStep')
@@ -117,9 +117,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     #--------------- STEPS functions -----------------------
     def refinementSubtomogram(self):
         """ Run the Subtomogram refinement. """
-        input = pwem.os.getcwd() + "/" + self.inputSetOfSubTomogram.get().getFileName().replace("subtomograms.sqlite","extra/sptboxer_01/basename.hdf")
-        print('#--------------- refinementSubtomogram ----------------------- %s ' % input)
-        args = ' %s' % input
+        args = ' %s' % pwem.os.getcwd() + "/" + self.inputSetOfSubTomogram.get().getFileName().replace("subtomograms.sqlite","extra/sptboxer_01/basename.hdf")
         if not isinstance(self.inputRef.get(), NoneType):
             args += (' --reference=%s ' % self.inputRef.get().getFileName())
         args += (' --mass=%f' % self.mass)
@@ -134,9 +132,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
             args += ' --goldcontinue '
         if self.localfilter:
             args += ' --localfilter '
-        print('#--------------- STEPS functions -----------------------')
         print("command: e2spt_refine.py " + args)
-        print('#--------------- STEPS functions -----------------------')
         program = eman2.Plugin.getProgram('e2spt_refine.py')
         self.runJob(program, args,
                     cwd=self._getExtraPath())
