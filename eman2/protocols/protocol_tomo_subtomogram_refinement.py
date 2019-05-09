@@ -26,20 +26,20 @@
 # *
 # **************************************************************************
 
-from os.path import basename, abspath
-
 import pyworkflow.protocol.params as params
 import pyworkflow.em as pwem
-from pyworkflow.em import ImageHandler
-from pyworkflow.em.data import Transform
-from pyworkflow.em.convert import Ccp4Header
-from pyworkflow.utils.path import createAbsLink
-from pyworkflow.utils.properties import Message
 
 from tomo.protocols import ProtTomoBase
-from pyworkflow.protocol import STEPS_PARALLEL
+from pyworkflow.protocol import STEPS_PARALLEL, join
 
+import eman2
+from eman2.constants import *
 
+from tomo.objects import SetOfSubTomograms, SubTomogram
+# Micrograph type constants for particle extraction
+from pyworkflow.utils.dataset import DataSet
+
+SAME_AS_PICKING = 0
 class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     """Protocol to performs a conventional iterative subtomogram averaging using the full set of particles."""
     _outputClassName = 'SubTomogramRefinement'
@@ -53,40 +53,92 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def _defineParams(self, form):
         form.addSection(label='Params')
-        group = form.addGroup('Input')
-        group.addParam('inputSetOfTomograms', pwem.PointerParam,
-                       pointerClass='SetOfTomograms',
-                       label="Input set of tomograms", important=True,
-                       help='Select the input set of tomograms.')
-        group.addParam('iter', pwem.IntParam, default=1,
-                       label='Number of iterations',
-                       help='default(1)'
-                            'The number of iterations to perform.')
-        group.addParam('shrink', pwem.IntParam, default=1,
-                       label='Shrink:',
-                       help='Default=1 (no shrinking).'
-                            'Optionally shrink the input'
-                            'volumes by an integer amount for'
-                            ' coarse alignment.')
-        group.addParam('goldStandardOff', pwem.BooleanParam, default=False,
-                       label="Gold Standard off",
-                       help='This will PREVENT splitting the dataset'
-                            'provided through --input into two groups, '
-                            'and the entire dataset will be refined together.'
-                            'If this parameter is NOT supplied (and thus '
-                            'the refinement is "gold standard") and --ref is supplied, '
-                            'two copies of the reference will be generated and'
-                            ' randomphase-lowpass filtered to the resolution '
-                            'specified through --refrandphase.')
+        form.addParam('inputSetOfSubTomogram', params.PointerParam,
+                      pointerClass='SetOfSubTomograms',
+                      important=True, label='Input SetOfSubTomograms',
+                      help='Select the SetOfSubTomograms.')
+        form.addParam('inputRef', params.PointerParam,
+                      pointerClass='Volume', allowsNull=True,
+                      default=None, label='Input Ref Tomogram',
+                      help='3D reference for initial model generation.'
+                           'No reference is used by default.')
 
+        group = form.addGroup('Input')
+        group.addParam('niter', pwem.IntParam, default=5,
+                       label='Number of iterations',
+                       help='The number of iterations to perform.')
+        group.addParam('mass', pwem.FloatParam, default=500.0,
+                       label='Mass:',
+                       help='Default=500.0.'
+                            'mass')
+        group.addParam('threads', pwem.IntParam, default=2,
+                       label='Threads:',
+                       help='Number of threads')
+        group.addParam('pkeep', pwem.FloatParam, default=0.8,
+                       label='Particle keep:',
+                       help='Fraction of particles to keep')
+        group.addParam('goldstandard', pwem.IntParam, default=-1,
+                       label='GoldStandard:',
+                       help='initial resolution for gold standard refinement')
         form.addParallelSection(threads=2, mpi=4)
 
     #--------------- INSERT steps functions ----------------
 
     def _insertAllSteps(self):
-        pass
+        self._insertFunctionStep('refinementSubtomogram')
+
+
+    def runImportParticlesSqlite(cls, pattern, samplingRate):
+        """ Run an Import particles protocol. """
+        cls.protImport = cls.newProtocol(pwem.ProtImportParticles,
+                                         importFrom=4,
+                                         sqliteFile=pattern, samplingRate=samplingRate)
+        cls.launchProtocol(cls.protImport)
+        # check that input images have been imported (a better way to do this?)
+        if cls.protImport.outputParticles is None:
+            raise Exception('Import of images: %s, failed. outputParticles is None.' % pattern)
+        return cls.protImport
+
+    def getFile(self, key):
+        if key in self.filesDict:
+            return join(self.path, self.filesDict[key])
+        return join(self.path, key)
 
     #--------------- STEPS functions -----------------------
+    def refinementSubtomogram(self):
+        print ('---------------------------------------------------------------------------------')
+        print ('refinementSubtomogram')
+        print ('---------------------------------------------------------------------------------')
+
+
+        print("import particles")
+
+        self.partsFn = self.getFile(self.inputSetOfSubTomogram.get().getFileName())
+        self.protImport = self.runImportParticlesSqlite(self.partsFn, 3.5)
+        args = ' %s' % (
+            pwem.os.getcwd() + "/" + self.inputSetOfSubTomogram.get().getFileName()).replace("subtomograms.sqlite", "extra/sptboxer_01/basename.hdf")
+        print(self.inputSetOfSubTomogram.get().get())
+        print ('---------------------------------------------------------------------------------')
+        print(self.inputRef.get())
+        if self.inputRef is not None:
+            args += (' --reference=%s ' % self.inputRef.get().getFileName())
+
+        if self.mass:
+            args += (' --mass=%f' % self.mass)
+
+        if self.niter > 1:
+            args += ' --niter=%d' % self.niter
+
+        args += ' --threads=%d' % self.threads
+        args += ' --goldstandard=%d ' % self.goldstandard
+        args += ' --pkeep=%f ' % self.pkeep
+
+        args += ' --sym=c1 --maxtilt=90.0 '
+        print ('---------------------------------------------------------------------------------')
+        print("command: " + args)
+        program = eman2.Plugin.getProgram('e2spt_refine.py')
+        self.runJob(program, args,
+                    cwd=self._getExtraPath())
 
     def convertInputStep(self):
         pass
@@ -100,13 +152,27 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     #--------------- INFO functions -------------------------
 
     def _validate(self):
-        return []
+        errors = []
+
+        if not eman2.Plugin.isNewVersion():
+            errors.append('Your EMAN2 version does not support the subtomogram refinement. '
+                          'Please update your installation to EMAN 2.23 or newer.')
+
+        return errors
 
     def _citations(self):
         return []
 
     def _summary(self):
-        return []
+        summary = []
+        summary.append("SetOfSubTomograms source: %s" % (self.inputSetOfSubTomogram.get().getFileName()))
+
+        if self.getOutputsSize() >= 1:
+            summary.append("Subtomogram refinamented")
+        else:
+            summary.append("Output subtomograms not ready yet.")
+
+        return summary
 
     def _methods(self):
         return []
