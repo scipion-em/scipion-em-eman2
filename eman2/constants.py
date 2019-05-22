@@ -33,6 +33,7 @@ EMAN2DIR = 'EMAN2DIR'
 # Supported versions
 V2_12 = '2.12'
 V2_21 = '2.21'
+V2_3 = '2.3'
 
 #------------------ Constants values ------------------------------------------
 

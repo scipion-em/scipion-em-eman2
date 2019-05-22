@@ -45,12 +45,12 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     _label = 'tomo extraction'
     OUTPUT_PREFIX = 'outputSetOfSubtomogram'
 
-    def __init__(self, **kwargs):
-        pwem.EMProtocol.__init__(self, **kwargs)
-
     @classmethod
     def isDisabled(cls):
-        return not eman2.Plugin.isNewVersion()
+        return not eman2.Plugin.isTomoAvailableVersion()
+
+    def __init__(self, **kwargs):
+        pwem.EMProtocol.__init__(self, **kwargs)
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -153,6 +153,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         suffix = self._getOutputSuffix(SetOfSubTomograms)
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(suffix)
         self.outputSubTomogramsSet.setSamplingRate(self.getInputTomogram().getSamplingRate())
+        self.outputSubTomogramsSet.setCoordinates3D(self.inputCoordinates)
 
         self.readSetOfTomograms(self._getExtraPath(pwutils.join('sptboxer_01', 'basename.hdf')),
                                 self.outputSubTomogramsSet)
@@ -185,7 +186,8 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         if self.cshrink > 1:
             args += ' --cshrink %d' % self.cshrink
 
-        program = eman2.Plugin.getProgram('e2spt_boxer.py')
+        program = eman2.Plugin.getProgram('e2spt_boxer_old.py')
+
         self.runJob(program, args,
                     cwd=self._getExtraPath())
 
