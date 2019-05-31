@@ -23,16 +23,17 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from pprint import pprint
 
-
-from pyworkflow.tests import *
+from tomo.data import DataSet
+from pyworkflow.tests import BaseTest, setupTestProject
 import pyworkflow.em as pwem
 from pyworkflow.utils import importFromPlugin
 
 import eman2
 from eman2 import *
 from eman2.protocols import *
-
+from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
 
 
 class TestEmanBase(BaseTest):
@@ -387,3 +388,101 @@ class TestEmanAutopick(TestEmanBase):
                                  "There was a problem with e2boxer gauss auto protocol")
         else:
             print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
+
+
+class TestEmanTomoExtraction(TestEmanBase):
+    """This class check if the protocol to extract particles
+    in Relion works properly.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('tomo-em')
+
+    def _runImportSetOfCoordinates3D(self, downsampleType = 0, doInvert = False, doNormalize = False, cshrink = 1):
+        protImportTomogram = self.newProtocol(ProtImportTomograms,
+                                 filesPath=self.dataset.getFile('overview_wbp.em'),
+                                 samplingRate=5)
+
+        self.launchProtocol(protImportTomogram)
+
+        protImportCoordinates3d = self.newProtocol(ProtImportCoordinates3D,
+                                 auto=ProtImportCoordinates3D.IMPORT_FROM_EMAN,
+                                 filesPath=self.dataset.getFile('coordinates3Deman2'),
+                                 importTomogram=protImportTomogram.outputTomogram,
+                                 filesPattern='', boxSize=32,
+                                 samplingRate=5)
+
+        self.launchProtocol(protImportCoordinates3d)
+        self.assertIsNotNone(protImportTomogram.outputTomogram,
+                             "There was a problem with tomogram output")
+        self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
+                             "There was a problem with coordinates 3d output")
+        print("downsampleType")
+        print(downsampleType)
+        if downsampleType == 1:
+            protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
+                                              inputTomogram=protImportTomogram.outputTomogram,
+                                              inputCoordinates=protImportCoordinates3d.outputCoordinates,
+                                              downsampleType=downsampleType,
+                                              doInvert=doInvert,
+                                              doNormalize=doNormalize,
+                                              cshrink=cshrink)
+        else:
+            protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
+                                              inputCoordinates=protImportCoordinates3d.outputCoordinates,
+                                              downsampleType=downsampleType,
+                                              doInvert=doInvert,
+                                              doNormalize=doNormalize,
+                                              cshrink=cshrink)
+        self.launchProtocol(protTomoExtraction)
+        self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
+                             "There was a problem with SetOfSubtomogram output")
+        return protTomoExtraction
+
+    def test_extractParticlesWithoutDownSampleType(self):
+        protImport = self._runImportSetOfCoordinates3D()
+        output = getattr(protImport, 'outputSetOfSubtomogram', None)
+        self.assertFalse(output is None)
+
+        return protImport
+
+    def test_extractParticlesWithDownSample(self):
+        protImport = self._runImportSetOfCoordinates3D(downsampleType = 1)
+        output = getattr(protImport, 'outputSetOfSubtomogram', None)
+        self.assertFalse(output is None)
+
+        return protImport
+
+    def test_extractParticlesWithDoInvert(self):
+        protImport = self._runImportSetOfCoordinates3D(doInvert=True)
+        output = getattr(protImport, 'outputSetOfSubtomogram', None)
+        self.assertFalse(output is None)
+
+        return protImport
+
+    def test_extractParticlesWithDoNormalize(self):
+        protImport = self._runImportSetOfCoordinates3D(doNormalize=True)
+        output = getattr(protImport, 'outputSetOfSubtomogram', None)
+        self.assertFalse(output is None)
+
+        return protImport
+
+    def test_extractParticlesModifiedCshrink(self):
+        protImport = self._runImportSetOfCoordinates3D(cshrink = 2)
+        output = getattr(protImport, 'outputSetOfSubtomogram', None)
+        self.assertFalse(output is None)
+
+        return protImport
+
+    def test_extractParticlesWithAllOptions(self):
+        protImport = self._runImportSetOfCoordinates3D(cshrink = 2, doNormalize=True, doInvert=True)
+        output = getattr(protImport, 'outputSetOfSubtomogram', None)
+        print(dir(output))
+        print(output.getCoordinates3D())
+        pprint(vars(output))
+        pprint(vars(output._size._objComment))
+        self.assertFalse(output is None)
+
+        return protImport
