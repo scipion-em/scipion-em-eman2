@@ -398,8 +398,8 @@ class TestEmanTomoExtraction(TestEmanBase):
     def setUpClass(cls):
         setupTestProject(cls)
         cls.dataset = DataSet.getDataSet('tomo-em')
-        cls.tomogram = cls.dataset.getFile('tomo1')
-        cls.coords3D = cls.dataset.getFile('eman_coordinates')
+        cls.tomogram = cls.dataset.getFile('overview_wbp.em')
+        cls.coords3D = cls.dataset.getFile('coordinates3Deman2')
 
     def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, cshrink = 1):
         protImportTomogram = self.newProtocol(ProtImportTomograms,
@@ -470,7 +470,7 @@ class TestEmanTomoExtraction(TestEmanBase):
         return protTomoExtraction
 
     def test_extractParticlesModifiedCshrink(self):
-        protTomoExtraction = self._runImportSetOfCoordinates3D(cshrink = 2)
+        protTomoExtraction = self._runTomoExtraction(cshrink = 2)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
         self.assertFalse(output is None)
 
