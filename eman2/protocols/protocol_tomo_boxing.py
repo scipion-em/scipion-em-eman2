@@ -46,7 +46,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     @classmethod
     def isDisabled(cls):
-        return not eman2.Plugin.isNewVersion()
+        return not eman2.Plugin.isTomoAvailableVersion()
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):

@@ -30,7 +30,7 @@ import subprocess
 import pyworkflow.em
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2DIR, V2_12, V2_21
+from .constants import EMAN2DIR, V2_12, V2_21, V2_3
 
 
 _logo = "eman2_logo.png"
@@ -43,7 +43,7 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pyworkflow.em.Plugin):
     _homeVar = EMAN2DIR
     _pathVars = [EMAN2DIR]
-    _supportedVersions = [V2_12, V2_21]
+    _supportedVersions = [V2_12, V2_21, V2_3]
 
     @classmethod
     def _defineVariables(cls):
@@ -80,6 +80,10 @@ class Plugin(pyworkflow.em.Plugin):
     @classmethod
     def isNewVersion(cls):
         return not cls.getActiveVersion().startswith("2.1")
+
+    @classmethod
+    def isTomoAvailableVersion(cls):
+        return cls.getActiveVersion().startswith("2.3")
 
     @classmethod
     def getProgram(cls, program, python=False):
