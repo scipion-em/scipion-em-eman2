@@ -24,8 +24,7 @@
 # *
 # **************************************************************************
 
-from tomo.data import DataSet
-from pyworkflow.tests import BaseTest, setupTestProject
+from pyworkflow.tests import BaseTest, setupTestProject, DataSet
 import pyworkflow.em as pwem
 from pyworkflow.utils import importFromPlugin
 
@@ -33,7 +32,6 @@ import eman2
 from eman2 import *
 from eman2.protocols import *
 from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
-
 
 class TestEmanBase(BaseTest):
     @classmethod
@@ -398,8 +396,8 @@ class TestEmanTomoExtraction(TestEmanBase):
     def setUpClass(cls):
         setupTestProject(cls)
         cls.dataset = DataSet.getDataSet('tomo-em')
-        cls.tomogram = cls.dataset.getFile('overview_wbp.em')
-        cls.coords3D = cls.dataset.getFile('coordinates3Deman2')
+        cls.tomogram = cls.dataset.getFile('tomo1')
+        cls.coords3D = cls.dataset.getFile('eman_coordinates')
 
     def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, cshrink = 1):
         protImportTomogram = self.newProtocol(ProtImportTomograms,
@@ -444,41 +442,52 @@ class TestEmanTomoExtraction(TestEmanBase):
     def test_extractParticlesWithoutDownSampleType(self):
         protTomoExtraction = self._runTomoExtraction()
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
-        self.assertFalse(output is None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
 
         return protTomoExtraction
 
     def test_extractParticlesWithDownSample(self):
         protTomoExtraction = self._runTomoExtraction(downsampleType = 1)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
-        self.assertFalse(output is None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
 
         return protTomoExtraction
 
     def test_extractParticlesWithDoInvert(self):
         protTomoExtraction = self._runTomoExtraction(doInvert=True)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
-        self.assertFalse(output is None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
 
         return protTomoExtraction
 
     def test_extractParticlesWithDoNormalize(self):
         protTomoExtraction = self._runTomoExtraction(doNormalize=True)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
-        self.assertFalse(output is None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
 
         return protTomoExtraction
 
     def test_extractParticlesModifiedCshrink(self):
         protTomoExtraction = self._runTomoExtraction(cshrink = 2)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
-        self.assertFalse(output is None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
 
         return protTomoExtraction
 
     def test_extractParticlesWithAllOptions(self):
         protTomoExtraction = self._runTomoExtraction(cshrink = 2, doNormalize=True, doInvert=True)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
-        self.assertFalse(output is None)
-
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
         return protTomoExtraction
