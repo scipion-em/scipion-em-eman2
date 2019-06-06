@@ -31,7 +31,7 @@ from pyworkflow.utils import importFromPlugin
 import eman2
 from eman2 import *
 from eman2.protocols import *
-from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
+from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms, ProtImportSubTomograms
 from tomo.tests import DataSet
 
 class TestEmanBase(BaseTest):
@@ -491,4 +491,84 @@ class TestEmanTomoExtraction(TestEmanBase):
         self.assertTrue(output)
         self.assertTrue(output.hasCoordinates3D())
         self.assertTrue(output.getCoordinates3D().getObjValue())
+        return protTomoExtraction
+
+class TestEmanTomoSubtomogramRefinement(TestEmanBase):
+    """This class check if the protocol Subtomogram refinement works properly.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('tomo-em')
+        cls.tomogram = cls.dataset.getFile('tomo1')
+        cls.inputSetOfSubTomogram = cls.dataset.getFile('subtomo')
+        cls.coords3D = cls.dataset.getFile('eman_coordinates')
+
+    def _runTomoSubtomogramRefinement(self, niter=2, mass=500.0, threads=1, pkeep=0.8, goldstandard=-1,
+                                      goldcontinue=False, maskFile="", setsf="", sym="c1", localfilter=False, maxtilt =90.0):
+
+        protImportTomogram = self.newProtocol(ProtImportTomograms,
+                                 filesPath=self.tomogram,
+                                 samplingRate=5)
+
+        self.launchProtocol(protImportTomogram)
+
+        protImportCoordinates3d = self.newProtocol(ProtImportCoordinates3D,
+                                                   auto=ProtImportCoordinates3D.IMPORT_FROM_EMAN,
+                                                   filesPath=self.coords3D,
+                                                   importTomogram=protImportTomogram.outputTomogram,
+                                                   filesPattern='', boxSize=32,
+                                                   samplingRate=5)
+
+        self.launchProtocol(protImportCoordinates3d)
+        self.assertIsNotNone(protImportTomogram.outputTomogram,
+                             "There was a problem with tomogram output")
+        self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
+                             "There was a problem with coordinates 3d output")
+        doInvert = False
+        doNormalize = False
+        cshrink = 1
+        protImportSubTomograms = self.newProtocol(EmanProtTomoExtraction,
+                                              inputTomogram=protImportTomogram.outputTomogram,
+                                              inputCoordinates=protImportCoordinates3d.outputCoordinates,
+                                              downsampleType=0,
+                                              doInvert=doInvert,
+                                              doNormalize=doNormalize,
+                                              cshrink=cshrink)
+
+        self.launchProtocol(protImportSubTomograms)
+        self.assertIsNotNone(protImportSubTomograms.outputSetOfSubtomogram,
+                             "There was a problem with SetOfSubtomogram output")
+
+
+        protImportTomogram = self.newProtocol(ProtImportTomograms,
+                                 filesPath=self.tomogram,
+                                 samplingRate=5)
+        self.launchProtocol(protImportTomogram)
+        # when i add the options: maskFile=maskFile, setsf=setsf, sym=sym, the protocol crash.
+        protTomoRefinement = self.newProtocol(EmanProtTomoRefinement,
+                                              inputSetOfSubTomogram=protImportSubTomograms.outputSetOfSubtomogram,
+                                              inputRef=protImportTomogram.outputTomogram,
+                                              niter=niter,
+                                              mass=mass,
+                                              threads=threads,
+                                              pkeep=pkeep,
+                                              goldstandard=goldstandard,
+                                              goldcontinue=goldcontinue,
+                                              sym=sym,
+                                              localfilter=localfilter,
+                                              maxtilt=maxtilt)
+
+        self.launchProtocol(protTomoRefinement)
+
+        self.assertIsNotNone(protTomoRefinement.outputSetOfSubtomogram,
+                             "There was a problem with SubtomogramRefinement output")
+        return protTomoRefinement
+
+    def test_defaultSubtomogramRefinement(self):
+        protTomoExtraction = self._runTomoSubtomogramRefinement()
+        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
+        self.assertTrue(output)
+
         return protTomoExtraction
