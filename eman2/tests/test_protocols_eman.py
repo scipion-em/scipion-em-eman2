@@ -24,7 +24,7 @@
 # *
 # **************************************************************************
 
-from pyworkflow.tests import BaseTest, setupTestProject, DataSet
+from pyworkflow.tests import BaseTest, setupTestProject
 import pyworkflow.em as pwem
 from pyworkflow.utils import importFromPlugin
 
