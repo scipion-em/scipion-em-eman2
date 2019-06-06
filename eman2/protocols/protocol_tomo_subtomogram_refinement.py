@@ -142,8 +142,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
             args += ' --localfilter '
         print("command: e2spt_refine.py " + args)
         program = eman2.Plugin.getProgram('e2spt_refine.py')
-        self.runJob(program, args,
-                    cwd=self._getExtraPath())
+        self.runJob(program, args)
 
     def runMLStep(self, params):
         pass
