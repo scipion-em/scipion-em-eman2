@@ -43,11 +43,11 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pyworkflow.em.Plugin):
     _homeVar = EMAN2DIR
     _pathVars = [EMAN2DIR]
-    _supportedVersions = [V2_12, V2_21]
+    _supportedVersions = [V2_12, V2_21, V2_3]
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2DIR, 'eman-2.21')
+        cls._defineEmVar(EMAN2DIR, 'eman-2.3')
 
     @classmethod
     def getEnviron(cls):
@@ -140,10 +140,17 @@ class Plugin(pyworkflow.em.Plugin):
         eman22_commands = [
             ('./eman2.21.linux64.centos7.sh -b -p "%s/eman-2.21"' %
              SW_EM, '%s/eman-2.21/bin/python' % SW_EM)]
+        eman23_commands = [
+            ('./eman2.3.linux64.centos7.sh -b -p "%s/eman-2.3"' %
+             SW_EM, '%s/eman-2.3/bin/python' % SW_EM)]
 
         env.addPackage('eman', version='2.21',
                        tar='eman2.21.linux64.centos7.tgz',
-                       commands=eman22_commands,
+                       commands=eman22_commands)
+
+        env.addPackage('eman', version='2.3',
+                       tar='eman2.3.linux64.centos7.tgz',
+                       commands=eman23_commands,
                        default=True)
 
 
