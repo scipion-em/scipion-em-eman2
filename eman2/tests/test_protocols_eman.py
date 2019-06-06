@@ -32,6 +32,7 @@ import eman2
 from eman2 import *
 from eman2.protocols import *
 from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
+from tomo.tests import DataSet
 
 class TestEmanBase(BaseTest):
     @classmethod
