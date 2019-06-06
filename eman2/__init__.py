@@ -47,7 +47,7 @@ class Plugin(pyworkflow.em.Plugin):
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2DIR, 'eman-2.23')
+        cls._defineEmVar(EMAN2DIR, 'eman-2.21')
 
     @classmethod
     def getEnviron(cls):

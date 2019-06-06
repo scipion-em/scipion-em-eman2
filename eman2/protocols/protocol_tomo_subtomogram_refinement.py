@@ -27,11 +27,15 @@
 # **************************************************************************
 from types import NoneType
 
+from pyworkflow import utils as pwutils
 import pyworkflow.protocol.params as params
 import pyworkflow.em as pwem
+from pyworkflow.protocol import STEPS_PARALLEL
 
 from tomo.protocols import ProtTomoBase
-from pyworkflow.protocol import STEPS_PARALLEL
+
+from eman2.convert import writeSetOfSubTomograms
+
 import eman2
 
 SAME_AS_PICKING = 0
@@ -50,7 +54,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         form.addSection(label='Params')
         form.addParam('inputSetOfSubTomogram', params.PointerParam,
                       pointerClass='SetOfSubTomograms',
-                      important=True, label='Input SetOfSubTomograms',
+                      important=True, label='Input SubTomograms',
                       help='Select the SetOfSubTomograms.')
         form.addParam('inputRef', params.PointerParam,
                       pointerClass='Volume',
@@ -110,8 +114,18 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     #--------------- STEPS functions -----------------------
     def refinementSubtomogram(self):
+
+
+        storePath = self._getExtraPath("subtomograms")
+        pwutils.makePath(storePath)
+
+        newFn = pwutils.removeBaseExt(list(self.inputSetOfSubTomogram.get().getFiles())[0]).split('__ctf')[0] + '.hdf'
+        newFn = pwutils.join(storePath, newFn)
+        writeSetOfSubTomograms(self.inputSetOfSubTomogram.get(), storePath)
+
+
         """ Run the Subtomogram refinement. """
-        args = ' %s' % pwem.os.getcwd() + "/" + self.inputSetOfSubTomogram.get().getFileName().replace("subtomograms.sqlite","extra/sptboxer_01/basename.hdf")
+        args = ' %s' % newFn
         if not isinstance(self.inputRef.get(), NoneType):
             args += (' --reference=%s ' % self.inputRef.get().getFileName())
         args += (' --mass=%f' % self.mass)

@@ -152,6 +152,8 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coord.setMicrograph(mic)
                 coordsSet.append(coord)
 
+def writeSetOfSubTomograms(micSet, filename):
+    writeSetOfParticles(micSet, filename)
 
 def writeSetOfMicrographs(micSet, filename):
     """ Simplified function borrowed from xmipp. """
