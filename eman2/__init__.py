@@ -30,7 +30,7 @@ import subprocess
 import pyworkflow.em
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2DIR, EMAN2_HOME, V2_12, V2_21, V2_3
+from .constants import EMAN2_HOME, V2_21, V2_3
 
 
 _logo = "eman2_logo.png"
@@ -43,28 +43,17 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pyworkflow.em.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_12, V2_21, V2_3]
+    _supportedVersions = [V2_21, V2_3]
 
     @classmethod
     def _defineVariables(cls):
         cls._defineEmVar(EMAN2_HOME, 'eman-2.3')
-
-    # todo: remove this func in future releases
-    @classmethod
-    def getHome(cls, *paths):
-        """ Return a path from the "home" of the package
-         if the _homeVar is defined in the plugin. """
-        home = cls.getVar(cls._homeVar) or cls.getVar(EMAN2DIR)
-        return os.path.join(home, *paths) if home else ''
 
     @classmethod
     def getEnviron(cls):
         """ Setup the environment variables needed to launch Eman. """
         environ = pwutils.Environ(os.environ)
         pathList = [cls.getHome(d) for d in ['lib', 'bin']]
-
-        if not cls.isNewVersion():
-            pathList.append(cls.getHome('extlib', 'site-packages'))
 
         # This environment variable is used to setup OpenGL (Mesa)
         # library in remote desktops
@@ -75,19 +64,16 @@ class Plugin(pyworkflow.em.Plugin):
                        position=pwutils.Environ.BEGIN)
 
         environ.update({
-            'LD_LIBRARY_PATH': os.pathsep.join(pathList),
-            'PYTHONPATH': os.pathsep.join(pathList),
+            #'LD_LIBRARY_PATH': os.pathsep.join(pathList),
+            #'PYTHONPATH': os.pathsep.join(pathList),
             'SCIPION_MPI_FLAGS': os.environ.get('EMANMPIOPTS', '')
         }, position=pwutils.Environ.REPLACE)
 
-        if not cls.isNewVersion():
-            environ.update({'EMAN_PYTHON': cls.getHome('Python/bin/python')},
-                           position=pwutils.Environ.END)
         return environ
 
     @classmethod
     def isNewVersion(cls):
-        return not cls.getActiveVersion().startswith("2.1")
+        return cls.getActiveVersion().startswith("2.3")
 
     @classmethod
     def getProgram(cls, program, python=False):
@@ -95,11 +81,7 @@ class Plugin(pyworkflow.em.Plugin):
         program = os.path.join(cls.getHome('bin'), program)
 
         if python:
-            if cls.isNewVersion():
-                python = cls.getHome('bin/python')
-            else:
-                python = cls.getHome('Python/bin/python')
-
+            python = cls.getHome('bin/python')
             return '%(python)s %(program)s ' % locals()
         else:
             return '%(program)s ' % locals()
@@ -109,13 +91,8 @@ class Plugin(pyworkflow.em.Plugin):
         return cls.getProgram(program, python) + args
 
     @classmethod
-    def getBoxerCommand(cls, emanVersion=None, boxerVersion='new'):
-        """ Returns the Boxer command depending on Eman2 version.
-         If emanVersion is None, the current active version will be used.
-        """
-        emanVersion = emanVersion or cls.getActiveVersion()
-        new = emanVersion in [V2_12] or boxerVersion == 'new'
-        cmd = 'e2boxer.py' if new else 'e2boxer_old.py'
+    def getBoxerCommand(cls, boxerVersion='new'):
+        cmd = 'e2boxer.py' if boxerVersion == 'new' else 'e2boxer_old.py'
 
         return os.path.join(cls.getHome('bin'), cmd)
 
@@ -136,13 +113,6 @@ class Plugin(pyworkflow.em.Plugin):
 
     @classmethod
     def defineBinaries(cls, env):
-        eman2_commands = [('./eman2-installer',
-                           'eman2.*rc')]
-
-        env.addPackage('eman', version='2.12',
-                       tar='eman2.12.linux64.tgz',
-                       commands=eman2_commands)
-
         SW_EM = env.getEmFolder()
 
         eman22_commands = [
@@ -160,22 +130,6 @@ class Plugin(pyworkflow.em.Plugin):
                        tar='eman2.3.linux64.centos7.tgz',
                        commands=eman23_commands,
                        default=True)
-
-    # todo: remove this func in future releases
-    @classmethod
-    def validateInstallation(cls):
-        """
-        Check if the binaries are properly installed and if not, return
-        a list with the error messages.
-        """
-        if not os.path.exists(cls.getVar(EMAN2_HOME)):
-            if not os.path.exists(cls.getVar(EMAN2DIR)):
-                return ["Missing variables:"] + EMAN2_HOME
-            else:
-                # accept EMAN2DIR for now
-                return []
-        else:
-            return []
 
 
 pyworkflow.em.Domain.registerPlugin(__name__)

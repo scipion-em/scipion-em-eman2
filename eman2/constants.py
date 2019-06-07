@@ -28,11 +28,9 @@ This file contains constants related to EMAN2 protocols
 """
 
 
-EMAN2DIR = 'EMAN2DIR'
 EMAN2_HOME = 'EMAN2_HOME'
 
 # Supported versions
-V2_12 = '2.12'
 V2_21 = '2.21'
 V2_3 = '2.3'
 

@@ -61,10 +61,6 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
 """
     _label = 'refine 2D bispec'
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isNewVersion()
-
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
 

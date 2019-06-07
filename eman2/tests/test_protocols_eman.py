@@ -201,8 +201,6 @@ class TestEmanRefine2D(TestEmanBase):
         cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
 
     def test_Refine2DEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print("Run Eman Refine 2D")
         protRefine = self.newProtocol(EmanProtRefine2D,
                                       numberOfIterations=2, numberOfClassAvg=5,
@@ -221,8 +219,6 @@ class TestEmanRefine2DBispec(TestEmanBase):
         cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
 
     def test_Refine2DBispecEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print("Run Eman Refine 2D bispec")
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
                                       numberOfIterations=2, numberOfClassAvg=5,
@@ -306,8 +302,6 @@ class TestEmanCtfAuto(TestEmanBase):
         cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_CtfAutoEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol works only for EMAN2.21 or higher!')
         print("Run Eman CTF Auto")
         protCtf = self.newProtocol(EmanProtCTFAuto,
                                    numberOfThreads=3)
@@ -333,9 +327,6 @@ class TestEmanAutopick(TestEmanBase):
         cls.protImportAvg = cls.runImportAverages(cls.avgFn, 4.4)
 
     def test_AutopickEman(self):
-        if not eman2.Plugin.isNewVersion():
-            print('This protocol exists only for EMAN2.21 or higher! Skipping test..')
-            return
         print("Run Eman auto picking")
         protPick = self.newProtocol(EmanProtAutopick,
                                     boxerMode=1,  # by_ref
@@ -346,44 +337,3 @@ class TestEmanAutopick(TestEmanBase):
         self.launchProtocol(protPick)
         self.assertIsNotNone(protPick.outputCoordinates,
                              "There was a problem with e2boxer auto protocol")
-
-    def test_AutopickSparx(self):
-        if not eman2.Plugin.isNewVersion():
-            print("Run Eman auto picking with gauss/sparx")
-            protPick2 = self.newProtocol(SparxGaussianProtPicking,
-                                         boxSize=128,
-                                         lowerThreshold=0.004,
-                                         higherThreshold=0.1,
-                                         gaussWidth=0.525,
-                                         useVarImg=False,
-                                         doInvert=True)
-            protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
-            self.launchProtocol(protPick2)
-            self.assertIsNotNone(protPick2.outputCoordinates,
-                                 "There was a problem with e2boxer gauss auto protocol")
-        else:
-            print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
-
-    def test_AutopickSparxPointer(self):
-        if not eman2.Plugin.isNewVersion():
-            print("Simulating an automatic protocol to estimate the boxSize")
-            protAutoBoxSize = self.newProtocol(pwem.ProtOutputTest,
-                                               iBoxSize=64,  # output is twice
-                                               objLabel='auto boxsize simulator')
-            self.launchProtocol(protAutoBoxSize)
-
-            print("Run Eman auto picking with gauss/sparx")
-            protPick2 = self.newProtocol(SparxGaussianProtPicking,
-                                         lowerThreshold=0.004,
-                                         higherThreshold=0.1,
-                                         gaussWidth=0.525,
-                                         useVarImg=False,
-                                         doInvert=True)
-            protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
-            protPick2.boxSize.setPointer(pwem.Pointer(protAutoBoxSize,
-                                                      extended="oBoxSize"))
-            self.launchProtocol(protPick2)
-            self.assertIsNotNone(protPick2.outputCoordinates,
-                                 "There was a problem with e2boxer gauss auto protocol")
-        else:
-            print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")

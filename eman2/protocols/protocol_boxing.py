@@ -162,10 +162,6 @@ class EmanProtBoxing(ProtParticlePicking):
     def _validate(self):
         errors = []
 
-        if self.useNewBoxer and not eman2.Plugin.isNewVersion():
-            errors.append('Your EMAN2 version does not support new boxer. '
-                          'Please update your installation to EMAN 2.21 or newer.')
-
         return errors
 
     def _warnings(self):

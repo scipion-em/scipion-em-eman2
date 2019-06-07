@@ -46,10 +46,6 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
     _label = 'ctf auto'
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isNewVersion()
-
     def __init__(self, **kwargs):
         ProtProcessParticles.__init__(self, **kwargs)
 

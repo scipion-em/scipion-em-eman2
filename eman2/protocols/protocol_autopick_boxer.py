@@ -41,10 +41,6 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     """
     _label = 'boxer auto'
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isNewVersion()
-
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
 

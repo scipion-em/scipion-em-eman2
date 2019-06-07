@@ -134,16 +134,15 @@ Major features of this program:
                       label='Number of iterations',
                       help='The total number of refinement iterations to '
                            'perform.')
-        if eman2.Plugin.isNewVersion():
-            form.addParam('tophat', EnumParam,
-                          choices=['none', 'local', 'global'],
-                          label="Tophat filter?", default=TOPHAT_NONE,
-                          display=EnumParam.DISPLAY_COMBO,
-                          help='Instead of imposing a final '
-                               'Wiener filter (tophat = none)), use a tophat '
-                               'filter (global similar to Relion). local '
-                               'determines local resolution and '
-                               'filters. Danger of feature exaggeration.')
+        form.addParam('tophat', EnumParam,
+                      choices=['none', 'local', 'global'],
+                      label="Tophat filter?", default=TOPHAT_NONE,
+                      display=EnumParam.DISPLAY_COMBO,
+                      help='Instead of imposing a final '
+                           'Wiener filter (tophat = none)), use a tophat '
+                           'filter (global similar to Relion). local '
+                           'determines local resolution and '
+                           'filters. Danger of feature exaggeration.')
         form.addParam('symmetry', StringParam, default='c1',
                       condition='not doContinue',
                       label='Symmetry group',
@@ -196,11 +195,10 @@ Major features of this program:
         form.addParam('m3dKeep', FloatParam, default='0.8',
                       label='Fraction of class-averages to use in 3-D map',
                       help='The fraction of slices to keep in reconstruction.')
-        if eman2.Plugin.isNewVersion():
-            form.addParam('useBispec', BooleanParam, default=False,
-                          label='Use bispectra? (experimental)',
-                          help='Will use bispectra for orientation '
-                               'determination (EXPERIMENTAL).')
+        form.addParam('useBispec', BooleanParam, default=False,
+                      label='Use bispectra? (experimental)',
+                      help='Will use bispectra for orientation '
+                           'determination (EXPERIMENTAL).')
         form.addParam('useSetsfref', BooleanParam, default=True,
                       label='Use the setsfref option in class averaging?',
                       help='This matches the filtration of the class-averages '
@@ -223,15 +221,14 @@ Major features of this program:
                       help="<name>:<parm>=<value>:...  An arbitrary processor "
                            "(e2help.py processors -v2) to apply to the 3-D map "
                            "after each iteration. Default=none")
-        if eman2.Plugin.isNewVersion():
-            form.addParam('ampCorrect', EnumParam,
-                          choices=['auto', 'strucfac', 'flatten', 'none'],
-                          label="Amplitude correction:", default=AMP_AUTO,
-                          display=EnumParam.DISPLAY_COMBO,
-                          help="Will perform amplitude correction via the specified "
-                               "method. 'flatten' requires a target resolution better "
-                               "than 8 angstroms (experimental). 'none' will disable "
-                               "amplitude correction (experimental).")
+        form.addParam('ampCorrect', EnumParam,
+                      choices=['auto', 'strucfac', 'flatten', 'none'],
+                      label="Amplitude correction:", default=AMP_AUTO,
+                      display=EnumParam.DISPLAY_COMBO,
+                      help="Will perform amplitude correction via the specified "
+                           "method. 'flatten' requires a target resolution better "
+                           "than 8 angstroms (experimental). 'none' will disable "
+                           "amplitude correction (experimental).")
         form.addParam('extraParams', StringParam,
                       default='',
                       label='Additional parameters',
@@ -418,12 +415,11 @@ Major features of this program:
         if self.m3dPostProcess.get() != 'none':
             args += " --m3dpostprocess=%s" % self.m3dPostProcess.get()
 
-        if eman2.Plugin.isNewVersion():
-            args += " --ampcorrect=%s" % self.getEnumText('ampCorrect')
-            if self.tophat != TOPHAT_NONE:
-                args += " --tophat=%s" % self.getEnumText('tophat')
-            if self.useBispec:
-                args += " --bispec"
+        args += " --ampcorrect=%s" % self.getEnumText('ampCorrect')
+        if self.tophat != TOPHAT_NONE:
+            args += " --tophat=%s" % self.getEnumText('tophat')
+        if self.useBispec:
+            args += " --bispec"
 
         if self.extraParams.hasValue():
             args += ' ' + self.extraParams.get()

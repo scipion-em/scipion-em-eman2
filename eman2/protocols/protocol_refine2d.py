@@ -172,13 +172,12 @@ class EmanProtRefine2D(em.ProtClassify2D):
                       help='Will seed the k-means loop quickly, but may '
                            'produce less consistent results. Always use this '
                            'when generating >~ 100 classes.')
-        if eman2.Plugin.isNewVersion():
-            form.addParam('doAutomask', BooleanParam, default=False,
-                          expertLevel=LEVEL_ADVANCED,
-                          label='Automask class-averages?',
-                          help='This will perform a 2-D automask on class-averages '
-                               'to help with centering. May be useful for negative '
-                               'stain data particularly.')
+        form.addParam('doAutomask', BooleanParam, default=False,
+                      expertLevel=LEVEL_ADVANCED,
+                      label='Automask class-averages?',
+                      help='This will perform a 2-D automask on class-averages '
+                           'to help with centering. May be useful for negative '
+                           'stain data particularly.')
 
         line = form.addLine('Centering: ',
                             help="If the default centering algorithm "
@@ -515,7 +514,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
         if self.classRefSf:
             args += " --classrefsf"
 
-        if eman2.Plugin.isNewVersion() and self.doAutomask:
+        if self.doAutomask:
             args += " --automask"
 
         for param in ['simcmp', 'simalign', 'simralign', 'classnormproc',
