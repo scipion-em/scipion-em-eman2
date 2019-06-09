@@ -900,8 +900,8 @@ class CtfViewer(ProtocolViewer):
         if saveChanges:
             self.protocol.createOutputStep()
             showInfo("Output updated",
-                          "Output particles were updated with new CTF values.",
-                          self.getTkRoot())
+                     "Output particles were updated with new CTF values.",
+                     self.getTkRoot())
 
     def _load(self):
         self.protocol._createFilenameTemplates()

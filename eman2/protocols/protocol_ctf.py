@@ -54,6 +54,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
         myDict = {
             'partSet': self._getExtraPath('sets/all.lst'),
             'partSetFlipBispec': self._getExtraPath('sets/all__ctf_flip_bispec.lst'),
+            'partSetFlipInvar': self._getExtraPath('sets/all__ctf_flip_invar.lst'),
             'partSetFlipFullRes': self._getExtraPath('sets/all__ctf_flip_fullres.lst'),
             'partSetFlipLp5': self._getExtraPath('sets/all__ctf_flip_lp5.lst'),
             'partSetFlipLp7': self._getExtraPath('sets/all__ctf_flip_lp7.lst'),
@@ -96,6 +97,13 @@ class EmanProtCTFAuto(ProtProcessParticles):
                       label='Extra padding',
                       help='If particles were boxed more tightly than EMAN '
                            'requires, this will add some extra padding.')
+        if self._isVersion23():
+            form.addParam('invarType', EnumParam,
+                          expertLevel=LEVEL_ADVANCED,
+                          choices=['auto', 'bispec', 'harmonic'],
+                          label='Invariant type', default=INVAR_AUTO,
+                          display=EnumParam.DISPLAY_COMBO,
+                          help='Which type of invariants to generate')
         form.addParam('highDensity', BooleanParam, default=False,
                       label='High density ',
                       help='If particles are very close together, this will '
@@ -158,7 +166,10 @@ class EmanProtCTFAuto(ProtProcessParticles):
             if key == 'FL':
                 outputName = 'outputParticles_flip_fullRes'
             elif key == 'bispec':
-                outputName = 'outputParticles_flip_bispec'
+                if not self._isVersion23():
+                    outputName = 'outputParticles_flip_bispec'
+                else:
+                    outputName = 'outputParticles_flip_invar'
             else:
                 outputName = 'outputParticles_flip_lp%s' % key
 
@@ -187,9 +198,12 @@ class EmanProtCTFAuto(ProtProcessParticles):
     def _summary(self):
         summary = []
 
-        if self.hasAttribute('outputParticles_flip_bispec'):
+        if self.hasAttribute('outputParticles_flip_bispec') or \
+                self.hasAttribute('outputParticles_flip_invar'):
             summary.append('CTF estimation on particles completed, '
                            'produced filtered particles and bispectra.')
+        else:
+            summary.append('Output is not ready yet.')
 
         return summary
 
@@ -226,6 +240,8 @@ class EmanProtCTFAuto(ProtProcessParticles):
             args += " --highdensity"
         if self.invert:
             args += " --invert"
+        if self._isVersion23():
+            args += " --invartype %s" % self.getEnumText('invarType')
 
         args += " --constbfactor %0.2f --defocusmin %0.2f --defocusmax %0.2f" % (
             self.constBfact.get(),
@@ -252,17 +268,19 @@ class EmanProtCTFAuto(ProtProcessParticles):
         if protType == 'hires':
             outputs.update({'FL': 'partSetFlipFullRes',
                             '12': 'partSetFlipLp12',
-                            '5': 'partSetFlipLp5',
-                            'bispec': 'partSetFlipBispec'})
+                            '5': 'partSetFlipLp5'})
         elif protType == 'midres':
             outputs.update({'FL': 'partSetFlipFullRes',
                             '20': 'partSetFlipLp20',
-                            '7': 'partSetFlipLp7',
-                            'bispec': 'partSetFlipBispec'})
+                            '7': 'partSetFlipLp7'})
         else:  # lores
             outputs.update({'20': 'partSetFlipLp20',
-                            '12': 'partSetFlipLp12',
-                            'bispec': 'partSetFlipBispec'})
+                            '12': 'partSetFlipLp12'})
+
+        if not self._isVersion23():
+            outputs['bispec'] = 'partSetFlipBispec'
+        else:
+            outputs['bispec'] = 'partSetFlipInvar'
 
         return outputs
 
@@ -273,3 +291,6 @@ class EmanProtCTFAuto(ProtProcessParticles):
         oldPixSize = inputParts.getSamplingRate()
         newPixSize = float(oldDimX) / newBox * oldPixSize
         return newPixSize
+
+    def _isVersion23(self):
+        return eman2.Plugin.isVersion('2.3')

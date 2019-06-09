@@ -27,7 +27,8 @@
 import os
 
 from pyworkflow.protocol.params import (IntParam, FloatParam,
-                                        EnumParam, PointerParam)
+                                        EnumParam, PointerParam,
+                                        StringParam)
 from pyworkflow.em.protocol import ProtParticlePickingAuto
 from pyworkflow.utils import makePath
 
@@ -46,7 +47,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
         myDict = {'goodRefsFn': self._getExtraPath('info/boxrefs.hdf'),
                   'badRefsFn': self._getExtraPath('info/boxrefsbad.hdf'),
-                  'bgRefsFn': self._getExtraPath('info/bgrefsbad.hdf')
+                  'bgRefsFn': self._getExtraPath('info/bgrefsbg.hdf')
                   }
         self._updateFilenamesDict(myDict)
 
@@ -64,7 +65,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                       help="Longest axis of particle in pixels (diameter, "
                            "not radius).")
         form.addParam('boxerMode', EnumParam,
-                      choices=['local search', 'by ref', 'gauss', 'neural net'],
+                      choices=['local search', 'by ref', 'neural net'],
                       label="Autopicker mode:", default=AUTO_LOCAL,
                       display=EnumParam.DISPLAY_COMBO,
                       help="Choose autopicker mode:\n\n"
@@ -73,11 +74,18 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                            " _by ref_ - simple reference-based "
                            "cross-correlation picker with exhaustive "
                            "rotational search.\n"
-                           " _gauss_ - Gaussian sparx picker.\n"
                            " _neural net_ - convolutional neural network "
                            "boxer.")
         form.addParam('threshold', FloatParam, default='5.0',
                       label='Threshold')
+
+        if self._isVersion23():
+            form.addParam('device', StringParam, default='cpu',
+                          label='Device',
+                          help='For Convnet training only.\n'
+                               'Pick a device to use. Choose from cpu, '
+                               'gpu, or gpuX (X=0,1,...) when multiple '
+                               'gpus are available. Default is cpu.')
 
         form.addSection('References')
         form.addParam('goodRefs', PointerParam,
@@ -131,6 +139,9 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         params += " --autopick=%s:threshold=%0.2f" % (
             modes[self.boxerMode.get()], self.threshold.get())
 
+        if self._isVersion23() and self.boxerMode.get() == AUTO_CONVNET:
+            params += " --device %s" % self.device.get()
+
         params += ' %s' % micFile
         program = eman2.Plugin.getBoxerCommand()
 
@@ -142,8 +153,6 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
-        if self.boxerMode.get() == AUTO_GAUSS:
-            errors.append('Gauss mode is not implemented for new e2boxer yet.')
         if self.boxerMode.get() == AUTO_CONVNET:
             if not (self.badRefs.hasValue() and self.bgRefs.hasValue()):
                 errors.append('Neural net picker requires all three types of references.')
@@ -161,3 +170,6 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     def readCoordsFromMics(self, workingDir, micList, coordSet):
         coordSet.setBoxSize(self.boxSize.get())
         readSetOfCoordinates(workingDir, micList, coordSet, newBoxer=True)
+
+    def _isVersion23(self):
+        return eman2.Plugin.isVersion('2.3')

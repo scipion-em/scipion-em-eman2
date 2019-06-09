@@ -177,6 +177,13 @@ Major features of this program:
                       help='Default=boxsize/20. Specify number of voxels to '
                            'expand mask before soft edge. Use this if low '
                            'density peripheral features are cut off by the mask.')
+        if self._isVersion23():
+            form.addParam('noRandPhase', BooleanParam, default=False,
+                          label='Supress phase randomization',
+                          help='Suppress independent phase randomization '
+                               'of input map. Only appropriate if input '
+                               'map has been preprocessed in some suitable '
+                               'fashion.')
 
         form.addSection(label='Advanced')
         form.addParam('speed', EnumParam,
@@ -356,6 +363,9 @@ Major features of this program:
                        "HTML report*.")
         return summary
 
+    def _citations(self):
+        return ['Bell2016']
+
     # --------------------------- UTILS functions -----------------------------
     def _prepareParams(self):
         args1 = " --input=%(imgsFn)s --model=%(volume)s"
@@ -418,8 +428,14 @@ Major features of this program:
         args += " --ampcorrect=%s" % self.getEnumText('ampCorrect')
         if self.tophat != TOPHAT_NONE:
             args += " --tophat=%s" % self.getEnumText('tophat')
-        if self.useBispec:
+
+        if self.useBispec and not self._isVersion23():
             args += " --bispec"
+        else:
+            args += " --invar"
+
+        if self._isVersion23() and self.noRandPhase:
+            args += " --norandomaphase"
 
         if self.extraParams.hasValue():
             args += ' ' + self.extraParams.get()
@@ -521,3 +537,6 @@ Major features of this program:
                                              self._getBaseName('angles', iter=iterN)),
                                      direc=self._getExtraPath())
             proc.wait()
+
+    def _isVersion23(self):
+        return eman2.Plugin.isVersion('2.3')

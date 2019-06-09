@@ -33,7 +33,8 @@ from pyworkflow.utils.properties import Message
 from pyworkflow.utils.path import join, getExt
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.em.protocol import ProtParticlePicking
-from pyworkflow.protocol.params import BooleanParam, IntParam
+from pyworkflow.protocol.params import (BooleanParam, IntParam,
+                                        StringParam)
 
 import eman2
 from eman2.convert import loadJson, readSetOfCoordinates
@@ -66,6 +67,13 @@ class EmanProtBoxing(ProtParticlePicking):
                       label='Particle size (px)',
                       help="Longest axis of particle in pixels (diameter, "
                            "not radius).")
+        if self._isVersion23():
+            form.addParam('device', StringParam, default='cpu',
+                          label='Device',
+                          help='For Convnet training only.\n'
+                               'Pick a device to use. Choose from cpu, '
+                               'gpu, or gpuX (X=0,1,...) when multiple '
+                               'gpus are available. Default is cpu.')
 
         form.addParam('invertY', BooleanParam, default=False,
                       label='Invert Y coordinates',
@@ -105,6 +113,8 @@ class EmanProtBoxing(ProtParticlePicking):
                 'ptclSize': self.particleSize.get(),
                 'thr': self.numberOfThreads.get()
             })
+            if self._isVersion23():
+                arguments += " --device=%s" % self.device.get()
 
         # Run the command with formatted parameters
         self._log.info('Launching: ' + program + ' ' + arguments % self._params)
@@ -197,3 +207,6 @@ class EmanProtBoxing(ProtParticlePicking):
 
     def _useNewBoxer(self):
         return True if self.useNewBoxer else False
+
+    def _isVersion23(self):
+        return eman2.Plugin.isVersion('2.3')

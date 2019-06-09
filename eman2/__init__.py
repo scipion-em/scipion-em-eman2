@@ -64,16 +64,16 @@ class Plugin(pyworkflow.em.Plugin):
                        position=pwutils.Environ.BEGIN)
 
         environ.update({
-            #'LD_LIBRARY_PATH': os.pathsep.join(pathList),
-            #'PYTHONPATH': os.pathsep.join(pathList),
+            'LD_LIBRARY_PATH': os.pathsep.join(pathList),
+            'PYTHONPATH': os.pathsep.join(pathList),
             'SCIPION_MPI_FLAGS': os.environ.get('EMANMPIOPTS', '')
         }, position=pwutils.Environ.REPLACE)
 
         return environ
 
     @classmethod
-    def isNewVersion(cls):
-        return cls.getActiveVersion().startswith("2.3")
+    def isVersion(cls, version='2.3'):
+        return cls.getActiveVersion().startswith(version)
 
     @classmethod
     def getProgram(cls, program, python=False):
