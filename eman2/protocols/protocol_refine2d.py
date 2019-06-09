@@ -549,8 +549,7 @@ class EmanProtRefine2D(em.ProtClassify2D):
                   'classiter': self.classIter.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': eman2.SCRATCHDIR
-                  }
+                  'scratch': eman2.SCRATCHDIR}
         args = args % params
 
         if self.extraParams.hasValue():
@@ -646,9 +645,8 @@ class EmanProtRefine2D(em.ProtClassify2D):
 
     def _fillClassesFromIter(self, clsSet, iterN):
         self._execEmanProcess(self._getRun(), iterN)
-        params = {'orderBy' : ['_micId', 'id'],
-                  'direction' : 'ASC'
-                  }
+        params = {'orderBy': ['_micId', 'id'],
+                  'direction': 'ASC'}
         clsSet.classifyItems(updateItemCallback=self._updateParticle,
                              updateClassCallback=self._updateClass,
                              itemDataIterator=self._iterTextFile(iterN),
@@ -659,9 +657,9 @@ class EmanProtRefine2D(em.ProtClassify2D):
         classesFn = self._getFileName("classes", run=numRun, iter=iterN)
 
         proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 2d'
-                                 % (self._getParticlesStack(), clsFn, classesFn,
-                                    self._getBaseName('results', iter=iterN)),
-                                 direc=self._getExtraPath())
+                                                   % (self._getParticlesStack(), clsFn, classesFn,
+                                                      self._getBaseName('results', iter=iterN)),
+                                              direc=self._getExtraPath())
         proc.wait()
 
         self._classesInfo = {}  # store classes info, indexed by class id

@@ -211,8 +211,7 @@ class EmanProtInitModel(ProtInitialVolume):
                         'symmetry': self.symmetry.get(),
                         'threads': self.numberOfThreads.get(),
                         'mpis': self.numberOfMpi.get(),
-                        'scratch': eman2.SCRATCHDIR
-                        }
+                        'scratch': eman2.SCRATCHDIR}
 
     def _isHighSym(self):
         return self.symmetry.get() in ["oct", "tet", "icos"]
