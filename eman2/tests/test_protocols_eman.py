@@ -152,6 +152,31 @@ class TestEmanInitialModelGroel(TestEmanInitialModelMda):
         cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
 
 
+class TestEmanInitialModelSGD(TestEmanBase):
+    @classmethod
+    def setUpClass(cls):
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('groel')
+        cls.averages = cls.dataset.getFile('averages')
+        cls.symmetry = 'd7'
+        cls.numberOfIterations = 20
+        cls.numberOfModels = 2
+        cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
+
+    def test_initialmodel(self):
+        print("Run Initial model SGD")
+        protIniModel = self.newProtocol(EmanProtInitModelSGD,
+                                        symmetry=self.symmetry,
+                                        numberOfIterations=self.numberOfIterations,
+                                        numberOfModels=self.numberOfModels,
+                                        numberOfThreads=4)
+        protIniModel.inputType.set(0)  # averages
+        protIniModel.inputAvg.set(self.protImportAvg.outputAverages)
+        self.launchProtocol(protIniModel)
+        self.assertIsNotNone(protIniModel.outputVolumes,
+                             "There was a problem with eman initial model SGD protocol")
+
+
 class TestEmanReconstruct(TestEmanBase):
     def test_ReconstructEman(self):
         print("Import Set of particles with angles")

@@ -212,3 +212,7 @@ ALL_MAPS = 3
 OBJCMD_CLASSAVG_PROJS = 'Show class-averages/projections'
 OBJCMD_PROJS = 'Show only projections'
 OBJCMD_INITVOL = 'Show initial random volume'
+
+# SGD input types
+SGD_INPUT_AVG = 0
+SGD_INPUT_PTCLS = 1
