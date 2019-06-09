@@ -115,6 +115,11 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
                       label='Number of MSA vectors to use',
                       help='Number of MSa basis vectors to use when '
                            'classifying particles.')
+        if self._isVersion23():
+            form.addParam('alignSort', BooleanParam, default=True,
+                          label='Align and sort?',
+                          help='This will align and sort the final class-averages '
+                               'based on mutual similarity.')
 
         line = form.addLine('Centering: ',
                             help="If the default centering algorithm "
@@ -323,6 +328,9 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         args += " --classkeep=%(classKeep)f --classiter=%(classiter)d "
         args += " --classaverager=%s" % self.getEnumText('classAveragerType')
 
+        if self._isVersion23() and self.alignSort:
+            args += " --alignsort"
+
         if self.classKeepSig:
             args += " --classkeepsig"
 
@@ -475,3 +483,6 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
 
     def _inputProt(self):
         return self.inputBispec.get()
+
+    def _isVersion23(self):
+        return eman2.Plugin.isVersion('2.3')

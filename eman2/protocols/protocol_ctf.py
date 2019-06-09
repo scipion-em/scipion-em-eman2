@@ -92,14 +92,14 @@ class EmanProtCTFAuto(ProtProcessParticles):
                       label='Estimate phase shift',
                       help='Include phase/amplitude contrast in CTF '
                            'estimation. For use with hole-less phase plates.')
+
+        form.addSection(label='Advanced')
         form.addParam('extrapad', BooleanParam, default=False,
-                      expertLevel=LEVEL_ADVANCED,
                       label='Extra padding',
                       help='If particles were boxed more tightly than EMAN '
                            'requires, this will add some extra padding.')
         if self._isVersion23():
             form.addParam('invarType', EnumParam,
-                          expertLevel=LEVEL_ADVANCED,
                           choices=['auto', 'bispec', 'harmonic'],
                           label='Invariant type', default=INVAR_AUTO,
                           display=EnumParam.DISPLAY_COMBO,
@@ -111,12 +111,10 @@ class EmanProtCTFAuto(ProtProcessParticles):
                            'If set uses an alternative strategy, '
                            'but may over-estimate SSNR.')
         form.addParam('invert', BooleanParam, default=False,
-                      expertLevel=LEVEL_ADVANCED,
                       label='Invert contrast',
                       help='Invert the contrast of the particles in output '
                            'files (default false)')
         form.addParam('constBfact', FloatParam, default=-1.0,
-                      expertLevel=LEVEL_ADVANCED,
                       label='Constant B-factor',
                       help='Set B-factor to a fixed value, negative value '
                            'enables autofitting.')
