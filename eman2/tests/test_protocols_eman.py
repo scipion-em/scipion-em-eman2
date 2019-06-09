@@ -215,15 +215,23 @@ class TestEmanRefine2DBispec(TestEmanBase):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
-        TestEmanBase.setData('mda')
-        cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
+        TestEmanBase.setData('relion_tutorial')
+        cls.partsFn = cls.dataset.getFile('import/case2/particles.sqlite')
+        cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_Refine2DBispecEman(self):
         print("Run Eman Refine 2D bispec")
+        protCtf = self.newProtocol(EmanProtCTFAuto,
+                                   numberOfThreads=3)
+        protCtf.inputParticles.set(self.protImport.outputParticles)
+        self.launchProtocol(protCtf)
+        self.assertIsNotNone(protCtf.outputParticles_flip_fullRes,
+                             "There was a problem with eman ctf auto protocol")
+
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
+                                      inputBispec=protCtf,
                                       numberOfIterations=2, numberOfClassAvg=5,
                                       classIter=2, nbasisfp=5)
-        protRefine.inputParticles.set(self.protImport.outputParticles)
         self.launchProtocol(protRefine)
         self.assertIsNotNone(protRefine.outputClasses,
                              "There was a problem with eman refine2d bispec protocol")

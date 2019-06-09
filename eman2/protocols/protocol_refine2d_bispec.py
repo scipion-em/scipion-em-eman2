@@ -38,7 +38,6 @@ from pyworkflow.utils import makePath, createLink, cleanPath
 
 
 import eman2
-from eman2.convert import writeSetOfParticles
 from eman2.constants import *
 
 
@@ -65,11 +64,13 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         """ Centralize the names of the files. """
 
         myDict = {
-            'partSet': 'sets/inputSet.lst',
-            'partFlipSet': 'sets/inputSet__ctf_flip.lst',
-            # the strange filename below is required for buggy eman
-            'partBispecSet': self._getExtraPath('sets/inputSet.lst__ctf_flip_bispec.lst'),
-            'partInvarSet': self._getExtraPath('sets/inputSet.lst__ctf_flip_invar.lst'),
+            'partSetFlipFullRes': self._getExtraPath('sets/all__ctf_flip_fullres.lst'),
+            'partSetFlipLp5': self._getExtraPath('sets/all__ctf_flip_lp5.lst'),
+            'partSetFlipLp7': self._getExtraPath('sets/all__ctf_flip_lp7.lst'),
+            'partSetFlipLp12': self._getExtraPath('sets/all__ctf_flip_lp12.lst'),
+            'partSetFlipLp20': self._getExtraPath('sets/all__ctf_flip_lp20.lst'),
+            'partBispecSet': self._getExtraPath('sets/all__ctf_flip_bispec.lst'),
+            'partInvarSet': self._getExtraPath('sets/all__ctf_flip_invar.lst'),
             'classes_scipion': self._getExtraPath('classes_scipion_it%(iter)02d.sqlite'),
             'classes': 'r2db_%(run)02d/classes_%(iter)02d.hdf',
             'cls': 'r2db_%(run)02d/classmx_%(iter)02d.hdf',
@@ -89,24 +90,11 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
     #--------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
-        form.addParam('inputParticles', PointerParam, label="Input particles",
-                      important=True, pointerClass='SetOfParticles',
-                      help='Select the input particles.')
-        form.addParam('useInputBispec', BooleanParam, default=False,
-                      label='Provide input bispectra?',
-                      help='The bispectra are produced by *e2ctf auto* program. '
-                           'If not provided, they will be automatically generated.')
         form.addParam('inputBispec', PointerParam,
-                      condition='useInputBispec',
                       label='Choose e2ctf auto protocol',
                       pointerClass='EmanProtCTFAuto',
-                      help='Important: bispectra should match input particles!')
-        form.addParam('skipctf', BooleanParam, default=False,
-                      expertLevel=LEVEL_ADVANCED,
-                      label='Skip ctf estimation?',
-                      help='Use this if you want to skip running e2ctf.py. '
-                           'It is not recommended to skip this step unless CTF '
-                           'estimation was already done with EMAN2.')
+                      help='Select EMAN CTF auto protocol that has '
+                           'generated bispectra.')
         form.addParam('numberOfClassAvg', IntParam, default=32,
                       label='Number of class-averages',
                       help='Number of class-averages to generate. Normally you '
@@ -265,75 +253,21 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._createIterTemplates(currRun=1)
-        self._insertFunctionStep('convertImagesStep')
+        self._insertFunctionStep('createLinksStep')
         args = self._prepareParams()
         self._insertFunctionStep('refineStep', args)
         self._insertFunctionStep('createOutputStep')
 
     #--------------------------- STEPS functions ------------------------------
-    def convertImagesStep(self):
-        partSet = self._getInputParticles()
-        partAlign = partSet.getAlignment()
-        storePath = self._getExtraPath("particles")
-        makePath(storePath)
-        writeSetOfParticles(partSet, storePath, alignType=partAlign)
+    def createLinksStep(self):
+        prot = self._inputProt()
+        prevPartDir = prot._getExtraPath("particles")
+        currPartDir = self._getExtraPath("particles")
+        prevSetsDir = prot._getExtraPath("sets")
+        currSetsDir = self._getExtraPath("sets")
 
-        if self.useInputBispec and self.inputBispec is not None:
-            print("Skipping CTF estimation since input bispectra were provided")
-            self.skipctf.set(True)
-
-        if not self.skipctf:
-            program = eman2.Plugin.getProgram('e2ctf.py')
-            acq = partSet.getAcquisition()
-
-            args = " --voltage %d" % acq.getVoltage()
-            args += " --cs %f" % acq.getSphericalAberration()
-            args += " --ac %f" % (100 * acq.getAmplitudeContrast())
-            args += " --threads=%d" % self.numberOfThreads.get()
-            if not partSet.isPhaseFlipped():
-                args += " --phaseflip"
-            args += " --computesf --apix %f" % partSet.getSamplingRate()
-            args += " --allparticles --autofit --curdefocusfix --storeparm -v 8"
-            self.runJob(program, args, cwd=self._getExtraPath(),
-                        numberOfMpi=1, numberOfThreads=1)
-
-        program = eman2.Plugin.getProgram('e2buildsets.py')
-        args = " --setname=inputSet --allparticles --minhisnr=-1"
-        self.runJob(program, args, cwd=self._getExtraPath(),
-                    numberOfMpi=1, numberOfThreads=1)
-
-        if self.useInputBispec:
-            prot = self.inputBispec.get()
-            prot._createFilenameTemplates()
-
-            if not self._isVersion23():
-                bispec = prot.outputParticles_flip_bispec
-                if not bispec.getSize() == partSet.getSize():
-                    raise Exception('Input particles and bispectra sets have different size!')
-                # link bispec hdf files and lst file
-                pattern = prot._getExtraPath('particles/*__ctf_flip_bispec.hdf')
-                print("\nLinking bispectra input files...")
-                for fn in sorted(glob(pattern)):
-                    newFn = join(self._getExtraPath('particles'), basename(fn))
-                    createLink(fn, newFn)
-                    print("    %s -> %s" % (fn, newFn))
-                lstFn = prot._getFileName('partSetFlipBispec')
-                newLstFn = self._getFileName('partBispecSet')
-                createLink(lstFn, newLstFn)
-            else:
-                bispec = prot.outputParticles_flip_invar
-                if not bispec.getSize() == partSet.getSize():
-                    raise Exception('Input particles and bispectra sets have different size!')
-                # link bispec hdf files and lst file
-                pattern = prot._getExtraPath('particles/*__ctf_flip_invar.hdf')
-                print("\nLinking bispectra input files...")
-                for fn in sorted(glob(pattern)):
-                    newFn = join(self._getExtraPath('particles'), basename(fn))
-                    createLink(fn, newFn)
-                    print("    %s -> %s" % (fn, newFn))
-                lstFn = prot._getFileName('partSetFlipInvar')
-                newLstFn = self._getFileName('partInvarSet')
-                createLink(lstFn, newLstFn)
+        createLink(prevPartDir, currPartDir)
+        createLink(prevSetsDir, currSetsDir)
 
     def refineStep(self, args):
         """ Run the EMAN program to refine 2d. """
@@ -348,7 +282,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         self._fillClassesFromIter(classes2D, self._lastIter())
 
         self._defineOutputs(outputClasses=classes2D)
-        self._defineSourceRelation(self.inputParticles, classes2D)
+        self._defineSourceRelation(partSet, classes2D)
 
     #--------------------------- INFO functions -------------------------------
     def _validate(self):
@@ -361,7 +295,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         if not hasattr(self, 'outputClasses'):
             summary.append("Output classes not ready yet.")
         else:
-            summary.append("Input Particles: %s" % self.getObjectTag('inputParticles'))
+            summary.append("Input CTF protocol: %s" % self.getObjectTag('inputBispec'))
             summary.append("Classified into *%d* classes." % self.numberOfClassAvg)
             summary.append("Output set: %s" % self.getObjectTag('outputClasses'))
 
@@ -370,9 +304,8 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         return summary
 
     def _methods(self):
-        methods = "We classified input particles %s (%d items) " % (
-            self.getObjectTag('inputParticles'),
-            self._getInputParticles().getSize())
+        methods = "We classified input particles from %s" % (
+            self.getObjectTag('inputBispec'))
         methods += "into %d classes using e2refine2d_bispec.py " %\
                    self.numberOfClassAvg
         return [methods]
@@ -423,10 +356,13 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         return os.path.basename(self._getFileName(key, **args))
 
     def _getParticlesStack(self):
-        if not self.inputParticles.get().isPhaseFlipped() and not self.skipctf:
-            return self._getFileName("partFlipSet")
+        protType = self._inputProt().type.get()
+        if protType == HIRES:
+            return "sets/" + basename(self._getFileName("partSetFlipLp5"))
+        elif protType == MIDRES:
+            return "sets/" + basename(self._getFileName("partSetFlipLp7"))
         else:
-            return self._getFileName("partSet")
+            return "sets/" + basename(self._getFileName("partSetFlipLp12"))
 
     def _iterTextFile(self, iterN):
         f = open(self._getFileName('results', iter=iterN))
@@ -478,13 +414,18 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         return data_classes
 
     def _getInputParticles(self):
-        return self.inputParticles.get()
+        protType = self._inputProt().type.get()
+        if protType == HIRES:
+            return self._inputProt().outputParticles_flip_lp5
+        elif protType == MIDRES:
+            return self._inputProt().outputParticles_flip_lp7
+        else:
+            return self._inputProt().outputParticles_flip_lp12
 
     def _fillClassesFromIter(self, clsSet, iterN):
         self._execEmanProcess(iterN)
-        params = {'orderBy' : ['_micId', 'id'],
-                  'direction' : 'ASC'
-                  }
+        params = {'orderBy': ['_micId', 'id'],
+                  'direction': 'ASC'}
         clsSet.classifyItems(updateItemCallback=self._updateParticle,
                              updateClassCallback=self._updateClass,
                              itemDataIterator=self._iterTextFile(iterN),
@@ -495,9 +436,9 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
         classesFn = self._getFileName("classes", run=1, iter=iterN)
 
         proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 2d'
-                                 % (self._getParticlesStack(), clsFn, classesFn,
-                                    self._getBaseName('results', iter=iterN)),
-                                 direc=self._getExtraPath())
+                                                   % (self._getParticlesStack(), clsFn, classesFn,
+                                                      self._getBaseName('results', iter=iterN)),
+                                              direc=self._getExtraPath())
         proc.wait()
 
         self._classesInfo = {}  # store classes info, indexed by class id
@@ -532,5 +473,5 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
             index, fn = self._classesInfo[classId]
             item.getRepresentative().setLocation(classId, fn)
 
-    def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')
+    def _inputProt(self):
+        return self.inputBispec.get()

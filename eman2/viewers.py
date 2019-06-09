@@ -171,14 +171,14 @@ Examples:
         return views
 
     def createScipionView(self, filename):
-        labels =  'enabled id _size _representative._filename '
+        labels = 'enabled id _size _representative._filename '
         viewParams = {showj.ORDER: labels,
                       showj.VISIBLE: labels,
                       showj.RENDER:'_representative._filename',
                       showj.SORT_BY: '_size desc'
                       }
 
-        inputParticlesId = self.protocol.inputParticles.get().strId()
+        inputParticlesId = self.protocol._getInputParticles().strId()
         view = ClassesView(self._project,
                            self.protocol.strId(), filename, other=inputParticlesId,
                            env=self._env,
