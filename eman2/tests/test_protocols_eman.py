@@ -337,3 +337,44 @@ class TestEmanAutopick(TestEmanBase):
         self.launchProtocol(protPick)
         self.assertIsNotNone(protPick.outputCoordinates,
                              "There was a problem with e2boxer auto protocol")
+
+    def test_AutopickSparx(self):
+        if not eman2.Plugin.isVersion('2.21'):
+            print("Run Eman auto picking with gauss/sparx")
+            protPick2 = self.newProtocol(SparxGaussianProtPicking,
+                                         boxSize=128,
+                                         lowerThreshold=0.004,
+                                         higherThreshold=0.1,
+                                         gaussWidth=0.525,
+                                         useVarImg=False,
+                                         doInvert=True)
+            protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
+            self.launchProtocol(protPick2)
+            self.assertIsNotNone(protPick2.outputCoordinates,
+                                 "There was a problem with e2boxer gauss auto protocol")
+        else:
+            print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
+
+    def test_AutopickSparxPointer(self):
+        if not eman2.Plugin.isVersion('2.21'):
+            print("Simulating an automatic protocol to estimate the boxSize")
+            protAutoBoxSize = self.newProtocol(pwem.ProtOutputTest,
+                                               iBoxSize=64,  # output is twice
+                                               objLabel='auto boxsize simulator')
+            self.launchProtocol(protAutoBoxSize)
+
+            print("Run Eman auto picking with gauss/sparx")
+            protPick2 = self.newProtocol(SparxGaussianProtPicking,
+                                         lowerThreshold=0.004,
+                                         higherThreshold=0.1,
+                                         gaussWidth=0.525,
+                                         useVarImg=False,
+                                         doInvert=True)
+            protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
+            protPick2.boxSize.setPointer(pwem.Pointer(protAutoBoxSize,
+                                                      extended="oBoxSize"))
+            self.launchProtocol(protPick2)
+            self.assertIsNotNone(protPick2.outputCoordinates,
+                                 "There was a problem with e2boxer gauss auto protocol")
+        else:
+            print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")

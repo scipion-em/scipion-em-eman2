@@ -78,6 +78,9 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                            "boxer.")
         form.addParam('threshold', FloatParam, default='5.0',
                       label='Threshold')
+        form.addParam('threshold2', FloatParam, default='-5.0',
+                      condition='boxerMode==%d' % AUTO_CONVNET,
+                      label='Threshold2')
 
         if self._isVersion23():
             form.addParam('device', StringParam, default='cpu',
@@ -135,12 +138,15 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         params += " --ptclsize=%d" % self.particleSize.get()
         params += " --threads=%d" % self.numberOfThreads.get()
 
-        modes = ['auto_local', 'auto_ref', 'auto_gauss', 'auto_convnet']
+        modes = ['auto_local', 'auto_ref', 'auto_convnet']
         params += " --autopick=%s:threshold=%0.2f" % (
             modes[self.boxerMode.get()], self.threshold.get())
 
-        if self._isVersion23() and self.boxerMode.get() == AUTO_CONVNET:
-            params += " --device %s" % self.device.get()
+        if self.boxerMode.get() == AUTO_CONVNET:
+            params += ":threshold2=%0.2f" % self.threshold2.get()
+
+            if self._isVersion23():
+                params += " --device %s" % self.device.get()
 
         params += ' %s' % micFile
         program = eman2.Plugin.getBoxerCommand()

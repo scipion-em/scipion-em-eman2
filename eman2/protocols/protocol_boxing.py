@@ -69,6 +69,7 @@ class EmanProtBoxing(ProtParticlePicking):
                            "not radius).")
         if self._isVersion23():
             form.addParam('device', StringParam, default='cpu',
+                          condition='useNewBoxer',
                           label='Device',
                           help='For Convnet training only.\n'
                                'Pick a device to use. Choose from cpu, '
@@ -128,7 +129,7 @@ class EmanProtBoxing(ProtParticlePicking):
 
     def check_gauss(self):
         if self._useNewBoxer():
-            # gauss picker is not implemented for Eman v.2.21 yet
+            # gauss picker is not implemented for new e2boxer
             pass
         else:
             # Function to check if gaussian algorithm was used to pick
