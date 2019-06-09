@@ -140,18 +140,26 @@ class EmanProtInitModel(ProtInitialVolume):
 
     # --------------------------- STEPS functions -----------------------------
     def createStackImgsStep(self):
-
-        imgsFn = self._params['imgsFn']
         if isinstance(self.inputSet.get(), SetOfClasses2D):
+            pixSize = self.inputSet.get().getImages().getSamplingRate()
             imgSet = self._createSetOfParticles("_averages")
             for i, cls in enumerate(self.inputSet.get()):
                 img = cls.getRepresentative()
-                img.setSamplingRate(cls.getSamplingRate())
+                img.setSamplingRate(pixSize)
                 img.setObjId(i + 1)
                 imgSet.append(img)
         else:
             imgSet = self.inputSet.get()
-        imgSet.writeStack(imgsFn)
+            pixSize = imgSet.getSamplingRate()
+
+        tmpStack = self._getTmpPath("averages.spi")
+        imgSet.writeStack(tmpStack)
+        orig = os.path.relpath(tmpStack,
+                               self._getExtraPath())
+        args = "%s %s --apix=%0.3f" % (orig, self._params['relImgsFn'], pixSize)
+        self.runJob(eman2.Plugin.getProgram('e2proc2d.py'), args,
+                    cwd=self._getExtraPath(),
+                    numberOfMpi=1, numberOfThreads=1)
 
     def createInitialModelStep(self, args):
         """ Run the EMAN program to create the initial model. """
@@ -201,10 +209,8 @@ class EmanProtInitModel(ProtInitialVolume):
     # --------------------------- UTILS functions -----------------------------
 
     def _prepareDefinition(self):
-        imgsFn = self._getPath('representatives.stk')
-
-        self._params = {'imgsFn': imgsFn,
-                        'relImgsFn': os.path.relpath(imgsFn, self._getExtraPath()),
+        self._params = {'imgsFn': self._getExtraPath('representatives.hdf'),
+                        'relImgsFn': 'representatives.hdf',
                         'numberOfIterations': self.numberOfIterations.get(),
                         'numberOfModels': self.numberOfModels.get(),
                         'shrink': self.shrink.get(),

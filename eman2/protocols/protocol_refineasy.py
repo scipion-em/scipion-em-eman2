@@ -371,10 +371,17 @@ Major features of this program:
         args1 = " --input=%(imgsFn)s --model=%(volume)s"
         args2 = self._commonParams()
 
-        volume = os.path.relpath(self.input3DReference.get().getFileName(),
-                                 self._getExtraPath()).replace(":mrc", "")
+        refVolFn = "ref_vol.hdf"
+        origVol = os.path.relpath(self.input3DReference.get().getFileName(),
+                               self._getExtraPath()).replace(":mrc", "")
+        args = "%s %s --apix=%0.3f" % (origVol, refVolFn,
+                                       self.input3DReference.get().getSamplingRate())
+        self.runJob(eman2.Plugin.getProgram('e2proc3d.py'), args,
+                    cwd=self._getExtraPath(),
+                    numberOfMpi=1, numberOfThreads=1)
+
         params = {'imgsFn': self._getParticlesStack(),
-                  'volume': volume}
+                  'volume': refVolFn}
 
         args = args1 % params + args2
         return args
@@ -426,13 +433,15 @@ Major features of this program:
             args += " --m3dpostprocess=%s" % self.m3dPostProcess.get()
 
         args += " --ampcorrect=%s" % self.getEnumText('ampCorrect')
+
         if self.tophat != TOPHAT_NONE:
             args += " --tophat=%s" % self.getEnumText('tophat')
 
-        if self.useBispec and not self._isVersion23():
-            args += " --bispec"
-        else:
-            args += " --invar"
+        if self.useBispec:
+            if self._isVersion23():
+                args += " --invar"
+            else:
+                args += " --bispec"
 
         if self._isVersion23() and self.noRandPhase:
             args += " --norandomaphase"
