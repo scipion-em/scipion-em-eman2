@@ -50,6 +50,7 @@ To check the installation, simply run one of the following Scipion tests:
    scipion test eman2.tests.test_protocols_eman.TestEmanReconstruct
    scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelMda
    scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelGroel
+   scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelSGD
    scipion test eman2.tests.test_protocols_eman.TestEmanCtfAuto
    scipion test eman2.tests.test_protocols_eman.TestEmanAutopick
 
@@ -65,10 +66,11 @@ In 2018 the plugin was updated to support the latest (at that moment) EMAN2: 2.2
 Protocols
 ---------
 
-* `boxer (old and new e2boxer.py) <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtBoxing>`_
-* boxer auto (fully automated new boxer in 2.21)
+* `boxer (old and new interactive e2boxer.py) <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtBoxing>`_
+* boxer auto (fully automated new boxer in >=2.21)
 * ctf auto
 * `initial model <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtInitModel>`_
+* initial model SGD
 * reconstruct
 * refine 2d
 * refine 2d bispec
