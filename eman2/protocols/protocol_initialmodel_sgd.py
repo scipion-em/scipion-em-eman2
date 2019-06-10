@@ -48,10 +48,6 @@ class EmanProtInitModelSGD(ProtInitialVolume):
 
     _label = 'initial model SGD'
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isVersion('2.3')
-
     # --------------------------- DEFINE param functions ----------------------
 
     def _defineParams(self, form):
