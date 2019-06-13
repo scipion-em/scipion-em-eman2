@@ -35,7 +35,6 @@ from pyworkflow.protocol import STEPS_PARALLEL
 from tomo.protocols import ProtTomoBase
 
 from eman2.convert import writeSetOfSubTomograms
-
 import eman2
 
 SAME_AS_PICKING = 0
@@ -43,6 +42,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     """Protocol to performs a conventional iterative subtomogram averaging using the full set of particles."""
     _outputClassName = 'SubTomogramRefinement'
     _label = 'subtomogram refinement'
+    OUTPUT_PREFIX = 'outputSetOfClassesSubTomograms'
 
     def __init__(self, **kwargs):
         pwem.EMProtocol.__init__(self, **kwargs)
@@ -107,25 +107,24 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def _insertAllSteps(self):
         #TODO: Get the basename.hdf from the inputSetOfSubTomogram
-        #self._insertFunctionStep('convertInputStep')
+        self._insertFunctionStep('convertInputStep')
         self._insertFunctionStep('refinementSubtomogram')
         #TODO: Set and show the output
-        #self._insertFunctionStep('createOutputStep')
+        self._insertFunctionStep('createOutputStep')
 
     #--------------- STEPS functions -----------------------
-    def refinementSubtomogram(self):
-
-
+    def convertInputStep(self):
         storePath = self._getExtraPath("subtomograms")
         pwutils.makePath(storePath)
 
-        newFn = pwutils.removeBaseExt(list(self.inputSetOfSubTomogram.get().getFiles())[0]).split('__ctf')[0] + '.hdf'
-        newFn = pwutils.join(storePath, newFn)
+        self.newFn = pwutils.removeBaseExt(list(self.inputSetOfSubTomogram.get().getFiles())[0]).split('__ctf')[0] + '.hdf'
+        self.newFn = pwutils.join(storePath, self.newFn)
         writeSetOfSubTomograms(self.inputSetOfSubTomogram.get(), storePath)
 
+    def refinementSubtomogram(self):
 
         """ Run the Subtomogram refinement. """
-        args = ' %s' % newFn
+        args = ' %s' % self.newFn
         if not isinstance(self.inputRef.get(), NoneType):
             args += (' --reference=%s ' % self.inputRef.get().getFileName())
         args += (' --mass=%f' % self.mass)
@@ -149,7 +148,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def createOutputStep(self):
         pass
-#
+
     #--------------- INFO functions -------------------------
 
     def _validate(self):
@@ -166,11 +165,13 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def _summary(self):
         summary = []
-        summary.append("SetOfSubTomograms source: %s" % (self.inputSetOfSubTomogram.get().getFileName()))
+        summary.append("SetOfClassesSubTomograms source: %s" % (self.inputSetOfSubTomogram.get().getFileName()))
 
         if not isinstance(self.inputRef.get(), NoneType):
             summary.append("Referenced Tomograms source: %s" % (self.inputRef.get().getFileName()))
 
+        if not isinstance(self.subtomograms, NoneType):
+            summary.append(self.subtomograms.printAll())
         if self.getOutputsSize() >= 1:
             summary.append("Subtomogram Averaging Completed")
         else:
