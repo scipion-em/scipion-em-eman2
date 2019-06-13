@@ -35,6 +35,7 @@ from pyworkflow.protocol import STEPS_PARALLEL
 from tomo.protocols import ProtTomoBase
 
 from eman2.convert import writeSetOfSubTomograms
+from tomo.objects import SubTomogram
 import eman2
 
 SAME_AS_PICKING = 0
@@ -147,7 +148,55 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         pass
 
     def createOutputStep(self):
-        pass
+        files = self.getFiles()
+
+        folder = "./spt_"
+        folderSuffix = "00"
+        for file in files:
+            if folder in file:
+                lastExecution = file[6:]
+                lastExecution = lastExecution[:lastExecution.index("/")]
+                if folderSuffix < lastExecution:
+                    folderSuffix = lastExecution
+        folder = folder + folderSuffix
+
+        self.subTomograms = list()
+        paramFile = ""
+        txtInfo = list()
+        lists = list()
+        for file in files:
+            if folder in file:
+                if ".hdf" in file:
+                    self.subTomograms.append(file)
+                if "spt_params.json" in file:
+                    paramFile = file
+                if ".txt" in file:
+                    txtInfo.append(file)
+                if ".lst" in file:
+                    lists.append(file)
+
+        suffix = self._getOutputSuffix("")
+        self.inputSetOfSubTomogram.get().setSamplingRate(self.inputRef.get().getSamplingRate())
+        self.outputSetOfClassesSubTomograms = self._createSetOfClassesSubTomograms(self.inputSetOfSubTomogram, suffix)
+        #self._fillClassesFromIter(self.outputSetOfClassesSubTomograms, self._lastIter())
+
+        self.subTomogramsSet = self._createSetOfSubTomograms(suffix)
+        for subTomogram in self.subTomograms:
+            self.readSetOfTomograms(subTomogram, self.subTomogramsSet)
+        self._defineOutputs(outputSetOfClassesSubTomograms=self.outputSetOfClassesSubTomograms)
+        #self._defineSourceRelation(self.subTomogramsSet, self.outputSetOfClassesSubTomograms)
+
+
+    def readSetOfTomograms(self, workDir, tomogramsSet):
+
+        subtomogram = SubTomogram()
+
+        imgh = pwem.ImageHandler()
+        x, y, z, n = imgh.getDimensions(workDir)
+        for index in range(1, n + 1):
+            subtomogram.cleanObjId()
+            subtomogram.setLocation(index, workDir)
+            tomogramsSet.append(subtomogram)
 
     #--------------- INFO functions -------------------------
 
@@ -170,8 +219,6 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         if not isinstance(self.inputRef.get(), NoneType):
             summary.append("Referenced Tomograms source: %s" % (self.inputRef.get().getFileName()))
 
-        if not isinstance(self.subtomograms, NoneType):
-            summary.append(self.subtomograms.printAll())
         if self.getOutputsSize() >= 1:
             summary.append("Subtomogram Averaging Completed")
         else:

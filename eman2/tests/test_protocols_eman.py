@@ -34,6 +34,7 @@ from eman2.protocols import *
 from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms, ProtImportSubTomograms
 from tomo.tests import DataSet
 
+import pdb
 class TestEmanBase(BaseTest):
     @classmethod
     def setUpClass(cls):
@@ -561,14 +562,13 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
                                               maxtilt=maxtilt)
 
         self.launchProtocol(protTomoRefinement)
-
-        self.assertIsNotNone(protTomoRefinement.outputSetOfSubtomogram,
-                             "There was a problem with SubtomogramRefinement output")
+        self.assertIsNotNone(protTomoRefinement.outputSetOfClassesSubTomograms,
+                             "There was a problem with SetOfClassesSubTomograms output")
         return protTomoRefinement
 
     def test_defaultSubtomogramRefinement(self):
         protTomoExtraction = self._runTomoSubtomogramRefinement()
-        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
-        self.assertTrue(output)
+        output = getattr(protTomoExtraction, 'outputSetOfClassesSubTomograms', None)
+        self.assertTrue(output.getImages() is not None)
 
         return protTomoExtraction
