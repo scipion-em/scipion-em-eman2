@@ -51,7 +51,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     #--------------- DEFINE param functions ---------------
 
     def _defineParams(self, form):
-        form.addSection(label='Params')
+        form.addSection(label='Input')
         form.addParam('inputSetOfSubTomogram', params.PointerParam,
                       pointerClass='SetOfSubTomograms',
                       important=True, label='Input SubTomograms',
@@ -62,39 +62,39 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
                       help='3D reference for initial model generation.'
                            'No reference is used by default.')
 
-        group = form.addGroup('Config')
-        group.addParam('niter', pwem.IntParam, default=5,
+        form.addSection(label='Optimization')
+        form.addParam('niter', pwem.IntParam, default=5,
                        label='Number of iterations',
                        help='The number of iterations to perform.')
-        group.addParam('mass', pwem.FloatParam, default=500.0,
+        form.addParam('mass', pwem.FloatParam, default=500.0,
                        label='Mass:',
                        help='Default=500.0.'
                             'mass')
-        group.addParam('threads', pwem.IntParam, default=2,
+        form.addParam('threads', pwem.IntParam, default=2,
                        label='Threads:',
                        help='Number of threads')
-        group.addParam('pkeep', pwem.FloatParam, default=0.8,
+        form.addParam('pkeep', pwem.FloatParam, default=0.8,
                        label='Particle keep:',
                        help='Fraction of particles to keep')
-        group.addParam('goldstandard', pwem.IntParam, default=-1,
+        form.addParam('goldstandard', pwem.IntParam, default=-1,
                        label='GoldStandard:',
                        help='initial resolution for gold standard refinement')
-        group.addParam('goldcontinue', params.BooleanParam, default=False,
+        form.addParam('goldcontinue', params.BooleanParam, default=False,
                        label='Gold continue',
                        help='continue from an existing gold standard refinement')
-        group.addParam('maskFile', params.PointerParam, allowsNull=True,
+        form.addParam('maskFile', params.PointerParam, allowsNull=True,
                        pointerClass='VolumeMask', label='Mask file',
                        help='Select the mask object')
-        group.addParam('setsf', params.PointerParam, allowsNull=True,
+        form.addParam('setsf', params.PointerParam, allowsNull=True,
                        pointerClass='VolumeMask', label='Structure factor',
                        help='Select the structure factor')
-        group.addParam('sym', params.StringParam, default='c1',
+        form.addParam('sym', params.StringParam, default='c1',
                        label='Symmetry',
                       help='Symmetry (Default: c1')
-        group.addParam('localfilter', params.BooleanParam, default=False,
+        form.addParam('localfilter', params.BooleanParam, default=False,
                        label='Local filter',
                       help='use tophat local')
-        group.addParam('maxtilt', params.FloatParam, default=90.0,
+        form.addParam('maxtilt', params.FloatParam, default=90.0,
                        label='maxtilt',
                        help='Explicitly zeroes data beyond specified tilt angle.'
                             'Assumes tilt axis exactly on Y and zero tilt in X-Y'
