@@ -17,7 +17,7 @@ a) Stable version
 
 .. code-block::
 
-    scipion installp -p scipion-em-eman
+    scipion installp -p scipion-em-eman2
 
 b) Developer's version
 
@@ -25,13 +25,13 @@ b) Developer's version
 
     .. code-block::
 
-        git clone https://github.com/scipion-em/scipion-em-eman.git
+        git clone https://github.com/scipion-em/scipion-em-eman2.git
 
     * install
 
     .. code-block::
 
-        scipion installp -p path_to_scipion-em-eman --devel
+        scipion installp -p path_to_scipion-em-eman2 --devel
 
 EMAN2 binaries will be installed automatically with the plugin, but you can also link an existing installation.
 
