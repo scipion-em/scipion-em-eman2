@@ -258,6 +258,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
             args += " --recon %(reconsMethod)s"
         else:
             args += " --mode %s" % self.getEnumText('fourierMode')
+            args += " --threads=%d" % self.numberOfThreads.get()
 
         if self.extraParams.hasValue():
             args += ' ' + self.extraParams.get()
