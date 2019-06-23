@@ -52,7 +52,9 @@ class EmanProtBoxing(ProtParticlePicking):
                   'badRefsFn': self._getExtraPath('info/boxrefsbad.hdf'),
                   'bgRefsFn': self._getExtraPath('info/boxrefsbg.hdf'),
                   'nnetFn': self._getExtraPath('nnet_pickptcls.hdf'),
-                  'trainoutFn': self._getExtraPath('trainout_pickptcl.hdf')
+                  'nnetClFn': self._getExtraPath('nnet_classify.hdf'),
+                  'trainoutFn': self._getExtraPath('trainout_pickptcl.hdf'),
+                  'trainoutClFn': self._getExtraPath('trainout_classify.hdf')
                   }
         self._updateFilenamesDict(myDict)
 
@@ -100,7 +102,7 @@ class EmanProtBoxing(ProtParticlePicking):
         self._createFilenameTemplates()
         self.inputMics = self.inputMicrographs.get()
         micList = [os.path.relpath(mic.getFileName(),
-                                   self.workingDir.get()) for mic in self.inputMics]
+                                   self.getCoordsDir()) for mic in self.inputMics]
 
         self._params = {'inputMics': ' '.join(micList)}
         # Launch Boxing GUI
@@ -115,10 +117,10 @@ class EmanProtBoxing(ProtParticlePicking):
         boxerVersion = 'old' if not useNewBoxer else 'new'
         boxer = eman2.Plugin.getBoxerCommand(boxerVersion=boxerVersion)
         program = eman2.Plugin.getProgram(boxer)
-        arguments = "%(inputMics)s"
+        arguments = ''
 
         if useNewBoxer:
-            arguments += " --apix=%(pixSize)f --boxsize=%(boxSize)d"
+            arguments = " --apix=%(pixSize)f --boxsize=%(boxSize)d"
             arguments += " --ptclsize=%(ptclSize)d --gui --threads=%(thr)d --no_ctf"
             self._params.update({
                 'pixSize': self.inputMics.getSamplingRate(),
@@ -129,15 +131,16 @@ class EmanProtBoxing(ProtParticlePicking):
             if self._isVersion23():
                 arguments += " --device=%s" % self.device.get()
 
+        arguments += " %(inputMics)s"
+
         # Run the command with formatted parameters
         self._log.info('Launching: ' + program + ' ' + arguments % self._params)
-        self.runJob(program, arguments % self._params)
+        self.runJob(program, arguments % self._params, cwd=self.getCoordsDir())
 
         # Open dialog to request confirmation to create output
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
             self.check_gauss()
-            self._leaveDir()  # going back to project dir
-            self._createOutput(self.getWorkingDir())
+            self._createOutput(self.getCoordsDir())
 
     def check_gauss(self):
         if self._useNewBoxer():
@@ -153,7 +156,7 @@ class EmanProtBoxing(ProtParticlePicking):
                 jsonGaussDict = loadJson(gaussJsonFile)
                 gaussParsDict = None
                 micList = [os.path.relpath(mic.getFileName(),
-                                           self.workingDir.get()) for mic in self.inputMics]
+                                           self.getCoordsDir()) for mic in self.inputMics]
                 # Go over the list of input micrographs and see if
                 # gaussian was used to pick any of them
                 for mic in micList:
@@ -179,7 +182,7 @@ class EmanProtBoxing(ProtParticlePicking):
                     boxer = eman2.Plugin.getBoxerCommand(boxerVersion='old')
                     program = eman2.Plugin.getProgram(boxer)
                     self._log.info('Launching: ' + program + ' ' + arguments % self._params)
-                    self.runJob(program, arguments % self._params)
+                    self.runJob(program, arguments % self._params, cwd=self.getCoordsDir())
 
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
@@ -204,11 +207,8 @@ class EmanProtBoxing(ProtParticlePicking):
         return warnings
 
     # --------------------------- UTILS functions -----------------------------
-    def _runSteps(self, startIndex):
-        # Redefine run to change to workingDir path
-        # Change to protocol working directory
-        self._enterWorkingDir()
-        ProtParticlePicking._runSteps(self, startIndex)
+    def getCoordsDir(self):
+        return self._getExtraPath()
 
     def getFiles(self):
         filePaths = self.inputMicrographs.get().getFiles() | ProtParticlePicking.getFiles(self)

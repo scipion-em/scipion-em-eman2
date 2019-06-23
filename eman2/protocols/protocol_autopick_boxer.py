@@ -49,7 +49,9 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                   'badRefsFn': self._getExtraPath('info/boxrefsbad.hdf'),
                   'bgRefsFn': self._getExtraPath('info/boxrefsbg.hdf'),
                   'nnetFn': self._getExtraPath('nnet_pickptcls.hdf'),
-                  'trainoutFn': self._getExtraPath('trainout_pickptcl.hdf')
+                  'nnetClFn': self._getExtraPath('nnet_classify.hdf'),
+                  'trainoutFn': self._getExtraPath('trainout_pickptcl.hdf'),
+                  'trainoutClFn': self._getExtraPath('trainout_classify.hdf')
                   }
         self._updateFilenamesDict(myDict)
 
@@ -127,22 +129,15 @@ class EmanProtAutopick(ProtParticlePickingAuto):
             convertReferences(goodRefs, self._getFileName('goodRefsFn'))
 
         if boxerProt is not None:
-            input = [boxerProt._getFileName('goodRefsFn'),
-                     boxerProt._getFileName('badRefsFn'),
-                     boxerProt._getFileName('bgRefsFn'),
-                     boxerProt._getFileName('nnetfn'),
-                     boxerProt._getFileName('trainoutFn')
-                     ]
+            boxerProt._createFilenameTemplates()
+            keys = ['goodRefsFn', 'badRefsFn', 'bgRefsFn',
+                    'nnetFn', 'nnetClFn',
+                    'trainoutFn', 'trainoutClFn']
 
-            output = [self._getFileName('goodRefsFn'),
-                      self._getFileName('badRefsFn'),
-                      self._getFileName('bgRefsFn'),
-                      self._getFileName('nnetfn'),
-                      self._getFileName('trainoutFn')
-                      ]
-
-            for i, refs in enumerate(input):
-                createLink(refs, output[i])
+            for fn in keys:
+                if os.path.exists(boxerProt._getFileName(fn)):
+                    createLink(boxerProt._getFileName(fn),
+                               self._getFileName(fn))
 
     def _pickMicrograph(self, mic, *args):
         micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())
@@ -172,9 +167,6 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
-        if self.boxerMode.get() == AUTO_CONVNET:
-            if not (self.badRefs.hasValue() and self.bgRefs.hasValue()):
-                errors.append('Neural net picker requires all three types of references.')
 
         return errors
 
