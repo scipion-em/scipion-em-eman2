@@ -340,10 +340,6 @@ Major features of this program:
         if self.resol < 2 * samplingRate:
             errors.append("\nTarget resolution is smaller than Nyquist limit.")
 
-        if not self.doContinue:
-            self._validateDim(particles, self.input3DReference.get(), errors,
-                              'Input particles', 'Reference volume')
-
         return errors
 
     def _summary(self):
