@@ -159,7 +159,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
             params += ":threshold2=%0.2f" % self.threshold2.get()
 
             if self._isVersion23():
-                params += " --device %s" % self.device.get()
+                params += " --device=%s" % self.device.get()
 
         params += ' %s' % micFile
         program = eman2.Plugin.getBoxerCommand()
