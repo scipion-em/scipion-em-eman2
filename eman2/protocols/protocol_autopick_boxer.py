@@ -30,7 +30,7 @@ from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         EnumParam, PointerParam,
                                         StringParam)
 from pyworkflow.em.protocol import ProtParticlePickingAuto
-from pyworkflow.utils import makePath
+from pyworkflow.utils import makePath, createLink
 
 import eman2
 from eman2.convert import readSetOfCoordinates, convertReferences
@@ -47,7 +47,9 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
         myDict = {'goodRefsFn': self._getExtraPath('info/boxrefs.hdf'),
                   'badRefsFn': self._getExtraPath('info/boxrefsbad.hdf'),
-                  'bgRefsFn': self._getExtraPath('info/bgrefsbg.hdf')
+                  'bgRefsFn': self._getExtraPath('info/boxrefsbg.hdf'),
+                  'nnetFn': self._getExtraPath('nnet_pickptcls.hdf'),
+                  'trainoutFn': self._getExtraPath('trainout_pickptcl.hdf')
                   }
         self._updateFilenamesDict(myDict)
 
@@ -84,6 +86,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
         if self._isVersion23():
             form.addParam('device', StringParam, default='cpu',
+                          condition='boxerMode==%d' % AUTO_CONVNET,
                           label='Device',
                           help='For Convnet training only.\n'
                                'Pick a device to use. Choose from cpu, '
@@ -91,22 +94,19 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                                'gpus are available. Default is cpu.')
 
         form.addSection('References')
+        form.addParam('boxerProt', PointerParam,
+                      pointerClass='EmanProtBoxing',
+                      condition='boxerMode==%d' % AUTO_CONVNET,
+                      label='Previous e2boxer protocol',
+                      help='Provide previously executed e2boxer protocol '
+                           'that has all 3 types of references and '
+                           'pre-trained neural network.')
         form.addParam('goodRefs', PointerParam,
                       pointerClass='SetOfAverages',
-                      important=True,
+                      condition='boxerMode!=%d' % AUTO_CONVNET,
+                      allowsNull=True,
                       label="Good references",
                       help="Good particle references.")
-        form.addParam('badRefs', PointerParam,
-                      pointerClass='SetOfAverages',
-                      allowsNull=True,
-                      label="Bad references",
-                      help="Bad particle references like ice contamination "
-                           "or large aggregation.")
-        form.addParam('bgRefs', PointerParam,
-                      pointerClass='SetOfAverages',
-                      allowsNull=True,
-                      label="Background references",
-                      help="Pure noise regions in micrograph.")
 
         form.addParallelSection(threads=1, mpi=0)
 
@@ -119,17 +119,30 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- STEPS functions -----------------------------
     def convertInputStep(self):
         goodRefs = self.goodRefs.get() if self.goodRefs.hasValue() else None
-        badRefs = self.badRefs.get() if self.badRefs.hasValue() else None
-        bgRefs = self.bgRefs.get() if self.bgRefs.hasValue() else None
+        boxerProt = self.boxerProt.get() if self.boxerProt.hasValue() else None
         storePath = self._getExtraPath("info")
         makePath(storePath)
-        output = [self._getFileName('goodRefsFn'),
-                  self._getFileName('badRefsFn'),
-                  self._getFileName('bgRefsFn')]
 
-        for i, refs in enumerate([goodRefs, badRefs, bgRefs]):
-            if refs is not None:
-                convertReferences(refs, output[i])
+        if goodRefs is not None:
+            convertReferences(goodRefs, self._getFileName('goodRefsFn'))
+
+        if boxerProt is not None:
+            input = [boxerProt._getFileName('goodRefsFn'),
+                     boxerProt._getFileName('badRefsFn'),
+                     boxerProt._getFileName('bgRefsFn'),
+                     boxerProt._getFileName('nnetfn'),
+                     boxerProt._getFileName('trainoutFn')
+                     ]
+
+            output = [self._getFileName('goodRefsFn'),
+                      self._getFileName('badRefsFn'),
+                      self._getFileName('bgRefsFn'),
+                      self._getFileName('nnetfn'),
+                      self._getFileName('trainoutFn')
+                      ]
+
+            for i, refs in enumerate(input):
+                createLink(refs, output[i])
 
     def _pickMicrograph(self, mic, *args):
         micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())

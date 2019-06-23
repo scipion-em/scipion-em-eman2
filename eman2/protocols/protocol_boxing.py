@@ -45,6 +45,17 @@ class EmanProtBoxing(ProtParticlePicking):
     """
     _label = 'boxer'
 
+    def _createFilenameTemplates(self):
+        """ Centralize the names of the files. """
+
+        myDict = {'goodRefsFn': self._getExtraPath('info/boxrefs.hdf'),
+                  'badRefsFn': self._getExtraPath('info/boxrefsbad.hdf'),
+                  'bgRefsFn': self._getExtraPath('info/boxrefsbg.hdf'),
+                  'nnetFn': self._getExtraPath('nnet_pickptcls.hdf'),
+                  'trainoutFn': self._getExtraPath('trainout_pickptcl.hdf')
+                  }
+        self._updateFilenamesDict(myDict)
+
     def __init__(self, **args):
         ProtParticlePicking.__init__(self, **args)
         # The following attribute is only for testing
@@ -86,6 +97,7 @@ class EmanProtBoxing(ProtParticlePicking):
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
+        self._createFilenameTemplates()
         self.inputMics = self.inputMicrographs.get()
         micList = [os.path.relpath(mic.getFileName(),
                                    self.workingDir.get()) for mic in self.inputMics]
