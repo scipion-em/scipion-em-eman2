@@ -286,7 +286,7 @@ class TestEmanTiltValidate(TestEmanBase):
 
         print("Importing coordinate pairs")
         protImportCoords = self.newProtocol(pwem.ProtImportCoordinatesPairs,
-                                            importFrom=2,  # from eman
+                                            importFrom=1,  # from eman
                                             patternUntilted=self.patternU,
                                             patternTilted=self.patternT,
                                             boxSize=256)
