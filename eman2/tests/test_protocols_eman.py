@@ -24,17 +24,14 @@
 # *
 # **************************************************************************
 
-from pyworkflow.tests import BaseTest, setupTestProject
+from pyworkflow.tests import BaseTest, setupTestProject, DataSet
 import pyworkflow.em as pwem
 from pyworkflow.utils import importFromPlugin
 
 import eman2
 from eman2 import *
 from eman2.protocols import *
-from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms, ProtImportSubTomograms
-from tomo.tests import DataSet
 
-import pdb
 class TestEmanBase(BaseTest):
     @classmethod
     def setUpClass(cls):
@@ -396,12 +393,14 @@ class TestEmanTomoExtraction(TestEmanBase):
 
     @classmethod
     def setUpClass(cls):
+        from tomo.tests import DataSet
         setupTestProject(cls)
         cls.dataset = DataSet.getDataSet('tomo-em')
         cls.tomogram = cls.dataset.getFile('tomo1')
         cls.coords3D = cls.dataset.getFile('eman_coordinates')
 
     def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, cshrink = 1):
+        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
