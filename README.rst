@@ -36,6 +36,9 @@ b) Developer's version
 EMAN2 binaries will be installed automatically with the plugin, but you can also link an existing installation.
 
     * Default installation path assumed is ``software/em/eman-2.3``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
+
+    **IMPORTANT: From plugin version 1.0.5 EMAN2DIR was renamed to EMAN2_HOME. Please update your scipion.conf file!**
+
     * If you need to pass special options to mpirun (like a hostfile), you can use the *EMANMPIOPTS* shell variable, but most users should not need this. A typical usage would be ``export EMANMPIOPTS="-hostfile myhosts.txt"``. You should only do this if necessary, though (note that then when supplying the parameter **--parallel=mpi:n:scratch_directory**, 'n' is no longer the number of cpus to use, but rather the number of nodes listed in myhosts.txt).
     * The default scratch directory is assumed */tmp/*. You can change it by setting *EMAN2SCRATCHDIR* in your shell environment.
 
