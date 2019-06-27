@@ -28,7 +28,8 @@ import os
 
 from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         EnumParam, PointerParam,
-                                        StringParam)
+                                        StringParam, USE_GPU,
+                                        GPU_LIST, BooleanParam)
 from pyworkflow.em.protocol import ProtParticlePickingAuto
 from pyworkflow.utils import makePath, createLink
 
@@ -61,6 +62,16 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         ProtParticlePickingAuto._defineParams(self, form)
+        form.addHidden(USE_GPU, BooleanParam, default=False,
+                       label="Use GPU?",
+                       help="Set to Yes if you want to run Neural Net "
+                            "boxer on GPU. Default is CPU.")
+        form.addHidden(GPU_LIST, StringParam, default='0',
+                       label="Choose GPU ID",
+                       help="GPU may have several cores. Set it to zero"
+                            " if you do not know what we are talking about."
+                            " First core index is 0, second 1 and so on.\n"
+                            "Eman boxer can use only one GPU.")
         form.addParam('boxSize', IntParam, default=128,
                       label='Box size (px)',
                       help="Box size in pixels.")
@@ -85,16 +96,6 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         form.addParam('threshold2', FloatParam, default='-5.0',
                       condition='boxerMode==%d' % AUTO_CONVNET,
                       label='Threshold2')
-
-        if self._isVersion23():
-            form.addParam('device', StringParam, default='cpu',
-                          condition='boxerMode==%d' % AUTO_CONVNET,
-                          label='Device',
-                          help='For Convnet training only.\n'
-                               'Pick a device to use. Choose from cpu, '
-                               'gpu, or gpuX (X=0,1,...) when multiple '
-                               'gpus are available. Default is cpu.')
-
         form.addSection('References')
         form.addParam('boxerProt', PointerParam,
                       pointerClass='EmanProtBoxing',
@@ -153,8 +154,10 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         if self.boxerMode.get() == AUTO_CONVNET:
             params += ":threshold2=%0.2f" % self.threshold2.get()
 
-            if self._isVersion23():
-                params += " --device=%s" % self.device.get()
+            if self.useGpu:
+                params += " --device=gpu%s" % self.gpuList.get().strip()
+            else:
+                params += " --device=cpu"
 
         params += ' %s' % micFile
         program = eman2.Plugin.getBoxerCommand()
@@ -167,6 +170,9 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
+
+        if self.useGpu and (self.boxerMode.get() != AUTO_CONVNET):
+            errors.append("You can use GPU only for neural net picker!")
 
         return errors
 
