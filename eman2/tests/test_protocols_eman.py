@@ -499,6 +499,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
 
     @classmethod
     def setUpClass(cls):
+        from tomo.tests import DataSet
         setupTestProject(cls)
         cls.dataset = DataSet.getDataSet('tomo-em')
         cls.tomogram = cls.dataset.getFile('tomo1')
@@ -506,8 +507,8 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         cls.coords3D = cls.dataset.getFile('eman_coordinates')
 
     def _runTomoSubtomogramRefinement(self, niter=2, mass=500.0, threads=1, pkeep=0.8, goldstandard=-1,
-                                      goldcontinue=False, maskFile="", setsf="", sym="c1", localfilter=False, maxtilt =90.0):
-
+                                      goldcontinue=False, sym="c1", localfilter=False, maxtilt =90.0):
+        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms, ProtImportSubTomograms
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
@@ -546,7 +547,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
                                  filesPath=self.tomogram,
                                  samplingRate=5)
         self.launchProtocol(protImportTomogram)
-        # when i add the options: maskFile=maskFile, setsf=setsf, sym=sym, the protocol crash.
+
         protTomoRefinement = self.newProtocol(EmanProtTomoRefinement,
                                               inputSetOfSubTomogram=protImportSubTomograms.outputSetOfSubtomogram,
                                               inputRef=protImportTomogram.outputTomogram,
@@ -566,8 +567,13 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         return protTomoRefinement
 
     def test_defaultSubtomogramRefinement(self):
-        protTomoExtraction = self._runTomoSubtomogramRefinement()
-        output = getattr(protTomoExtraction, 'outputSetOfClassesSubTomograms', None)
+        protTomoSubtomogramRefinement = self._runTomoSubtomogramRefinement()
+        output = getattr(protTomoSubtomogramRefinement, 'outputSetOfClassesSubTomograms', None)
         self.assertTrue(output.getImages() is not None)
-
-        return protTomoExtraction
+        self.assertTrue(output.getImages().getObjValue().getDimensions() == (32, 32, 32))
+        self.assertTrue(output.getImages().getObjValue().getSamplingRate() == 5)
+        output = getattr(protTomoSubtomogramRefinement, 'outputTomogram', None)
+        self.assertTrue(output is not None)
+        self.assertTrue("threed" in output.getBaseName())
+        self.assertTrue(output.getSamplingRate() == 5)
+        return protTomoSubtomogramRefinement
