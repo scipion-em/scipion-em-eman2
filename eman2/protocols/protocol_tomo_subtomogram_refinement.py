@@ -30,7 +30,8 @@ from types import NoneType
 from pyworkflow import utils as pwutils
 import pyworkflow.protocol.params as params
 import pyworkflow.em as pwem
-from pyworkflow.protocol import STEPS_PARALLEL
+from pyworkflow.em import Transform
+from pyworkflow.protocol import STEPS_PARALLEL, Float
 
 from tomo.protocols import ProtTomoBase
 
@@ -39,6 +40,39 @@ from tomo.objects import SubTomogram
 import eman2
 
 SAME_AS_PICKING = 0
+
+
+def getRefinementFile(folder, files, pattern):
+    pattern = "^" + folder + pattern
+    import re
+    outputList = list()
+    print(files)
+    for file in files:
+        print(file)
+        if re.match(pattern, file) is not None:
+            outputList.append(file.replace(folder, ""))
+
+    lastIteration = max(re.findall(r'\d+', ''.join(outputList)))
+
+    for file in outputList:
+        if lastIteration in file:
+            return file
+    return None
+
+def getLastFolder(files, folder, folderSuffix):
+    for file in files:
+        print(file)
+        if folder in file:
+            lastExecution = file[len(folder):]
+            print(lastExecution)
+            if "/" in lastExecution:
+                lastExecution = lastExecution[:lastExecution.index("/")]
+                if folderSuffix < lastExecution:
+                    folderSuffix = lastExecution
+    folder = folder + folderSuffix
+    return folder
+
+
 class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     """Protocol to performs a conventional iterative subtomogram averaging using the full set of particles."""
     _outputClassName = 'SubTomogramRefinement'
@@ -148,55 +182,67 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         pass
 
     def createOutputStep(self):
-        files = self.getFiles()
-
+        pwutils.getFiles(self.workingDir.get())
+        files = pwutils.getFiles(".")
+        pprint("files--------------------")
         folder = "./spt_"
         folderSuffix = "00"
-        for file in files:
-            if folder in file:
-                lastExecution = file[6:]
-                lastExecution = lastExecution[:lastExecution.index("/")]
-                if folderSuffix < lastExecution:
-                    folderSuffix = lastExecution
-        folder = folder + folderSuffix
 
-        self.subTomograms = list()
-        paramFile = ""
-        txtInfo = list()
-        lists = list()
-        for file in files:
-            if folder in file:
-                if ".hdf" in file:
-                    self.subTomograms.append(file)
-                if "spt_params.json" in file:
-                    paramFile = file
-                if ".txt" in file:
-                    txtInfo.append(file)
-                if ".lst" in file:
-                    lists.append(file)
+        folder = getLastFolder(files, folder, folderSuffix)
 
+        folderPattern = folder.replace("/","\/").replace(".", "\.")
+        lastImage= getRefinementFile(folderPattern, files, "\/(threed_)(\d)+(\.hdf)$")
+
+        lastParam= getRefinementFile(folderPattern, files, "\/(particle_parms_)(\d)+(\.json)$")
+        import json
+        jsonParams = json.load(open(lastParam))
+        keys = list()
+        for item in jsonParams:
+            keys.append(item)
+        keys.sort()
+        coverageDict = list()
+        scoreDict = list()
+        transformDict = list()
+        for key in keys:
+            coverage = Float((jsonParams[key]['coverage']))
+            score = Float((jsonParams[key]['score']))
+            coverageDict.append(coverage)
+            scoreDict.append(score)
+            transformDict.append(Transform(jsonParams[key]['xform.align3d']['matrix']))
         suffix = self._getOutputSuffix("")
         self.inputSetOfSubTomogram.get().setSamplingRate(self.inputRef.get().getSamplingRate())
+        for item in self.inputSetOfSubTomogram.get(0).iterItems():
+
+            transform = transformDict.pop(0)
+            coverage = coverageDict.pop(0)
+            score = scoreDict.pop(0)
+
+            setattr(item, 'coverage', coverage)
+            setattr(item, 'score', score)
+            item.setTransform(transform)
+
         self.outputSetOfClassesSubTomograms = self._createSetOfClassesSubTomograms(self.inputSetOfSubTomogram, suffix)
-        #self._fillClassesFromIter(self.outputSetOfClassesSubTomograms, self._lastIter())
-
         self.subTomogramsSet = self._createSetOfSubTomograms(suffix)
-        for subTomogram in self.subTomograms:
-            self.readSetOfTomograms(subTomogram, self.subTomogramsSet)
+
+        subTomogram = self.readTomogram(lastImage)
+        subTomogram.setSamplingRate(self.inputRef.get().getSamplingRate())
+        self.inputSetOfSubTomogram.get().setSamplingRate(self.inputRef.get().getSamplingRate())
+        self.subTomogramsSet.append(subTomogram)
         self._defineOutputs(outputSetOfClassesSubTomograms=self.outputSetOfClassesSubTomograms)
-        #self._defineSourceRelation(self.subTomogramsSet, self.outputSetOfClassesSubTomograms)
+        self._defineOutputs(outputTomogram=subTomogram)
+        self._defineSourceRelation(self.inputSetOfSubTomogram.get(), self.outputSetOfClassesSubTomograms)
 
+    def readTomogram(self, workDir):
 
-    def readSetOfTomograms(self, workDir, tomogramsSet):
+        from tomo.objects import Tomogram
 
-        subtomogram = SubTomogram()
+        subtomogram = Tomogram()
 
         imgh = pwem.ImageHandler()
         x, y, z, n = imgh.getDimensions(workDir)
-        for index in range(1, n + 1):
-            subtomogram.cleanObjId()
-            subtomogram.setLocation(index, workDir)
-            tomogramsSet.append(subtomogram)
+        subtomogram.cleanObjId()
+        subtomogram.setLocation(1, workDir)
+        return subtomogram
 
     #--------------- INFO functions -------------------------
 
