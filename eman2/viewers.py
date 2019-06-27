@@ -46,7 +46,7 @@ from eman2.convert import loadJson
 from eman2.protocols import (EmanProtBoxing, EmanProtCTFAuto,
                              EmanProtInitModel, EmanProtRefine2D,
                              EmanProtRefine2DBispec, EmanProtRefine,
-                             EmanProtTiltValidate)
+                             EmanProtTiltValidate, EmanProtInitModelSGD)
 
 
 class EmanViewer(DataViewer):
@@ -54,7 +54,7 @@ class EmanViewer(DataViewer):
     with the Xmipp program xmipp_showj
     """
     _environments = [DESKTOP_TKINTER]
-    _targets = [EmanProtBoxing, EmanProtInitModel]
+    _targets = [EmanProtBoxing, EmanProtInitModel, EmanProtInitModelSGD]
 
     def _visualize(self, obj, **args):
 
@@ -70,6 +70,19 @@ class EmanViewer(DataViewer):
             objCommands = "'%s' '%s' '%s'" % (OBJCMD_CLASSAVG_PROJS,
                                               OBJCMD_PROJS,
                                               OBJCMD_INITVOL)
+
+            self._views.append(ObjectView(self._project, obj.strId(), fn,
+                                          viewParams={showj.MODE: showj.MODE_MD,
+                                                      showj.VISIBLE: labels,
+                                                      showj.RENDER: '_filename',
+                                                      showj.OBJCMDS: objCommands}))
+            return self._views
+
+        elif isinstance(obj, EmanProtInitModelSGD):
+            obj = obj.outputVolumes
+            fn = obj.getFileName()
+            labels = 'id enabled comment _filename '
+            objCommands = "'%s'" % OBJCMD_CLASSAVG_PROJS
 
             self._views.append(ObjectView(self._project, obj.strId(), fn,
                                           viewParams={showj.MODE: showj.MODE_MD,
@@ -171,14 +184,14 @@ Examples:
         return views
 
     def createScipionView(self, filename):
-        labels =  'enabled id _size _representative._filename '
+        labels = 'enabled id _size _representative._filename '
         viewParams = {showj.ORDER: labels,
                       showj.VISIBLE: labels,
                       showj.RENDER:'_representative._filename',
                       showj.SORT_BY: '_size desc'
                       }
 
-        inputParticlesId = self.protocol.inputParticles.get().strId()
+        inputParticlesId = self.protocol._getInputParticles().strId()
         view = ClassesView(self._project,
                            self.protocol.strId(), filename, other=inputParticlesId,
                            env=self._env,
@@ -900,8 +913,8 @@ class CtfViewer(ProtocolViewer):
         if saveChanges:
             self.protocol.createOutputStep()
             showInfo("Output updated",
-                          "Output particles were updated with new CTF values.",
-                          self.getTkRoot())
+                     "Output particles were updated with new CTF values.",
+                     self.getTkRoot())
 
     def _load(self):
         self.protocol._createFilenameTemplates()
