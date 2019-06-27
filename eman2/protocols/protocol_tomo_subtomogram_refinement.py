@@ -41,38 +41,6 @@ import eman2
 
 SAME_AS_PICKING = 0
 
-
-def getRefinementFile(folder, files, pattern):
-    pattern = "^" + folder + pattern
-    import re
-    outputList = list()
-    print(files)
-    for file in files:
-        print(file)
-        if re.match(pattern, file) is not None:
-            outputList.append(file.replace(folder, ""))
-
-    lastIteration = max(re.findall(r'\d+', ''.join(outputList)))
-
-    for file in outputList:
-        if lastIteration in file:
-            return file
-    return None
-
-def getLastFolder(files, folder, folderSuffix):
-    for file in files:
-        print(file)
-        if folder in file:
-            lastExecution = file[len(folder):]
-            print(lastExecution)
-            if "/" in lastExecution:
-                lastExecution = lastExecution[:lastExecution.index("/")]
-                if folderSuffix < lastExecution:
-                    folderSuffix = lastExecution
-    folder = folder + folderSuffix
-    return folder
-
-
 class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     """Protocol to performs a conventional iterative subtomogram averaging using the full set of particles."""
     _outputClassName = 'SubTomogramRefinement'
@@ -184,22 +152,34 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     def createOutputStep(self):
         pwutils.getFiles(self.workingDir.get())
         files = pwutils.getFiles(".")
-        pprint("files--------------------")
-        folder = "./spt_"
-        folderSuffix = "00"
-
-        folder = getLastFolder(files, folder, folderSuffix)
+        folder = self.getLastOutputFolder(files)
 
         folderPattern = folder.replace("/","\/").replace(".", "\.")
-        lastImage= getRefinementFile(folderPattern, files, "\/(threed_)(\d)+(\.hdf)$")
+        lastImage= self.getOutputFile(folderPattern, folder, files, "\/(threed_)(\d)+(\.hdf)$")
+        lastParam= self.getOutputFile(folderPattern, folder, files, "\/(particle_parms_)(\d)+(\.json)$")
+        
+        self.fillRefinementValuesOnSetOfSubtomogram(lastParam, self.inputSetOfSubTomogram.get(0))
 
-        lastParam= getRefinementFile(folderPattern, files, "\/(particle_parms_)(\d)+(\.json)$")
+        tomogram = self.readTomogram(lastImage)
+        tomogram.setSamplingRate(self.inputRef.get().getSamplingRate())
+        self._defineOutputs(outputTomogram=tomogram)
+
+        self.inputSetOfSubTomogram.get().setSamplingRate(self.inputRef.get().getSamplingRate())
+
+        self.outputSetOfClassesSubTomograms = self._createSetOfClassesSubTomograms(self.inputSetOfSubTomogram)
+        self._defineOutputs(outputSetOfClassesSubTomograms=self.outputSetOfClassesSubTomograms)
+
+        self._defineSourceRelation(self.inputSetOfSubTomogram.get(), self.outputSetOfClassesSubTomograms)
+
+    def fillRefinementValuesOnSetOfSubtomogram(self, lastParam, setOfSubTomograms):
         import json
         jsonParams = json.load(open(lastParam))
+
         keys = list()
         for item in jsonParams:
             keys.append(item)
         keys.sort()
+
         coverageDict = list()
         scoreDict = list()
         transformDict = list()
@@ -209,31 +189,13 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
             coverageDict.append(coverage)
             scoreDict.append(score)
             transformDict.append(Transform(jsonParams[key]['xform.align3d']['matrix']))
-        suffix = self._getOutputSuffix("")
-        self.inputSetOfSubTomogram.get().setSamplingRate(self.inputRef.get().getSamplingRate())
-        for item in self.inputSetOfSubTomogram.get(0).iterItems():
 
-            transform = transformDict.pop(0)
-            coverage = coverageDict.pop(0)
-            score = scoreDict.pop(0)
-
-            setattr(item, 'coverage', coverage)
-            setattr(item, 'score', score)
-            item.setTransform(transform)
-
-        self.outputSetOfClassesSubTomograms = self._createSetOfClassesSubTomograms(self.inputSetOfSubTomogram, suffix)
-        self.subTomogramsSet = self._createSetOfSubTomograms(suffix)
-
-        subTomogram = self.readTomogram(lastImage)
-        subTomogram.setSamplingRate(self.inputRef.get().getSamplingRate())
-        self.inputSetOfSubTomogram.get().setSamplingRate(self.inputRef.get().getSamplingRate())
-        self.subTomogramsSet.append(subTomogram)
-        self._defineOutputs(outputSetOfClassesSubTomograms=self.outputSetOfClassesSubTomograms)
-        self._defineOutputs(outputTomogram=subTomogram)
-        self._defineSourceRelation(self.inputSetOfSubTomogram.get(), self.outputSetOfClassesSubTomograms)
+        for item in setOfSubTomograms.iterItems():
+            setattr(item, 'coverage', coverageDict.pop(0))
+            setattr(item, 'score', scoreDict.pop(0))
+            item.setTransform(transformDict.pop(0))
 
     def readTomogram(self, workDir):
-
         from tomo.objects import Tomogram
 
         subtomogram = Tomogram()
@@ -243,6 +205,26 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         subtomogram.cleanObjId()
         subtomogram.setLocation(1, workDir)
         return subtomogram
+
+    def getOutputFile(self, folderpattern, folder, files, pattern):
+        pattern = "^" + folderpattern + pattern
+        import re
+        outputList = list()
+        for file in files:
+            if re.match(pattern, file) is not None:
+                outputList.append(file.replace(folder, ""))
+        lastIteration = max(re.findall(r'\d+', ''.join(outputList)))
+
+        output= [file for file in outputList if lastIteration in file]
+        return folder+output.pop()
+
+    def getLastOutputFolder(self, files):
+        folder = "./spt_"
+        import re
+        validFolders = [file for file in files if folder in file]
+        folderSuffix = max(re.findall(r'\d+', ''.join(validFolders)))
+        folder = folder + folderSuffix
+        return folder
 
     #--------------- INFO functions -------------------------
 
