@@ -119,7 +119,7 @@ class Plugin(pyworkflow.em.Plugin):
             ('./eman2.21.linux64.centos7.sh -b -p "%s/eman-2.21"' %
              SW_EM, '%s/eman-2.21/bin/python' % SW_EM)]
         eman23_commands = [
-            ('./eman2.3.linux64.centos7.sh -b -p "%s/eman-2.3"' %
+            ('./eman2.3.linux64.sh -b -p "%s/eman-2.3"' %
              SW_EM, '%s/eman-2.3/bin/python' % SW_EM)]
 
         env.addPackage('eman', version='2.21',
@@ -127,7 +127,7 @@ class Plugin(pyworkflow.em.Plugin):
                        commands=eman22_commands)
 
         env.addPackage('eman', version='2.3',
-                       tar='eman2.3.linux64.centos7.tgz',
+                       tar='eman2.3.linux64.tgz',
                        commands=eman23_commands,
                        default=True)
 
