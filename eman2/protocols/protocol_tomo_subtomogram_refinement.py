@@ -157,19 +157,20 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         folderPattern = folder.replace("/","\/").replace(".", "\.")
         lastImage= self.getOutputFile(folderPattern, folder, files, "\/(threed_)(\d)+(\.hdf)$")
         lastParam= self.getOutputFile(folderPattern, folder, files, "\/(particle_parms_)(\d)+(\.json)$")
-        
-        self.fillRefinementValuesOnSetOfSubtomogram(lastParam, self.inputSetOfSubTomogram.get(0))
-
-        tomogram = self.readTomogram(lastImage)
-        tomogram.setSamplingRate(self.inputRef.get().getSamplingRate())
-        self._defineOutputs(outputTomogram=tomogram)
 
         self.inputSetOfSubTomogram.get().setSamplingRate(self.inputRef.get().getSamplingRate())
+        self.fillRefinementValuesOnSetOfSubtomogram(lastParam, self.inputSetOfSubTomogram.get(0))
 
-        self.outputSetOfClassesSubTomograms = self._createSetOfClassesSubTomograms(self.inputSetOfSubTomogram)
-        self._defineOutputs(outputSetOfClassesSubTomograms=self.outputSetOfClassesSubTomograms)
+        subTomogram = SubTomogram()
+        subTomogram.cleanObjId()
+        subTomogram.setLocation(0, lastImage)
 
-        self._defineSourceRelation(self.inputSetOfSubTomogram.get(), self.outputSetOfClassesSubTomograms)
+        subTomogram.setSamplingRate(self.inputRef.get().getSamplingRate())
+        self._defineOutputs(outputSubTomogram=subTomogram)
+
+        self._defineOutputs(outputSetOfSubTomograms=self.inputSetOfSubTomogram.get(0))
+
+        self._defineSourceRelation(self.inputSetOfSubTomogram.get(), self.outputSetOfSubTomograms)
 
     def fillRefinementValuesOnSetOfSubtomogram(self, lastParam, setOfSubTomograms):
         import json
@@ -194,17 +195,6 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
             setattr(item, 'coverage', coverageDict.pop(0))
             setattr(item, 'score', scoreDict.pop(0))
             item.setTransform(transformDict.pop(0))
-
-    def readTomogram(self, workDir):
-        from tomo.objects import Tomogram
-
-        subtomogram = Tomogram()
-
-        imgh = pwem.ImageHandler()
-        x, y, z, n = imgh.getDimensions(workDir)
-        subtomogram.cleanObjId()
-        subtomogram.setLocation(1, workDir)
-        return subtomogram
 
     def getOutputFile(self, folderpattern, folder, files, pattern):
         pattern = "^" + folderpattern + pattern
