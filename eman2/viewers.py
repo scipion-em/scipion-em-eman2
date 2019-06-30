@@ -266,6 +266,9 @@ Examples:
 
         group.addParam('showImagesAngularAssignment', LabelParam,
                        label='Particles angular assignment')
+        group.addParam('showEulerInEman', LabelParam,
+                       label='Run e2eulerxplor.py',
+                       help='See https://blake.bcm.edu/emanwiki/EMAN2/Programs/e2eulerxplor')
 
         group = form.addGroup('Volumes')
 
@@ -320,6 +323,7 @@ Examples:
     def _getVisualizeDict(self):
         self._load()
         return {'showImagesAngularAssignment': self._showImagesAngularAssignment,
+                'showEulerInEman': self._runEulerXplor,
                 'displayVol': self._showVolumes,
                 'displayAngDist': self._showAngularDistribution,
                 'resolutionPlotsFSC': self._showFSC,
@@ -351,6 +355,17 @@ Examples:
                           self.protocol.strId(), filename,
                           other=inputParticlesId,
                           env=self._env, viewParams=viewParams)
+
+    def _runEulerXplor(self, paramName=None):
+        program = eman2.Plugin.getProgram('e2eulerxplor.py')
+        hostConfig = self.protocol.getHostConfig()
+        # Create the steps executor
+        executor = StepExecutor(hostConfig)
+        self.protocol.setStepsExecutor(executor)
+        # Finally run the protocol
+        self.protocol.runJob(program, "", cwd=self.protocol._getExtraPath(),
+                             numberOfMpi=1, numberOfThreads=1)
+        return []
 
     # =========================================================================
     # ShowVolumes
