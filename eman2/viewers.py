@@ -31,9 +31,11 @@ import pyworkflow.gui.text as text
 from pyworkflow.gui.dialog import askYesNo, showInfo
 from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER,
                                WEB_DJANGO)
+from pyworkflow.em.data import FSC
 import pyworkflow.em.viewers.showj as showj
 from pyworkflow.em.viewers import (ObjectView, DataView, EmPlotter,
-                                  ChimeraView, ChimeraClientView, ClassesView, DataViewer)
+                                   ChimeraView, ChimeraClientView, ClassesView,
+                                   DataViewer, FscViewer)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.executor import StepExecutor
 from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
@@ -264,6 +266,9 @@ Examples:
 
         group.addParam('showImagesAngularAssignment', LabelParam,
                        label='Particles angular assignment')
+        group.addParam('showEulerInEman', LabelParam,
+                       label='Run e2eulerxplor.py',
+                       help='See https://blake.bcm.edu/emanwiki/EMAN2/Programs/e2eulerxplor')
 
         group = form.addGroup('Volumes')
 
@@ -291,7 +296,10 @@ Examples:
                        help='')
 
         group = form.addGroup('Resolution')
-
+        group.addParam('figure', EnumParam, default=0,
+                       choices=['new', 'active'],
+                       label='Figure',
+                       display=EnumParam.DISPLAY_HLIST)
         group.addParam('resolutionPlotsFSC', EnumParam,
                        choices=['unmasked', 'masked', 'masked tight', 'all'],
                        default=FSC_UNMASK, display=EnumParam.DISPLAY_COMBO,
@@ -315,6 +323,7 @@ Examples:
     def _getVisualizeDict(self):
         self._load()
         return {'showImagesAngularAssignment': self._showImagesAngularAssignment,
+                'showEulerInEman': self._runEulerXplor,
                 'displayVol': self._showVolumes,
                 'displayAngDist': self._showAngularDistribution,
                 'resolutionPlotsFSC': self._showFSC,
@@ -346,6 +355,17 @@ Examples:
                           self.protocol.strId(), filename,
                           other=inputParticlesId,
                           env=self._env, viewParams=viewParams)
+
+    def _runEulerXplor(self, paramName=None):
+        program = eman2.Plugin.getProgram('e2eulerxplor.py')
+        hostConfig = self.protocol.getHostConfig()
+        # Create the steps executor
+        executor = StepExecutor(hostConfig)
+        self.protocol.setStepsExecutor(executor)
+        # Finally run the protocol
+        self.protocol.runJob(program, "", cwd=self.protocol._getExtraPath(),
+                             numberOfMpi=1, numberOfThreads=1)
+        return []
 
     # =========================================================================
     # ShowVolumes
@@ -486,49 +506,31 @@ Examples:
     # =========================================================================
     # plotFSC
     # =========================================================================
+    def _getFigure(self):
+        return None if self.figure == 0 else 'active'
+
     def _showFSC(self, paramName=None):
         threshold = self.resolutionThresholdFSC.get()
-        gridsize = self._getGridSize(1)
-        xplotter = EmPlotter(x=gridsize[0], y=gridsize[1],
-                             windowTitle='Resolution FSC')
+        fscPlot = self.resolutionPlotsFSC.get()
 
-        plot_title = 'FSC'
-        a = xplotter.createSubPlot(plot_title, 'Angstroms^-1', 'FSC',
-                                   yformat=False)
-        legends = []
+        fscViewer = FscViewer(project=self.protocol.getProject(),
+                              threshold=threshold,
+                              protocol=self.protocol,
+                              figure=self._getFigure(),
+                              addButton=True)
+        fscSet = self.protocol._createSetOfFSCs()
 
-        show = False
         for it in self._iterations:
-            if self.resolutionPlotsFSC.get() == FSC_UNMASK:
-                fscUnmask = self.protocol._getFileName('fscUnmasked',
-                                                       run=self.protocol._getRun(),
-                                                       iter=it)
-                if os.path.exists(fscUnmask):
-                    show = True
-                    self._plotFSC(a, fscUnmask)
-                    legends.append('unmasked map it %d' % it)
-                xplotter.showLegend(legends)
+            label = self._getLabel(fscPlot, it)
 
-            elif self.resolutionPlotsFSC.get() == FSC_MASK:
-                fscMask = self.protocol._getFileName('fscMasked',
-                                                     run=self.protocol._getRun(),
-                                                     iter=it)
-                if os.path.exists(fscMask):
-                    show = True
-                    self._plotFSC(a, fscMask)
-                    legends.append('masked map it %d' % it)
-                xplotter.showLegend(legends)
-
-            elif self.resolutionPlotsFSC.get() == FSC_MASKTIGHT:
-                fscMaskTight = self.protocol._getFileName('fscMaskedTight',
-                                                          run=self.protocol._getRun(),
-                                                          iter=it)
-                if os.path.exists(fscMaskTight):
-                    show = True
-                    self._plotFSC(a, fscMaskTight)
-                    legends.append('masked tight map it %d' % it)
-                xplotter.showLegend(legends)
-            elif self.resolutionPlotsFSC.get() == FSC_ALL:
+            if label is not None:
+                fn = self.protocol._getFileName(label[0],
+                                                run=self.protocol._getRun(),
+                                                iter=it)
+                if os.path.exists(fn):
+                    fsc = self._plotFSC(fn, label[1])
+                    fscSet.append(fsc)
+            else:
                 fscUnmask = self.protocol._getFileName('fscUnmasked',
                                                        run=self.protocol._getRun(),
                                                        iter=it)
@@ -539,34 +541,23 @@ Examples:
                                                           run=self.protocol._getRun(),
                                                           iter=it)
                 if os.path.exists(fscUnmask):
-                    show = True
-                    self._plotFSC(a, fscUnmask)
-                    legends.append('unmasked map it %d' % it)
-                    self._plotFSC(a, fscMask)
-                    legends.append('masked map it %d' % it)
-                    self._plotFSC(a, fscMaskTight)
-                    legends.append('masked tight map it %d' % it)
-                xplotter.showLegend(legends)
+                    fscU = self._plotFSC(fscUnmask, label='unmasked it %d' % it)
+                    fscM = self._plotFSC(fscMask, label='masked it %d' % it)
+                    fscT = self._plotFSC(fscMaskTight, label='masked tight it %d' % it)
+                    fscSet.append(fscU)
+                    fscSet.append(fscM)
+                    fscSet.append(fscT)
 
-        if show:
-            if threshold < self.maxFrc:
-                a.plot([self.minInv, self.maxInv], [threshold, threshold],
-                       color='black', linestyle='--')
-            a.grid(True)
-        else:
-            raise Exception("Set a valid iteration to show its FSC")
+        fscViewer.visualize(fscSet)
+        return [fscViewer]
 
-        return [xplotter]
-
-    def _plotFSC(self, a, fscFn):
+    def _plotFSC(self, fscFn, label):
         resolution_inv = self._getColunmFromFilePar(fscFn, 0)
         frc = self._getColunmFromFilePar(fscFn, 1)
-        self.maxFrc = max(frc)
-        self.minInv = min(resolution_inv)
-        self.maxInv = max(resolution_inv)
-        a.plot(resolution_inv, frc)
-        a.xaxis.set_major_formatter(self._plotFormatter)
-        a.set_ylim([-0.1, 1.1])
+        fsc = FSC(objLabel=label)
+        fsc.setData(resolution_inv, frc)
+
+        return fsc
 
     def _showHtmlReport(self, paramName=None):
         reportPath = self.protocol._getFileName('reportHtml',
@@ -689,6 +680,16 @@ Examples:
                         yield rot, tilt
 
         f.close()
+
+    def _getLabel(self, label, it):
+        if label == FSC_UNMASK:
+            return ['fscUnmasked', 'unmasked it %d' % it]
+        elif label == FSC_MASK:
+            return ['fscMasked', 'masked it %d' % it]
+        elif label == FSC_MASKTIGHT:
+            return ['fscMaskedTight', 'masked tight it %d' % it]
+        else:
+            return None
 
 
 class TiltValidateViewer(ProtocolViewer):
