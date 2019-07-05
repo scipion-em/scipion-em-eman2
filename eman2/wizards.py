@@ -48,7 +48,7 @@ class SparxGaussianPickerWizard(EmWizard):
         autopickProt = form.protocol
         micSet = autopickProt.getInputMicrographs()
         if not micSet:
-            print('must specify input micrographs')
+            print('You must specify input micrographs')
             return
 
         # ensuring a valid boxSize

@@ -134,16 +134,15 @@ Major features of this program:
                       label='Number of iterations',
                       help='The total number of refinement iterations to '
                            'perform.')
-        if eman2.Plugin.isNewVersion():
-            form.addParam('tophat', EnumParam,
-                          choices=['none', 'local', 'global'],
-                          label="Tophat filter?", default=TOPHAT_NONE,
-                          display=EnumParam.DISPLAY_COMBO,
-                          help='Instead of imposing a final '
-                               'Wiener filter (tophat = none)), use a tophat '
-                               'filter (global similar to Relion). local '
-                               'determines local resolution and '
-                               'filters. Danger of feature exaggeration.')
+        form.addParam('tophat', EnumParam,
+                      choices=['none', 'local', 'global'],
+                      label="Tophat filter?", default=TOPHAT_NONE,
+                      display=EnumParam.DISPLAY_COMBO,
+                      help='Instead of imposing a final '
+                           'Wiener filter (tophat = none)), use a tophat '
+                           'filter (global similar to Relion). local '
+                           'determines local resolution and '
+                           'filters. Danger of feature exaggeration.')
         form.addParam('symmetry', StringParam, default='c1',
                       condition='not doContinue',
                       label='Symmetry group',
@@ -178,6 +177,13 @@ Major features of this program:
                       help='Default=boxsize/20. Specify number of voxels to '
                            'expand mask before soft edge. Use this if low '
                            'density peripheral features are cut off by the mask.')
+        if self._isVersion23():
+            form.addParam('noRandPhase', BooleanParam, default=False,
+                          label='Supress phase randomization',
+                          help='Suppress independent phase randomization '
+                               'of input map. Only appropriate if input '
+                               'map has been preprocessed in some suitable '
+                               'fashion.')
 
         form.addSection(label='Advanced')
         form.addParam('speed', EnumParam,
@@ -196,11 +202,10 @@ Major features of this program:
         form.addParam('m3dKeep', FloatParam, default='0.8',
                       label='Fraction of class-averages to use in 3-D map',
                       help='The fraction of slices to keep in reconstruction.')
-        if eman2.Plugin.isNewVersion():
-            form.addParam('useBispec', BooleanParam, default=False,
-                          label='Use bispectra? (experimental)',
-                          help='Will use bispectra for orientation '
-                               'determination (EXPERIMENTAL).')
+        form.addParam('useBispec', BooleanParam, default=False,
+                      label='Use bispectra? (experimental)',
+                      help='Will use bispectra for orientation '
+                           'determination (EXPERIMENTAL).')
         form.addParam('useSetsfref', BooleanParam, default=True,
                       label='Use the setsfref option in class averaging?',
                       help='This matches the filtration of the class-averages '
@@ -223,15 +228,14 @@ Major features of this program:
                       help="<name>:<parm>=<value>:...  An arbitrary processor "
                            "(e2help.py processors -v2) to apply to the 3-D map "
                            "after each iteration. Default=none")
-        if eman2.Plugin.isNewVersion():
-            form.addParam('ampCorrect', EnumParam,
-                          choices=['auto', 'strucfac', 'flatten', 'none'],
-                          label="Amplitude correction:", default=AMP_AUTO,
-                          display=EnumParam.DISPLAY_COMBO,
-                          help="Will perform amplitude correction via the specified "
-                               "method. 'flatten' requires a target resolution better "
-                               "than 8 angstroms (experimental). 'none' will disable "
-                               "amplitude correction (experimental).")
+        form.addParam('ampCorrect', EnumParam,
+                      choices=['auto', 'strucfac', 'flatten', 'none'],
+                      label="Amplitude correction:", default=AMP_AUTO,
+                      display=EnumParam.DISPLAY_COMBO,
+                      help="Will perform amplitude correction via the specified "
+                           "method. 'flatten' requires a target resolution better "
+                           "than 8 angstroms (experimental). 'none' will disable "
+                           "amplitude correction (experimental).")
         form.addParam('extraParams', StringParam,
                       default='',
                       label='Additional parameters',
@@ -336,10 +340,6 @@ Major features of this program:
         if self.resol < 2 * samplingRate:
             errors.append("\nTarget resolution is smaller than Nyquist limit.")
 
-        if not self.doContinue:
-            self._validateDim(particles, self.input3DReference.get(), errors,
-                              'Input particles', 'Reference volume')
-
         return errors
 
     def _summary(self):
@@ -359,15 +359,25 @@ Major features of this program:
                        "HTML report*.")
         return summary
 
+    def _citations(self):
+        return ['Bell2016']
+
     # --------------------------- UTILS functions -----------------------------
     def _prepareParams(self):
         args1 = " --input=%(imgsFn)s --model=%(volume)s"
         args2 = self._commonParams()
 
-        volume = os.path.relpath(self.input3DReference.get().getFileName(),
-                                 self._getExtraPath()).replace(":mrc", "")
+        refVolFn = "ref_vol.hdf"
+        origVol = os.path.relpath(self.input3DReference.get().getFileName(),
+                               self._getExtraPath()).replace(":mrc", "")
+        args = "%s %s --apix=%0.3f" % (origVol, refVolFn,
+                                       self.input3DReference.get().getSamplingRate())
+        self.runJob(eman2.Plugin.getProgram('e2proc3d.py'), args,
+                    cwd=self._getExtraPath(),
+                    numberOfMpi=1, numberOfThreads=1)
+
         params = {'imgsFn': self._getParticlesStack(),
-                  'volume': volume}
+                  'volume': refVolFn}
 
         args = args1 % params + args2
         return args
@@ -418,12 +428,19 @@ Major features of this program:
         if self.m3dPostProcess.get() != 'none':
             args += " --m3dpostprocess=%s" % self.m3dPostProcess.get()
 
-        if eman2.Plugin.isNewVersion():
-            args += " --ampcorrect=%s" % self.getEnumText('ampCorrect')
-            if self.tophat != TOPHAT_NONE:
-                args += " --tophat=%s" % self.getEnumText('tophat')
-            if self.useBispec:
+        args += " --ampcorrect=%s" % self.getEnumText('ampCorrect')
+
+        if self.tophat != TOPHAT_NONE:
+            args += " --tophat=%s" % self.getEnumText('tophat')
+
+        if self.useBispec:
+            if self._isVersion23():
+                args += " --invar"
+            else:
                 args += " --bispec"
+
+        if self._isVersion23() and self.noRandPhase:
+            args += " --norandomaphase"
 
         if self.extraParams.hasValue():
             args += ' ' + self.extraParams.get()
@@ -525,3 +542,6 @@ Major features of this program:
                                              self._getBaseName('angles', iter=iterN)),
                                      direc=self._getExtraPath())
             proc.wait()
+
+    def _isVersion23(self):
+        return eman2.Plugin.isVersion('2.3')
