@@ -28,7 +28,7 @@ import os, math
 
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.gui.text as text
-from pyworkflow.gui.dialog import askYesNo, showInfo
+from pyworkflow.gui.dialog import askYesNo, showInfo, showError
 from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER,
                                WEB_DJANGO)
 from pyworkflow.em.data import FSC
@@ -744,7 +744,8 @@ class TiltValidateViewer(ProtocolViewer):
             if pwutils.exists(plotFn):
                 views.append(DataView(plotFn))
             else:
-                raise Exception("Contour plot file not found: %s" % plotFn)
+                showError("File not found", "Contour plot file not found: %s" % plotFn,
+                          self.getTkRoot())
 
         return views
 
