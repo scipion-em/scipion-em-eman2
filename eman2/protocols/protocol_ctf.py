@@ -26,7 +26,6 @@
 
 from pyworkflow.protocol.params import (FloatParam, EnumParam,
                                         BooleanParam)
-from pyworkflow.protocol.constants import LEVEL_ADVANCED
 import pyworkflow.utils as pwutils
 from pyworkflow.em import CTFModel
 from pyworkflow.em.data import SetOfParticles

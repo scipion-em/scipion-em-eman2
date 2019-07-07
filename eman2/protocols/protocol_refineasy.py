@@ -538,9 +538,9 @@ Major features of this program:
         if not exists(angles) and exists(self._getFileName('clsEven',
                                                            run=numRun, iter=iterN)):
             proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 3d'
-                                          % (self._getParticlesStack(), clsFn, classesFn,
-                                             self._getBaseName('angles', iter=iterN)),
-                                     direc=self._getExtraPath())
+                                                       % (self._getParticlesStack(), clsFn, classesFn,
+                                                          self._getBaseName('angles', iter=iterN)),
+                                                  direc=self._getExtraPath())
             proc.wait()
 
     def _isVersion23(self):

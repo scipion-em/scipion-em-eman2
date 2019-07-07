@@ -26,6 +26,7 @@
 
 from protocol_boxing import EmanProtBoxing
 from protocol_ctf import EmanProtCTFAuto
+from protocol_evalrefine import EmanProtEvalRefine
 from protocol_initialmodel import EmanProtInitModel
 from protocol_initialmodel_sgd import EmanProtInitModelSGD
 from protocol_reconstruct import EmanProtReconstruct
