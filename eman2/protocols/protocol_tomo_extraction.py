@@ -146,6 +146,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         for index in range(1, n + 1):
             subtomogram.cleanObjId()
             subtomogram.setLocation(index, workDir)
+            subtomogram.setCoordinate3D(self.coordDict[index-1])
             tomogramsSet.append(subtomogram)
 
     def createOutputStep(self):
@@ -164,10 +165,13 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     def writeSetOfCoordinates3D(self):
         self.coordsFileName = self._getExtraPath(
             pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'))
+        self.coordDict = []
 
         out = file(self.coordsFileName, "w")
         for coord3DSet in self.inputCoordinates.get().iterCoordinates():
             out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
+            self.coordDict.append(coord3DSet.clone())
+
         out.close()
 
     # --------------------------- STEPS functions -----------------------------
