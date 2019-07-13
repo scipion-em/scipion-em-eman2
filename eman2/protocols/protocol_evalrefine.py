@@ -34,8 +34,8 @@ from pyworkflow.utils import createLink
 
 
 import eman2
+import eman2.convert
 from eman2.constants import *
-from eman2.convert import writeSetOfParticles, iterLstFile
 
 
 class EmanProtEvalRefine(em.ProtAnalysis3D):
@@ -53,14 +53,16 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
 
         myDict = {
             'mask': self._getExtraPath('mask.hdf'),
-            'partSetGood': self._getExtraPath('sets/pf01_good_inputSet.lst'),
-            'partSetBad': self._getExtraPath('sets/pf01_bad_inputSet.lst'),
-            'partSetGoodInvar': self._getExtraPath('sets/pf01_good_inputSet.lst__ctf_flip_invar.lst'),
-            'partSetBadInvar': self._getExtraPath('sets/pf01_bad_inputSet.lst__ctf_flip_invar.lst')
+            'partSetGood': self._getExtraPath('sets/pf01_good_inputSet__ctf_flip.lst'),
+            'partSetBad': self._getExtraPath('sets/pf01_bad_inputSet__ctf_flip.lst'),
+            'partSetGoodInvar': self._getExtraPath('sets/pf01_good_inputSet__ctf_flip_invar.lst'),
+            'partSetBadInvar': self._getExtraPath('sets/pf01_bad_inputSet__ctf_flip_invar.lst'),
+            'even': self._getExtraPath('sets/inputSet__ctf_flip_even.lst'),
+            'odd': self._getExtraPath('sets/inputSet__ctf_flip_odd.lst')
         }
         self._updateFilenamesDict(myDict)
 
-    #--------------------------- DEFINE param functions -----------------------
+    # -------------------------- DEFINE param functions -----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('inputProt', PointerParam,
@@ -122,7 +124,7 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
 
         form.addParallelSection(threads=4, mpi=0)
 
-    #--------------------------- INSERT steps functions -----------------------
+    # -------------------------- INSERT steps functions -----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self.convertInputStep()
@@ -131,14 +133,13 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
         self._insertFunctionStep('evalStep', args)
         self._insertFunctionStep('createOutputStep')
 
-    #--------------------------- STEPS functions ------------------------------
+    # -------------------------- STEPS functions ------------------------------
     def convertInputStep(self):
         if self.inputMask.hasValue():
             mask = self.inputMask.get()
-            orig = os.path.relpath(mask.getFileName(),
-                                   self._getExtraPath())
-            args = "%s %s --apix=%0.3f" % (orig,
-                                           os.path.basename(self._getFileName("mask")),
+            orig = os.path.relpath(mask.getFileName(), self._getExtraPath())
+            maskBase = os.path.basename(self._getFileName("mask"))
+            args = "%s %s --apix=%0.3f" % (orig, maskBase,
                                            mask.getSamplingRate())
             self.runJob(eman2.Plugin.getProgram('e2proc3d.py'), args,
                         cwd=self._getExtraPath(),
@@ -161,37 +162,53 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
         """ Run the EMAN program to evalrefine. """
         program = eman2.Plugin.getProgram('e2evalrefine.py')
         # mpi and threads are handled by EMAN itself
-        self.runJob(program, args, cwd=self._getExtraPath(),
-                    numberOfMpi=1, numberOfThreads=1)
+        try:
+            self.runJob(program, args, cwd=self._getExtraPath(),
+                        numberOfMpi=1, numberOfThreads=1)
+        except Exception:
+            print("Seems that Eman2 program failed, althought files were "
+                  "generated.")
 
     def createOutputStep(self):
         inputSet = self._inputProt()._getInputParticles()
-        outputSets = self._getOutputSets()
-        outputs = {}
 
-        for key, fn in outputSets.iteritems():
-            outputSet = self._createSetOfParticles(suffix='_%s' % key)
+        def _nextItem(outputIter):
+            try:
+                item = next(outputIter)
+                r = None if item is None else item[0]
+            except StopIteration:
+                r = None
+            return r
+
+        def _createOutputTuple(label, fileKey):
+            outputSet = self._createSetOfParticles(suffix='_%s' % label)
             outputSet.copyInfo(inputSet)
             outputSet.setIsPhaseFlipped(True)
             outputSet.setHasCTF(True)
-
-            #partIter = iter(inputSet.iterItems(orderBy=['id'], direction='ASC'))
-            outputSet.copyItems(inputSet,
-                                updateItemCallback=self._setFileName,
-                                itemDataIterator=iterLstFile(self._getFileName(fn)))
             outputSet.setSamplingRate(inputSet.getSamplingRate())
-            outputs = {
-                'good': 'outputParticles_good',
-                'bad': 'outputParticles_bad',
-                'good_invar': 'outputParticles_good_invar',
-                'bad_invar': 'outputParticles_bad_invar'}
-            outputs[key] = outputSet
+            outputIter = eman2.convert.iterLstFile(self._getFileName(fileKey))
+            return outputSet, outputIter, _nextItem(outputIter)
 
-        self._defineOutputs(**outputs)
-        for _, out in self.iterOutputAttributes(SetOfParticles):
-            self._defineSourceRelation(inputSet, out)
+        goodSet, goodIter, goodFirst = _createOutputTuple('good', 'partSetGood')
+        badSet, badIter, badFirst = _createOutputTuple('bad', 'partSetBad')
 
-    #--------------------------- INFO functions -------------------------------
+        for i, part in eman2.convert.iterParticlesByMic(inputSet):
+            if i + 1 == goodFirst:
+                goodSet.append(part)
+                goodFirst = _nextItem(goodIter)
+            elif i + 1 == badFirst:
+                badSet.append(part)
+                badFirst = _nextItem(badIter)
+            else:
+                raise Exception("Particle %d (id=%d) not found in any set"
+                                % (i+1, part.getObjId()))
+
+        self._defineOutputs(outputParticlesGood=goodSet,
+                            outputParticlesBad=badSet)
+        self._defineSourceRelation(inputSet, goodSet)
+        self._defineSourceRelation(inputSet, badSet)
+
+    # -------------------------- INFO functions -------------------------------
     def _validate(self):
         errors = []
 
@@ -207,7 +224,7 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
 
         return methods
 
-    #--------------------------- UTILS functions ------------------------------
+    # -------------------------- UTILS functions ------------------------------
     def _prepareParams(self):
         args = " --threads %d" % self.numberOfThreads.get()
 
@@ -241,13 +258,6 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
 
     def _inputProt(self):
         return self.inputProt.get()
-
-    def _getOutputSets(self):
-        outputs = {'good': 'partSetGood',
-                   'bad': 'partSetBad',
-                   'good_invar': 'partSetGoodInvar',
-                   'bad_invar': 'partSetBadInvar'}
-        return outputs
 
     def _setFileName(self, item, row):
         fileName = self._getExtraPath(row[1])

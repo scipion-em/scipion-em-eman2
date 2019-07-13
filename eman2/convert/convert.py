@@ -281,8 +281,8 @@ def convertImage(inputLoc, outputLoc):
         else:
             return loc
 
-    proc = eman2.Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
-                                                        _getFn(outputLoc)))
+    proc = eman2.Plugin.createEmanProcess(
+        'e2ih.py', args='%s %s' % (_getFn(inputLoc), _getFn(outputLoc)))
     proc.wait()
 
 
@@ -291,8 +291,8 @@ def iterLstFile(filename):
     for line in f:
         if '#' not in line:
             # Decompose Eman filename
-            index, filename = int(line.split()[0]) + 1, line.split()[1]
-            yield (index, filename)
+            index, fn = int(line.split()[0]) + 1, line.split()[1]
+            yield (index, fn)
     f.close()
 
 
@@ -416,3 +416,4 @@ def calculatePhaseShift(ampcont):
     ctfPhaseShift = numpy.rad2deg(PhaseShift)
 
     return ctfPhaseShift
+
