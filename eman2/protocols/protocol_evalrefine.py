@@ -195,11 +195,12 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
         goodSet, goodIter, goodFirst = _createOutputTuple('good', 'partSetGood', 'partSetGood2')
         badSet, badIter, badFirst = _createOutputTuple('bad', 'partSetBad', 'partSetBad2')
 
-        for i, part in eman2.convert.iterParticlesByMic(inputSet):
-            if part.getIndex() == goodFirst[0] and removeBaseExt(part.getCoordinate().getMicName()) == removeBaseExt(goodFirst[1]):
+        for _, part in eman2.convert.iterParticlesByMic(inputSet):
+            loc, fn = part.getIndex(), part.getCoordinate().getMicName()
+            if loc == goodFirst[0] and removeBaseExt(fn) == removeBaseExt(goodFirst[1]):
                 goodSet.append(part)
                 goodFirst = _nextItem(goodIter)
-            elif part.getIndex() == badFirst[0] and removeBaseExt(part.getCoordinate().getMicName()) == removeBaseExt(badFirst[1]):
+            elif loc == badFirst[0] and removeBaseExt(fn) == removeBaseExt(badFirst[1]):
                 badSet.append(part)
                 badFirst = _nextItem(badIter)
             else:
