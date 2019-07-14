@@ -205,7 +205,7 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
                 badFirst = _nextItem(badIter)
             else:
                 raise Exception("Particle %d@%s (id=%d) not found in any set"
-                                % (part.getIndex(), part.getFileName(), part.getObjId()))
+                                % (loc, fn, part.getObjId()))
 
         self._defineOutputs(outputParticlesGood=goodSet,
                             outputParticlesBad=badSet)
