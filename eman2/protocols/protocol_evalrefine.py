@@ -1,8 +1,10 @@
 # **************************************************************************
 # *
-# *  Authors:     Grigory Sharov (gsharov@mrc-lmb.cam.ac.uk)
+# *  Authors:     Grigory Sharov (gsharov@mrc-lmb.cam.ac.uk) [1]
+# *  Authors:     J.M. de la Rosa Trevin (delarosatrevin@scilifelab.se) [2]
 # *
-# * MRC Laboratory of Molecular Biology (MRC-LMB)
+# * [1] MRC Laboratory of Molecular Biology (MRC-LMB)
+# * [2] SciLifeLab, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -26,11 +28,10 @@
 import os
 
 import pyworkflow.em as em
-from pyworkflow.em.data import SetOfParticles
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         StringParam, BooleanParam)
-from pyworkflow.utils import createLink
+from pyworkflow.utils import createLink, copyTree, removeBaseExt
 
 
 import eman2
@@ -53,12 +54,12 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
 
         myDict = {
             'mask': self._getExtraPath('mask.hdf'),
-            'partSetGood': self._getExtraPath('sets/pf01_good_inputSet__ctf_flip.lst'),
-            'partSetBad': self._getExtraPath('sets/pf01_bad_inputSet__ctf_flip.lst'),
-            'partSetGoodInvar': self._getExtraPath('sets/pf01_good_inputSet__ctf_flip_invar.lst'),
-            'partSetBadInvar': self._getExtraPath('sets/pf01_bad_inputSet__ctf_flip_invar.lst'),
-            'even': self._getExtraPath('sets/inputSet__ctf_flip_even.lst'),
-            'odd': self._getExtraPath('sets/inputSet__ctf_flip_odd.lst')
+            'partSetGood': self._getExtraPath('sets/pf01_good_inputSet.lst'),
+            'partSetBad': self._getExtraPath('sets/pf01_bad_inputSet.lst'),
+            'partSetGood2': self._getExtraPath('sets/pf01_good_inputSet__ctf_flip.lst'),
+            'partSetBad2': self._getExtraPath('sets/pf01_bad_inputSet__ctf_flip.lst'),
+            #'partSetGoodInvar': self._getExtraPath('sets/pf01_good_inputSet__ctf_flip_invar.lst'),
+            #'partSetBadInvar': self._getExtraPath('sets/pf01_bad_inputSet__ctf_flip_invar.lst'),
         }
         self._updateFilenamesDict(myDict)
 
@@ -69,7 +70,7 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
                       label='Choose e2refine_easy protocol',
                       pointerClass='EmanProtRefine',
                       help='Select a completed EMAN refinement protocol.')
-        form.addParam('evalPtcls', BooleanParam, default=False,
+        form.addParam('evalPtcls', BooleanParam, default=True,
                       label='Evaluate particle-map agreement',
                       help='Evaluates the particle-map agreement. '
                            'This may be used to identify bad particles.')
@@ -156,7 +157,7 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
 
         createLink(presResDir, currResDir)
         createLink(prevPartDir, currPartDir)
-        createLink(prevSetsDir, currSetsDir)
+        copyTree(prevSetsDir, currSetsDir)
 
     def evalStep(self, args):
         """ Run the EMAN program to evalrefine. """
@@ -166,42 +167,44 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
         except Exception:
-            print("Seems that Eman2 program failed, althought files were "
+            print("Seems that e2evalrefine.py has failed, although files were "
                   "generated.")
 
     def createOutputStep(self):
+        skipCtf = self._inputProt().skipctf.get()
         inputSet = self._inputProt()._getInputParticles()
 
         def _nextItem(outputIter):
             try:
                 item = next(outputIter)
-                r = None if item is None else item[0]
+                r = None if item is None else item
             except StopIteration:
                 r = None
             return r
 
-        def _createOutputTuple(label, fileKey):
+        def _createOutputTuple(label, fileKey, fileKey2):
             outputSet = self._createSetOfParticles(suffix='_%s' % label)
             outputSet.copyInfo(inputSet)
             outputSet.setIsPhaseFlipped(True)
             outputSet.setHasCTF(True)
             outputSet.setSamplingRate(inputSet.getSamplingRate())
-            outputIter = eman2.convert.iterLstFile(self._getFileName(fileKey))
+            fn = fileKey if skipCtf else fileKey2
+            outputIter = eman2.convert.iterLstFile(self._getFileName(fn))
             return outputSet, outputIter, _nextItem(outputIter)
 
-        goodSet, goodIter, goodFirst = _createOutputTuple('good', 'partSetGood')
-        badSet, badIter, badFirst = _createOutputTuple('bad', 'partSetBad')
+        goodSet, goodIter, goodFirst = _createOutputTuple('good', 'partSetGood', 'partSetGood2')
+        badSet, badIter, badFirst = _createOutputTuple('bad', 'partSetBad', 'partSetBad2')
 
         for i, part in eman2.convert.iterParticlesByMic(inputSet):
-            if i + 1 == goodFirst:
+            if part.getIndex() == goodFirst[0] and removeBaseExt(part.getCoordinate().getMicName()) == removeBaseExt(goodFirst[1]):
                 goodSet.append(part)
                 goodFirst = _nextItem(goodIter)
-            elif i + 1 == badFirst:
+            elif part.getIndex() == badFirst[0] and removeBaseExt(part.getCoordinate().getMicName()) == removeBaseExt(badFirst[1]):
                 badSet.append(part)
                 badFirst = _nextItem(badIter)
             else:
-                raise Exception("Particle %d (id=%d) not found in any set"
-                                % (i+1, part.getObjId()))
+                raise Exception("Particle %d@%s (id=%d) not found in any set"
+                                % (part.getIndex(), part.getFileName(), part.getObjId()))
 
         self._defineOutputs(outputParticlesGood=goodSet,
                             outputParticlesBad=badSet)
@@ -258,7 +261,3 @@ class EmanProtEvalRefine(em.ProtAnalysis3D):
 
     def _inputProt(self):
         return self.inputProt.get()
-
-    def _setFileName(self, item, row):
-        fileName = self._getExtraPath(row[1])
-        item.setLocation(row[0], fileName)
