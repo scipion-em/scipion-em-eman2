@@ -147,6 +147,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             subtomogram.cleanObjId()
             subtomogram.setLocation(index, workDir)
             subtomogram.setCoordinate3D(self.coordDict[index-1])
+            subtomogram.setAcquisition(self.getInputTomogram().getAcquisition())
             tomogramsSet.append(subtomogram)
 
     def createOutputStep(self):
