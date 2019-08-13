@@ -34,17 +34,16 @@ from protocol_refineasy import EmanProtRefine
 from protocol_tiltvalidate import EmanProtTiltValidate
 from protocol_autopick_boxer import EmanProtAutopick
 from protocol_autopick_sparx import SparxGaussianProtPicking
-
-
 from protocol_tomo_boxing import EmanProtTomoBoxing
 from protocol_tomo_extraction import EmanProtTomoExtraction
-from protocol_tomo_subtomogram_refinement import EmanProtTomoRefinement
+from protocol_tomo_initialmodel import EmanProtTomoInitialModel
 
-# try:
-#     from protocol_tomo_boxing import EmanProtTomoBoxing
-#     from protocol_tomo_extraction import EmanProtTomoExtraction
-#     from protocol_tomo_subtomogram_refinement import ProtSubTomogramRefinement
-# except ImportError:
-#     raise ImportError(
-#         'To use a Tomography protocol scipion-em-tomo plugin is required.'
-#         ' See https://github.com/scipion-em/scipion-em-tomo for further details')
+#try:
+#    from protocol_tomo_boxing import EmanProtTomoBoxing
+#    from protocol_tomo_extraction import EmanProtTomoExtraction
+#    from protocol_tomo_subtomogram_refinement import ProtSubTomogramRefinement
+#    from protocol_tomo_initialmodel.py import EmanProtTomoInitialModel
+#except ImportError:
+#    raise ImportError(
+#        'To use a Tomography protocol scipion-em-tomo plugin is required.'
+#        ' See https://github.com/scipion-em/scipion-em-tomo for further details')
