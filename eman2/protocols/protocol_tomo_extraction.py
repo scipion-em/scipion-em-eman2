@@ -146,6 +146,8 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         for index in range(1, n + 1):
             subtomogram.cleanObjId()
             subtomogram.setLocation(index, workDir)
+            subtomogram.setCoordinate3D(self.coordDict[index-1])
+            subtomogram.setAcquisition(self.getInputTomogram().getAcquisition())
             tomogramsSet.append(subtomogram)
 
     def createOutputStep(self):
@@ -164,10 +166,13 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     def writeSetOfCoordinates3D(self):
         self.coordsFileName = self._getExtraPath(
             pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'))
+        self.coordDict = []
 
         out = file(self.coordsFileName, "w")
         for coord3DSet in self.inputCoordinates.get().iterCoordinates():
             out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
+            self.coordDict.append(coord3DSet.clone())
+
         out.close()
 
     # --------------------------- STEPS functions -----------------------------
@@ -194,9 +199,9 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     def _validate(self):
         errors = []
 
-        if not eman2.Plugin.isNewVersion():
+        if not eman2.Plugin.isTomoAvailableVersion():
             errors.append('Your EMAN2 version does not support the tomo boxer. '
-                          'Please update your installation to EMAN 2.21 or newer.')
+                          'Please update your installation to EMAN 2.3 or newer.')
 
         return errors
 

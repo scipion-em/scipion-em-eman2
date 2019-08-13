@@ -409,7 +409,7 @@ def convertReferences(refSet, outputFn):
 
 def calculatePhaseShift(ampcont):
     # calculate phase shift as in EMAN2 ctf.cpp
-    if  -100.0 < ampcont <= 100.0:
+    if -100.0 < ampcont <= 100.0:
         PhaseShift = numpy.arcsin(ampcont / 100.0)
     elif ampcont > 100.0:
         PhaseShift = numpy.pi - numpy.arcsin(2.0 - ampcont / 100.0)

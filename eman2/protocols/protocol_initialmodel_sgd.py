@@ -1,8 +1,8 @@
 # **************************************************************************
 # *
-# * Authors:     Josue Gomez Blanco (josue.gomez-blanco@mcgill.ca)
+# *  Authors:     Grigory Sharov (gsharov@mrc-lmb.cam.ac.uk)
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * MRC Laboratory of Molecular Biology (MRC-LMB)
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -24,90 +24,115 @@
 # *
 # **************************************************************************
 
-import os
 from glob import glob
 
 from pyworkflow.utils.path import cleanPattern
 from pyworkflow.protocol.params import (PointerParam, TextParam, IntParam,
-                                        BooleanParam, LEVEL_ADVANCED,
-                                        StringParam)
+                                        BooleanParam, StringParam,
+                                        EnumParam, FloatParam)
 from pyworkflow.em.protocol import ProtInitialVolume
-from pyworkflow.em.data import SetOfClasses2D, Volume
+from pyworkflow.em.data import SetOfClasses2D, SetOfAverages, Volume
 
 import eman2
+from eman2.constants import *
 
 
-class EmanProtInitModel(ProtInitialVolume):
+class EmanProtInitModelSGD(ProtInitialVolume):
     """
-    This protocol wraps *e2initialmodel.py* EMAN2 program.
+    This protocol wraps *e2initialmodel_sgd.py* EMAN2 program.
 
-    It will take a set of class-averages/projections and build a set
-    of 3-D models suitable for use as initial models in single
-    particle reconstruction. The output set is theoretically sorted
-    in order of quality (best one is numbered 1), though it's best
-    to look at the other answers as well.
-
-    See more details in:
-    http://blake.bcm.edu/emanwiki/EMAN2/Programs/e2initialmodel
+    This program makes initial models using a (kind of) stochastic gradient
+    descent approach. It is recommended that the box size of
+    particles is around 100.
     """
 
-    _label = 'initial model'
+    _label = 'initial model SGD'
 
     # --------------------------- DEFINE param functions ----------------------
 
     def _defineParams(self, form):
         form.addSection(label='Input')
-        form.addParam('inputSet', PointerParam,
+        form.addParam('inputType', EnumParam,
+                      choices=['Averages', 'Particles'],
+                      default=SGD_INPUT_AVG,
+                      label='Select input type',
+                      help='You can choose either class averages '
+                      'or particles as input.')
+        form.addParam('inputAvg', PointerParam,
                       pointerClass='SetOfClasses2D, SetOfAverages',
+                      condition='inputType==%d' % SGD_INPUT_AVG,
                       # pointerCondition='hasRepresentatives',
                       label="Input averages", important=True,
-                      help='Select the your class averages to build your '
+                      help='Select the class averages to build your '
                            '3D model.\nYou can select SetOfAverages or '
                            'SetOfClasses2D as input.')
+        form.addParam('inputPart', PointerParam,
+                      pointerClass='SetOfParticles',
+                      condition='inputType==%d' % SGD_INPUT_PTCLS,
+                      label="Input particles", important=True,
+                      help='Select the particles to build your '
+                           '3D model.')
         form.addParam('symmetry', TextParam, default='c1',
                       label='Symmetry group',
                       help='Specify the symmetry.\nChoices are: c(n), d(n), '
                            'h(n), tet, oct, icos.\n'
                            'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
                            'for a detailed description of symmetry in Eman.')
-        form.addParam('numberOfIterations', IntParam, default=8,
+        form.addParam('batchSize', IntParam, default=10,
+                      label='Batch size',
+                      help='Batch size of stochastic gradient descent. '
+                           'N particles are randomly selected to '
+                           'generate an initial model at each step.')
+        form.addParam('numberOfIterations', IntParam, default=20,
                       label='Number of iterations to perform',
                       help='The total number of refinement to perform.')
         form.addParam('numberOfModels', IntParam, default=10,
                       label='Number of different initial models',
                       help='The number of different initial models to '
                            'generate in search of a good one.')
+        form.addParam('targetRes', FloatParam, default='20.0',
+                      label='Target resolution (A)',
+                      help='Target resolution in A of the model.')
         form.addParam('shrink', IntParam, default=1,
-                      expertLevel=LEVEL_ADVANCED,
                       label='Shrink factor',
                       help='Using a box-size >64 is not optimal for making '
                            'initial models. Suggest using this option to '
                            'shrink the input particles by an integer amount '
                            'prior to reconstruction. Default = 1, no shrinking')
-        form.addParam('randOrient', BooleanParam, default=False,
-                      expertLevel=LEVEL_ADVANCED,
-                      label='Use random orientations?',
-                      help='Instead of seeding with a random volume, '
-                           'seeds by randomizing input orientations')
-        if self._isVersion23():
-            form.addParam('autoMaskExp', IntParam, default=-1,
-                          expertLevel=LEVEL_ADVANCED,
-                          label='Automask expand (px)',
-                          help='Number of voxels of post-threshold expansion '
-                               'in the mask, for use when peripheral '
-                               'features are truncated '
-                               '(default=shrunk boxsize/20)')
+
+        form.addSection('Advanced')
+        form.addParam('learnRate', FloatParam, default='0.3',
+                      label='Learning rate',
+                      help='Learning rate is how much the initial model changes '
+                           'toward the gradient direction in each iteration. '
+                           'Ranges from 0.0 to 1.0. Default is 0.3')
+        form.addParam('lrDecay', FloatParam, default='1.0',
+                      label='Learning decay',
+                      help='Learning rate multiplier after each iteration.')
+        form.addParam('addNoise', FloatParam, default='3.0',
+                      label='Add noise',
+                      help='Add noise on particles at each iteration. '
+                           'Stablize convergence for some reason.')
+        form.addParam('fullCov', BooleanParam, default=False,
+                      label='Full coverage',
+                      help='Assume the input particles covers most of the '
+                           'orientation of the model. This gives better '
+                           'performance when the model is relatively featureless, '
+                           'but is more likely to fail when there are incorrect '
+                           'particles in the input.')
+        form.addParam('writeTmp', BooleanParam, default=False,
+                      label='Write tmp output?',
+                      help='Write output for each iteration.')
         form.addParam('extraParams', StringParam, default='',
-                      expertLevel=LEVEL_ADVANCED,
                       label='Additional arguments:',
                       help='In this box command-line arguments may be provided '
                            'that are not generated by the GUI. This may be '
                            'useful for testing developmental options and/or '
                            'expert use of the program. \n'
-                           'The command "e2initialmodel.py -h" will print a list '
+                           'The command "e2initialmodel_sgd.py -h" will print a list '
                            'of possible options.')
 
-        form.addParallelSection(threads=8, mpi=1)
+        form.addParallelSection(threads=10, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
 
@@ -118,21 +143,22 @@ class EmanProtInitModel(ProtInitialVolume):
         self._insertFunctionStep('createOutputStep')
 
     def _insertInitialModelStep(self):
-        args = '--input=%(relImgsFn)s --sym=%(symmetry)s'
+        args = '--ptcls=input_set.spi'
         if self.shrink > 1:
             args += ' --shrink=%(shrink)d'
-        if not self._isHighSym():
-            args += ' --tries=%(numberOfModels)d --iter=%(numberOfIterations)d'
-            if self.randOrient:
-                args += ' --randorient'
-            if self._isVersion23() and self.autoMaskExp.get() != -1:
-                args += '--automaskexpand %d'
-            if self.numberOfMpi > 1:
-                args += ' --parallel=mpi:%(mpis)d:%(scratch)s'
-            else:
-                args += ' --parallel=thread:%(threads)d'
-        else:
-            args += ' --threads=%(threads)d'
+
+        args += ' --ntry=%(numberOfModels)d --niter=%(numberOfIterations)d'
+        args += ' --batchsize=%(batchSize)d --targetres=%(targetRes)f'
+        args += ' --learnrate=%(learnRate)f --lrdecay=%(lrDecay)f'
+        args += ' --addnoise %(addNoise)f --sym=%(symmetry)s'
+
+        if self.writeTmp:
+            args += ' --writetmp'
+        if self.fullCov:
+            args += ' --fullcov'
+
+        args += ' --threads=%(threads)d'
+
         if self.extraParams.hasValue():
             args += " " + self.extraParams.get()
 
@@ -140,46 +166,40 @@ class EmanProtInitModel(ProtInitialVolume):
 
     # --------------------------- STEPS functions -----------------------------
     def createStackImgsStep(self):
-        if isinstance(self.inputSet.get(), SetOfClasses2D):
-            pixSize = self.inputSet.get().getImages().getSamplingRate()
+        imgsFn = self._params['imgsFn']
+        inputSet = self._getInputSet()
+        if isinstance(inputSet, SetOfClasses2D):
             imgSet = self._createSetOfParticles("_averages")
-            for i, cls in enumerate(self.inputSet.get()):
+            for i, cls in enumerate(self.inputAvg.get()):
                 img = cls.getRepresentative()
-                img.setSamplingRate(pixSize)
+                img.setSamplingRate(cls.getSamplingRate())
                 img.setObjId(i + 1)
                 imgSet.append(img)
+        elif isinstance(inputSet, SetOfAverages):
+            imgSet = self.inputAvg.get()
         else:
-            imgSet = self.inputSet.get()
-            pixSize = imgSet.getSamplingRate()
+            imgSet = self.inputPart.get()
 
-        tmpStack = self._getTmpPath("averages.spi")
-        imgSet.writeStack(tmpStack)
-        orig = os.path.relpath(tmpStack,
-                               self._getExtraPath())
-        args = "%s %s --apix=%0.3f" % (orig, self._params['relImgsFn'], pixSize)
-        self.runJob(eman2.Plugin.getProgram('e2proc2d.py'), args,
-                    cwd=self._getExtraPath(),
-                    numberOfMpi=1, numberOfThreads=1)
+        imgSet.writeStack(imgsFn)
 
     def createInitialModelStep(self, args):
         """ Run the EMAN program to create the initial model. """
-        cleanPattern(self._getExtraPath('initial_models'))
-        if self._isHighSym():
-            program = eman2.Plugin.getProgram('e2initialmodel_hisym.py')
-        else:
-            program = eman2.Plugin.getProgram('e2initialmodel.py')
-
+        cleanPattern(self._getExtraPath('initmodel_??'))
+        program = eman2.Plugin.getProgram('e2initialmodel_sgd.py')
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
     def createOutputStep(self):
-        classes2DSet = self.inputSet.get()
         volumes = self._createSetOfVolumes()
         shrink = self.shrink.get()
-        if isinstance(self.inputSet.get(), SetOfClasses2D):
-            volumes.setSamplingRate(classes2DSet.getImages().getSamplingRate() * shrink)
+        inputSet = self._getInputSet()
+        if isinstance(inputSet, SetOfClasses2D):
+            volumes.setSamplingRate(inputSet.getImages().getSamplingRate() * shrink)
+        elif isinstance(inputSet, SetOfAverages):
+                volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
         else:
-            volumes.setSamplingRate(self.inputSet.get().getSamplingRate() * shrink)
+            volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
+
         outputVols = self._getVolumes()
         for k, volFn in enumerate(outputVols):
             vol = Volume()
@@ -188,7 +208,7 @@ class EmanProtInitModel(ProtInitialVolume):
             volumes.append(vol)
 
         self._defineOutputs(outputVolumes=volumes)
-        self._defineSourceRelation(self.inputSet, volumes)
+        self._defineSourceRelation(inputSet, volumes)
 
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
@@ -200,35 +220,32 @@ class EmanProtInitModel(ProtInitialVolume):
         if not hasattr(self, 'outputVolumes'):
             summary.append("Output volumes not ready yet.")
         else:
-            summary.append("Input images: %s" % self.getObjectTag('inputSet'))
             summary.append("Output initial volumes: %s" % self.outputVolumes.getSize())
-            if self._isHighSym():
-                summary.append("Used e2initialmodel_hisym.py for high symmetry reconstruction.")
         return summary
 
     # --------------------------- UTILS functions -----------------------------
 
     def _prepareDefinition(self):
-        self._params = {'imgsFn': self._getExtraPath('representatives.hdf'),
-                        'relImgsFn': 'representatives.hdf',
+        self._params = {'imgsFn': self._getExtraPath('input_set.spi'),
                         'numberOfIterations': self.numberOfIterations.get(),
                         'numberOfModels': self.numberOfModels.get(),
                         'shrink': self.shrink.get(),
                         'symmetry': self.symmetry.get(),
                         'threads': self.numberOfThreads.get(),
-                        'mpis': self.numberOfMpi.get(),
-                        'scratch': eman2.SCRATCHDIR}
-
-    def _isHighSym(self):
-        return self.symmetry.get() in ["oct", "tet", "icos"]
+                        'batchSize': self.batchSize.get(),
+                        'targetRes': self.targetRes.get(),
+                        'learnRate': self.learnRate.get(),
+                        'lrDecay': self.lrDecay.get(),
+                        'addNoise': self.addNoise.get()}
 
     def _getVolumes(self):
-        if self._isHighSym():
-            outputVols = [self._getExtraPath('final.hdf')]
-        else:
-            outputVols = glob(self._getExtraPath('initial_models/model_??_??.hdf'))
-            outputVols.sort()
+        outputVols = glob(self._getExtraPath('initmodel_??/model_??.hdf'))
+        outputVols.sort()
+
         return outputVols
 
-    def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')
+    def _getInputSet(self):
+        if self.inputType.get() == SGD_INPUT_AVG:
+            return self.inputAvg.get()
+        else:
+            return self.inputPart.get()
