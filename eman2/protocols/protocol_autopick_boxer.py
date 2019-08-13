@@ -27,9 +27,11 @@
 import os
 
 from pyworkflow.protocol.params import (IntParam, FloatParam,
-                                        EnumParam, PointerParam)
+                                        EnumParam, PointerParam,
+                                        StringParam, USE_GPU,
+                                        GPU_LIST, BooleanParam)
 from pyworkflow.em.protocol import ProtParticlePickingAuto
-from pyworkflow.utils import makePath
+from pyworkflow.utils import makePath, createLink
 
 import eman2
 from eman2.convert import readSetOfCoordinates, convertReferences
@@ -41,16 +43,16 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     """
     _label = 'boxer auto'
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isNewVersion()
-
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
 
         myDict = {'goodRefsFn': self._getExtraPath('info/boxrefs.hdf'),
                   'badRefsFn': self._getExtraPath('info/boxrefsbad.hdf'),
-                  'bgRefsFn': self._getExtraPath('info/bgrefsbad.hdf')
+                  'bgRefsFn': self._getExtraPath('info/boxrefsbg.hdf'),
+                  'nnetFn': self._getExtraPath('nnet_pickptcls.hdf'),
+                  'nnetClFn': self._getExtraPath('nnet_classify.hdf'),
+                  'trainoutFn': self._getExtraPath('trainout_pickptcl.hdf'),
+                  'trainoutClFn': self._getExtraPath('trainout_classify.hdf')
                   }
         self._updateFilenamesDict(myDict)
 
@@ -60,6 +62,16 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         ProtParticlePickingAuto._defineParams(self, form)
+        form.addHidden(USE_GPU, BooleanParam, default=False,
+                       label="Use GPU?",
+                       help="Set to Yes if you want to run Neural Net "
+                            "boxer on GPU. Default is CPU.")
+        form.addHidden(GPU_LIST, StringParam, default='0',
+                       label="Choose GPU ID",
+                       help="GPU may have several cores. Set it to zero"
+                            " if you do not know what we are talking about."
+                            " First core index is 0, second 1 and so on.\n"
+                            "Eman boxer can use only one GPU.")
         form.addParam('boxSize', IntParam, default=128,
                       label='Box size (px)',
                       help="Box size in pixels.")
@@ -68,7 +80,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                       help="Longest axis of particle in pixels (diameter, "
                            "not radius).")
         form.addParam('boxerMode', EnumParam,
-                      choices=['local search', 'by ref', 'gauss', 'neural net'],
+                      choices=['local search', 'by ref', 'neural net'],
                       label="Autopicker mode:", default=AUTO_LOCAL,
                       display=EnumParam.DISPLAY_COMBO,
                       help="Choose autopicker mode:\n\n"
@@ -77,29 +89,27 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                            " _by ref_ - simple reference-based "
                            "cross-correlation picker with exhaustive "
                            "rotational search.\n"
-                           " _gauss_ - Gaussian sparx picker.\n"
                            " _neural net_ - convolutional neural network "
                            "boxer.")
         form.addParam('threshold', FloatParam, default='5.0',
                       label='Threshold')
-
+        form.addParam('threshold2', FloatParam, default='-5.0',
+                      condition='boxerMode==%d' % AUTO_CONVNET,
+                      label='Threshold2')
         form.addSection('References')
+        form.addParam('boxerProt', PointerParam,
+                      pointerClass='EmanProtBoxing',
+                      condition='boxerMode==%d' % AUTO_CONVNET,
+                      label='Previous e2boxer protocol',
+                      help='Provide previously executed e2boxer protocol '
+                           'that has all 3 types of references and '
+                           'pre-trained neural network.')
         form.addParam('goodRefs', PointerParam,
                       pointerClass='SetOfAverages',
-                      important=True,
+                      condition='boxerMode!=%d' % AUTO_CONVNET,
+                      allowsNull=True,
                       label="Good references",
                       help="Good particle references.")
-        form.addParam('badRefs', PointerParam,
-                      pointerClass='SetOfAverages',
-                      allowsNull=True,
-                      label="Bad references",
-                      help="Bad particle references like ice contamination "
-                           "or large aggregation.")
-        form.addParam('bgRefs', PointerParam,
-                      pointerClass='SetOfAverages',
-                      allowsNull=True,
-                      label="Background references",
-                      help="Pure noise regions in micrograph.")
 
         form.addParallelSection(threads=1, mpi=0)
 
@@ -112,17 +122,23 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- STEPS functions -----------------------------
     def convertInputStep(self):
         goodRefs = self.goodRefs.get() if self.goodRefs.hasValue() else None
-        badRefs = self.badRefs.get() if self.badRefs.hasValue() else None
-        bgRefs = self.bgRefs.get() if self.bgRefs.hasValue() else None
+        boxerProt = self.boxerProt.get() if self.boxerProt.hasValue() else None
         storePath = self._getExtraPath("info")
         makePath(storePath)
-        output = [self._getFileName('goodRefsFn'),
-                  self._getFileName('badRefsFn'),
-                  self._getFileName('bgRefsFn')]
 
-        for i, refs in enumerate([goodRefs, badRefs, bgRefs]):
-            if refs is not None:
-                convertReferences(refs, output[i])
+        if goodRefs is not None:
+            convertReferences(goodRefs, self._getFileName('goodRefsFn'))
+
+        if boxerProt is not None:
+            boxerProt._createFilenameTemplates()
+            keys = ['goodRefsFn', 'badRefsFn', 'bgRefsFn',
+                    'nnetFn', 'nnetClFn',
+                    'trainoutFn', 'trainoutClFn']
+
+            for fn in keys:
+                if os.path.exists(boxerProt._getFileName(fn)):
+                    createLink(boxerProt._getFileName(fn),
+                               self._getFileName(fn))
 
     def _pickMicrograph(self, mic, *args):
         micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())
@@ -131,9 +147,17 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         params += " --ptclsize=%d" % self.particleSize.get()
         params += " --threads=%d" % self.numberOfThreads.get()
 
-        modes = ['auto_local', 'auto_ref', 'auto_gauss', 'auto_convnet']
+        modes = ['auto_local', 'auto_ref', 'auto_convnet']
         params += " --autopick=%s:threshold=%0.2f" % (
             modes[self.boxerMode.get()], self.threshold.get())
+
+        if self.boxerMode.get() == AUTO_CONVNET:
+            params += ":threshold2=%0.2f" % self.threshold2.get()
+
+            if self.useGpu:
+                params += " --device=gpu%s" % self.gpuList.get().strip()
+            else:
+                params += " --device=cpu"
 
         params += ' %s' % micFile
         program = eman2.Plugin.getBoxerCommand()
@@ -146,11 +170,9 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
-        if self.boxerMode.get() == AUTO_GAUSS:
-            errors.append('Gauss mode is not implemented for new e2boxer yet.')
-        if self.boxerMode.get() == AUTO_CONVNET:
-            if not (self.badRefs.hasValue() and self.bgRefs.hasValue()):
-                errors.append('Neural net picker requires all three types of references.')
+
+        if self.useGpu and (self.boxerMode.get() != AUTO_CONVNET):
+            errors.append("You can use GPU only for neural net picker!")
 
         return errors
 
@@ -165,3 +187,6 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     def readCoordsFromMics(self, workingDir, micList, coordSet):
         coordSet.setBoxSize(self.boxSize.get())
         readSetOfCoordinates(workingDir, micList, coordSet, newBoxer=True)
+
+    def _isVersion23(self):
+        return eman2.Plugin.isVersion('2.3')

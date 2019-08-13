@@ -124,7 +124,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
         line.addParam('dimWriteVolY', IntParam, default=0, label='Y')
         line.addParam('dimWriteVolZ', IntParam, default=0, label='Z')
         form.addParam('reconstructionMethod', EnumParam,
-                      choices=['back_projection', 'fourier', 'fourier_plane',
+                      choices=['back_projection', 'fourier', 'fourier_iter',
                                'fouriersimple2D', 'nn4', 'nn4_ctf',
                                'nn4_ctf_rect', 'nn4_ctfw', 'nn4_ctfws', 'nn4_rect',
                                'nnSSNR', 'nnSSNR_ctf', 'wiener_fourier'],
@@ -258,6 +258,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
             args += " --recon %(reconsMethod)s"
         else:
             args += " --mode %s" % self.getEnumText('fourierMode')
+            args += " --threads=%d" % self.numberOfThreads.get()
 
         if self.extraParams.hasValue():
             args += ' ' + self.extraParams.get()

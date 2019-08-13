@@ -149,6 +149,30 @@ class TestEmanInitialModelGroel(TestEmanInitialModelMda):
         cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
 
 
+class TestEmanInitialModelSGD(TestEmanBase):
+    @classmethod
+    def setUpClass(cls):
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('groel')
+        cls.averages = cls.dataset.getFile('averages')
+        cls.symmetry = 'd7'
+        cls.numberOfIterations = 20
+        cls.numberOfModels = 2
+        cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
+
+    def test_initialmodel(self):
+        protIniModel = self.newProtocol(EmanProtInitModelSGD,
+                                        symmetry=self.symmetry,
+                                        numberOfIterations=self.numberOfIterations,
+                                        numberOfModels=self.numberOfModels,
+                                        numberOfThreads=4)
+        protIniModel.inputType.set(0)  # averages
+        protIniModel.inputAvg.set(self.protImportAvg.outputAverages)
+        self.launchProtocol(protIniModel)
+        self.assertIsNotNone(protIniModel.outputVolumes,
+                             "There was a problem with eman initial model SGD protocol")
+
+
 class TestEmanReconstruct(TestEmanBase):
     def test_ReconstructEman(self):
         print("Import Set of particles with angles")
@@ -198,8 +222,6 @@ class TestEmanRefine2D(TestEmanBase):
         cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
 
     def test_Refine2DEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print("Run Eman Refine 2D")
         protRefine = self.newProtocol(EmanProtRefine2D,
                                       numberOfIterations=2, numberOfClassAvg=5,
@@ -214,17 +236,23 @@ class TestEmanRefine2DBispec(TestEmanBase):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
-        TestEmanBase.setData('mda')
-        cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
+        TestEmanBase.setData('relion_tutorial')
+        cls.partsFn = cls.dataset.getFile('import/case2/particles.sqlite')
+        cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_Refine2DBispecEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print("Run Eman Refine 2D bispec")
+        protCtf = self.newProtocol(EmanProtCTFAuto,
+                                   numberOfThreads=3)
+        protCtf.inputParticles.set(self.protImport.outputParticles)
+        self.launchProtocol(protCtf)
+        self.assertIsNotNone(protCtf.outputParticles_flip_fullRes,
+                             "There was a problem with eman ctf auto protocol")
+
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
+                                      inputBispec=protCtf,
                                       numberOfIterations=2, numberOfClassAvg=5,
                                       classIter=2, nbasisfp=5)
-        protRefine.inputParticles.set(self.protImport.outputParticles)
         self.launchProtocol(protRefine)
         self.assertIsNotNone(protRefine.outputClasses,
                              "There was a problem with eman refine2d bispec protocol")
@@ -255,7 +283,7 @@ class TestEmanTiltValidate(TestEmanBase):
 
         print("Importing coordinate pairs")
         protImportCoords = self.newProtocol(pwem.ProtImportCoordinatesPairs,
-                                            importFrom=2,  # from eman
+                                            importFrom=1,  # from eman
                                             patternUntilted=self.patternU,
                                             patternTilted=self.patternT,
                                             boxSize=256)
@@ -303,8 +331,6 @@ class TestEmanCtfAuto(TestEmanBase):
         cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_CtfAutoEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol works only for EMAN2.21 or higher!')
         print("Run Eman CTF Auto")
         protCtf = self.newProtocol(EmanProtCTFAuto,
                                    numberOfThreads=3)
@@ -330,9 +356,6 @@ class TestEmanAutopick(TestEmanBase):
         cls.protImportAvg = cls.runImportAverages(cls.avgFn, 4.4)
 
     def test_AutopickEman(self):
-        if not eman2.Plugin.isNewVersion():
-            print('This protocol exists only for EMAN2.21 or higher! Skipping test..')
-            return
         print("Run Eman auto picking")
         protPick = self.newProtocol(EmanProtAutopick,
                                     boxerMode=1,  # by_ref
@@ -345,7 +368,7 @@ class TestEmanAutopick(TestEmanBase):
                              "There was a problem with e2boxer auto protocol")
 
     def test_AutopickSparx(self):
-        if not eman2.Plugin.isNewVersion():
+        if not eman2.Plugin.isVersion('2.21'):
             print("Run Eman auto picking with gauss/sparx")
             protPick2 = self.newProtocol(SparxGaussianProtPicking,
                                          boxSize=128,
@@ -362,7 +385,7 @@ class TestEmanAutopick(TestEmanBase):
             print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
 
     def test_AutopickSparxPointer(self):
-        if not eman2.Plugin.isNewVersion():
+        if not eman2.Plugin.isVersion('2.21'):
             print("Simulating an automatic protocol to estimate the boxSize")
             protAutoBoxSize = self.newProtocol(pwem.ProtOutputTest,
                                                iBoxSize=64,  # output is twice
