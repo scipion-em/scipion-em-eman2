@@ -199,9 +199,9 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     def _validate(self):
         errors = []
 
-        if not eman2.Plugin.isNewVersion():
+        if not eman2.Plugin.isTomoAvailableVersion():
             errors.append('Your EMAN2 version does not support the tomo boxer. '
-                          'Please update your installation to EMAN 2.21 or newer.')
+                          'Please update your installation to EMAN 2.3 or newer.')
 
         return errors
 
