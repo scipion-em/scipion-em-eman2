@@ -37,12 +37,13 @@ from protocol_autopick_boxer import EmanProtAutopick
 from protocol_autopick_sparx import SparxGaussianProtPicking
 from protocol_tomo_boxing import EmanProtTomoBoxing
 from protocol_tomo_extraction import EmanProtTomoExtraction
+from protocol_tomo_subtomogram_refinement import EmanProtTomoRefinement
 from protocol_tomo_initialmodel import EmanProtTomoInitialModel
 
 #try:
 #    from protocol_tomo_boxing import EmanProtTomoBoxing
 #    from protocol_tomo_extraction import EmanProtTomoExtraction
-#    from protocol_tomo_subtomogram_refinement import ProtSubTomogramRefinement
+#    from protocol_tomo_subtomogram_refinement import EmanProtTomoRefinement
 #    from protocol_tomo_initialmodel.py import EmanProtTomoInitialModel
 #except ImportError:
 #    raise ImportError(
