@@ -41,6 +41,7 @@ import eman2
 
 SAME_AS_PICKING = 0
 
+
 class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     """Protocol to performs a conventional iterative subtomogram averaging using the full set of particles."""
     _outputClassName = 'SubTomogramRefinement'

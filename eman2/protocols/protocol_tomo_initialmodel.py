@@ -24,17 +24,20 @@
 # *
 # **************************************************************************
 
-from pyworkflow.utils.properties import Message
+from glob import glob
+
 from pyworkflow.protocol import params
 import pyworkflow.em as pwem
 from pyworkflow.em.data import Volume
-from eman2.convert import writeSetOfParticles
 from pyworkflow.utils.path import makePath
+from pyworkflow import utils as pwutils
+
+import eman2
+from eman2.convert import writeSetOfParticles
 
 from tomo.protocols import ProtTomoBase
+from tomo.objects import SubTomogram
 
-from glob import glob
-import eman2
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
     """
@@ -47,6 +50,13 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
     to look at the other answers as well.
     """
     _label = 'tomo initial model'
+
+    @classmethod
+    def isDisabled(cls):
+        return not eman2.Plugin.isTomoAvailableVersion()
+
+    def __init__(self, **kwargs):
+        pwem.EMProtocol.__init__(self, **kwargs)
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -63,17 +73,20 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
                       label="Reference", important=True,
                       help='Select the subtomogram to use as reference')
 
+        form.addParam('mask', params.PointerParam,
+                      label='Mask',
+                      allowsNull=True,
+                      pointerClass='VolumeMask',
+                      help='Select the subtomogram to use as reference')
+
+        form.addSection(label='Optimization')
         form.addParam('symmetry', params.TextParam, default='c1',
                       label='Symmetry',
                       help='Specify the symmetry.\nChoices are: c(n), d(n), '
                            'h(n), tet, oct, icos.\n'
                            'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
                            'for a detailed description of symmetry in Eman.')
-        form.addParam('mask', params.PointerParam,
-                      label='Mask',
-                      allowsNull=True,
-                      pointerClass='VolumeMask',
-                      help='Select the subtomogram to use as reference')
+
         form.addParam('gaussFilter', params.FloatParam, default=-1,
                       label='Gauss',
                       help='The Gaussian filter level')
@@ -112,14 +125,18 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         # self.convertImagesStep()
         # self.prepareDefinition()
         # self.launchInitialModelStep()
-        self._getOutput()
+        # self._getOutput()
+
+        self._insertFunctionStep('convertImagesStep')
+        self._insertFunctionStep('createInitialModelStep')
+        self._insertFunctionStep('createOutputStep')
 
     # Eman2 output is saved on ScipionUserData/projects/{PROJECT_NAME}
     # must fetch from there, read and create scipion output in extra file.
-    def _getOutput(self):
-        toBaseDir = self.getWorkingDir() + '/../..'
-
-        print({'workingDic': self._enterDir(toBaseDir), 'baseDir': toBaseDir })
+    # def _getOutput(self):
+    #     toBaseDir = self.getWorkingDir() + '/../..'
+    #
+    #     print({'workingDic': self._enterDir(toBaseDir), 'baseDir': toBaseDir })
 
     # --------------------------- STEPS functions -----------------------------
     # Get Scipion references to subtomograms and write hdf files for eman2 to process.
@@ -130,8 +147,19 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         makePath(storePath)
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
 
-    def launchInitialModelStep(self):
-        command_params = self._params
+    def createInitialModelStep(self):
+        command_params = {
+            'symmetry': self.symmetry.get(),
+            'gaussFilter': self.gaussFilter.get(),
+            'filterto': self.filterto.get(),
+            'batchSize': self.batchSize.get(),
+            'learningRate': self.learningRate.get(),
+            'numberOfIterations': self.numberOfIterations.get(),
+            'numberOfBatches': self.numberOfBatches.get(),
+            'mask': self.mask.get(),
+            'shrink': self.shrink.get(),
+            'reference': self.reference.get().getFileName()
+         }
         args = '%s/*.hdf' % self._getExtraPath("particles")
         if command_params['reference']:
             args += ' --reference=%(reference)s'
@@ -151,13 +179,26 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
 
         program = eman2.Plugin.getProgram("e2spt_sgd.py")
         self._log.info('Launching: ' + program + ' ' + args % command_params)
-        self.runJob(program, args % command_params)
+        self.runJob(program, args % command_params,
+                    cwd=self._getExtraPath())
 
-        #self._insertFunctionStep('createInitialModelStep', args % self._params)
-
-    ## Missing what to do with output
     def createOutputStep(self):
+
+        # Create Initial Model
+        subtomo = SubTomogram()
+        self._getExtraPath(pwutils.join('sptsgd_00', 'output.hdf'))
+
+        subtomo.setFileName()
+        # subtomo.copyInfo(setOfSubtomograms)
+
+
+        # Create intermmediate steps
         setOfSubtomograms = self.particles.get()
+        setOfSubtomograms.clone()
+
+
+
+
         volumes = self._createSetOfVolumes()
         shrink = self.shrink.get()
         samplingRate = self.samplingRate.get()
@@ -172,30 +213,15 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         self._defineOutputs(outputVolumes=volumes)
         self._defineSourceRelation(self.inputSet, volumes)
 
-
-    def _runSteps(self, startIndex):
-        # Redefine run to change to workingDir path
-        # Change to protocol working directory
-        self._enterWorkingDir()
-        ProtTomoBase._runSteps(self, startIndex)
-
+    # def _runSteps(self, startIndex):
+    #     # Redefine run to change to workingDir path
+    #     # Change to protocol working directory
+    #     self._enterWorkingDir()
+    #     ProtTomoBase._runSteps(self, startIndex)
 
     def _getVolumes(self):
         outputVols = glob(self._getExtraPath('initial_models/model_??_??.hdf'))
         outputVols.sort()
         return outputVols
 
-    def prepareDefinition(self):
-        self._params = {
-            'symmetry': self.symmetry.get(),
-            'gaussFilter': self.gaussFilter.get(),
-            'filterto': self.filterto.get(),
-            'batchSize': self.batchSize.get(),
-            'learningRate': self.learningRate.get(),
-            'numberOfIterations': self.numberOfIterations.get(),
-            'numberOfBatches': self.numberOfBatches.get(),
-            'mask': self.mask.get(),
-            'shrink': self.shrink.get(),
-            'reference': self.reference.get().getFileName()
-         }
 
