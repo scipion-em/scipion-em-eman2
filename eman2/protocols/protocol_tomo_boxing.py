@@ -97,6 +97,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
             coord3DSet.setBoxSize(int(classItem["boxsize"]))
             coord3DSet.setName(classItem["name"])
+            coord3DSet.setVolumes(self.inputTomogram)
 
             name = self.OUTPUT_PREFIX + suffix
             args = {}
