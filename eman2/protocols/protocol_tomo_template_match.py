@@ -27,7 +27,7 @@
 import os
 import glob
 
-from tomo.objects import SetOfTomograms, Tomogram
+from tomo.objects import SetOfTomograms
 from pyworkflow import utils as pwutils
 from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         BooleanParam, LEVEL_ADVANCED,
@@ -63,7 +63,7 @@ class EmanProtTempMatch(ProtTomoPicking):
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('inputSet', PointerParam,
-                      pointerClass='Tomogram',
+                      pointerClass='SetOfTomograms',
                       label="Input tomograms", important=True,
                       help='Specify tomograms containing reference-like particles\n'
                            'to be extracted')
