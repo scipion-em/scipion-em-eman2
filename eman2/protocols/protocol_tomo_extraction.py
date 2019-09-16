@@ -24,22 +24,17 @@
 # *
 # **************************************************************************
 
-
 from pyworkflow import utils as pwutils
 import pyworkflow.em as pwem
 import pyworkflow.protocol.params as params
-
 from tomo.protocols import ProtTomoBase
 from tomo.objects import SetOfSubTomograms, SubTomogram
-
-from xmipp3.convert import writeSetOfCoordinates
-
 import eman2
 from eman2.constants import *
 
 import xmippLib
 
-# Micrograph type constants for particle extraction
+# Tomogram type constants for particle extraction
 SAME_AS_PICKING = 0
 OTHER = 1
 
@@ -88,12 +83,13 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         form.addParam('boxSize', params.FloatParam,
                       label='Box size',
-                      help='The subtomograms are extracted as a cubic box of this size')
+                      help='The subtomograms are extracted as a cubic box of this size. '
+                           'The wizard selects same box size as picking')
 
         form.addParam('downFactor', params.FloatParam, default=1.0,
                       label='Downsampling factor',
                       help='Select a value greater than 1.0 to reduce the size '
-                           'of tomogram before extracting the subtomograms. '
+                           'of subtomograms after extraction. '
                            'If 1.0 is used, no downsample is applied. '
                            'Non-integer downsample factors are possible. ')
 
@@ -123,12 +119,12 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
     # --------------------------- INSERT steps functions ----------------------
     def _tomosOther(self):
-        """ Return True if other micrographs are used for extract. """
+        """ Return True if other tomograms are used for extract. """
         return self.downsampleType == OTHER
 
     def getInputTomogram(self):
         """ Return the tomogram associated to the SetOfCoordinates3D or
-        Other micrographs. """
+        Other tomograms. """
         if not self._tomosOther():
             return self.inputCoordinates.get().getVolumes()
         else:
@@ -148,27 +144,30 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         for index in range(1, n + 1):
             subtomogram.cleanObjId()
             subtomogram.setLocation(index, workDir)
+            if self.downFactor.get() != 1:
+                I = xmippLib.Image(subtomogram.getLocation())
+                x, y, z, _ = I.getDimensions()
+                I.scale(int(x / self.downFactor.get()), int(y / self.downFactor.get()), int(z / self.downFactor.get()))
+                fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % index)
+                I.write(fnSubtomo)
+                subtomogram.setLocation(fnSubtomo)
             subtomogram.setCoordinate3D(self.coordDict[index-1])
             subtomogram.setAcquisition(self.getInputTomogram().getAcquisition())
             tomogramsSet.append(subtomogram)
 
+
     def createOutputStep(self):
         suffix = self._getOutputSuffix(SetOfSubTomograms)
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(suffix)
-        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomogram.get().getSamplingRate()*self.cshrink)
+        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomogram().getSamplingRate()*self.cshrink)
         self.outputSubTomogramsSet.setCoordinates3D(self.inputCoordinates)
-
         self.readSetOfTomograms(self._getExtraPath(pwutils.join('sptboxer_01', 'basename.hdf')),
                                 self.outputSubTomogramsSet)
-
         self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
         self._defineSourceRelation(self.inputCoordinates, self.outputSubTomogramsSet)
 
 
     def writeSetOfCoordinates3D(self):
-
-        # print('--------------------',self.inputCoordinates.get().getVolumes().get())
-
         self.coordsFileName = self._getExtraPath(
             pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'))
         self.coordDict = []
@@ -180,19 +179,12 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
     # --------------------------- STEPS functions -----------------------------
     def extractParticles(self):
-        TsCoord =self.inputCoordinates.get().getSamplingRate()
-        TsTomo = self.inputTomogram.get().getSamplingRate()
+        TsCoord = self.inputCoordinates.get().getSamplingRate()
+        TsTomo = self.getInputTomogram().getSamplingRate()
         self.cshrink = float(TsCoord/(TsTomo*self.downFactor.get()))
-        self.boxSize = self.boxSize.get()
         fnTomo = self.getInputTomogram().getFileName()
-        if self.downFactor.get() != 1:
-            I = xmippLib.Image(fnTomo)
-            x,y,z,_ = I.getDimensions()
-            I = I.scale(int(x*self.downFactor.get()), int(y*self.downFactor.get()), int(z*self.downFactor.get()))
-            fnTomo = self._getTmpPath("downsampled_tomo.em")
-            I.write(fnTomo)
         args = '%s --coords %s --boxsize %d' % (fnTomo, pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'),
-            self.boxSize)
+            self.boxSize.get())
         if self.doInvert:
             args += ' --invert'
 
@@ -219,11 +211,11 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         if self.getOutputsSize() >= 1:
             msg = ("A total of %s subtomograms of size %s were extracted"
-                   % (str(self.inputCoordinates.get().getSize()), self.boxSize))
+                   % (str(self.inputCoordinates.get().getSize()), self.boxSize.get()))
 
             if self._tomosOther():
-                msg += (" from another set of micrographs: %s"
-                        % self.getObjectTag('inputMicrographs'))
+                msg += (" from another set of tomograms: %s"
+                        % self.getObjectTag('inputTomogram'))
 
             msg += " using coordinates %s" % self.getObjectTag('inputCoordinates')
             msg += self.methodsVar.get('')
@@ -243,11 +235,11 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
     def _summary(self):
         summary = []
-        summary.append("Micrographs source: %s"
+        summary.append("Tomogram source: %s"
                        % self.getEnumText("downsampleType"))
 
         if self.getOutputsSize() >= 1:
-            summary.append("Particle box size: %s" % self.boxSize)
+            summary.append("Particle box size: %s" % self.boxSize.get())
             summary.append("Subtomogram extracted: %s" %
                            self.inputCoordinates.get().getSize())
         else:
