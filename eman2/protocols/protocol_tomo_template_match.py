@@ -25,7 +25,7 @@
 # **************************************************************************
 
 import os
-from glob import glob
+import glob
 
 from tomo.objects import SetOfTomograms, Tomogram
 from pyworkflow import utils as pwutils
@@ -48,7 +48,8 @@ class EmanProtTempMatch(ProtTomoPicking):
     This protocol wraps *e2spt_tempmatch.py* EMAN2 program.
 
     It will perform a sweep of an initial volume against a tomogram
-    to find correlation peaks and extract those particle coordinates
+    to find correlation peaks and extract the corresponding subtomogram
+    coordinates
 
     """
 
@@ -92,16 +93,8 @@ class EmanProtTempMatch(ProtTomoPicking):
 
     def _insertAllSteps(self):
         self._insertFunctionStep("convertInput")
-
-        input = self.inputSet.get()
-
-        deps = []
-        if isinstance(input,SetOfTomograms):
-            for tomo in input.iterItems():
-                copyTomo = tomo.clone()
-                deps.append(self._insertFunctionStep('tempMatchStep', copyTomo,  prerequisites=[]))
-        else:
-                deps.append(self._insertFunctionStep('tempMatchStep', input, prerequisites=[]))
+        self._insertFunctionStep('tempMatchStep')
+        self._insertFunctionStep("createOutputStep")
 
 
     # --------------------------- STEPS functions -----------------------------
@@ -111,33 +104,33 @@ class EmanProtTempMatch(ProtTomoPicking):
         makePath(self._getTmpPath("Vol"))
         img.convert(self.ref.get(), self._getTmpPath(os.path.join("Vol","ref_vol.mrc")))
 
-    def tempMatchStep(self,inputTomo):
-
-        tomoName = inputTomo.getFileName()
+    def tempMatchStep(self):
 
         makePath(self._getTmpPath("tmpDir"))
-
         volFile = os.path.abspath(self._getTmpPath(os.path.join("Vol","ref_vol.mrc")))
+        params = ""
 
-        params = " %s --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s --rmedge --rmgold --boxsz=%d" %(
-                 tomoName, volFile, self.nptcl.get(), self.dthr.get(), self.vthr.get(), self.delta.get(), self.sym.get(),
+        for tomo in self.inputSet.get():
+            params = params + " %s" % tomo.getFileName()
+
+        params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s --rmedge --rmgold --boxsz=%d" %(
+                 volFile, self.nptcl.get(), self.dthr.get(), self.vthr.get(), self.delta.get(), self.sym.get(),
                  self.boxSize.get())
 
         self.runJob(eman2.Plugin.getTemplateCommand(), params, cwd=os.path.abspath(self._getTmpPath("tmpDir")),
                     env=eman2.Plugin.getEnviron())
 
         #Move output files to Extra Path
-        baseTomo = os.path.basename(tomoName)
-        baseTomo = os.path.splitext(baseTomo)[0]
-        self.nameTomo = baseTomo
+        moveFile(self._getTmpPath(os.path.join("tmpDir","ccc.hdf")),self._getExtraPath("particles" + ".hdf"))
 
+        for tomo in self.inputSet.get():
+            tomoName = os.path.basename(tomo.getFileName())
+            tomoName = os.path.splitext(tomoName)[0]
+            tomoCoord = "extra-" + tomoName + "_info.json"
+            moveFile(self._getTmpPath(os.path.join("tmpDir", "info", tomoCoord)),
+                     self._getExtraPath("extra-" + tomoName + "_info.json"))
 
-        moveFile(self._getTmpPath(os.path.join("tmpDir","ccc.hdf")),self._getExtraPath(baseTomo+".hdf"))
-        moveFile(self._getTmpPath(os.path.join("tmpDir","info","extra-"+baseTomo+"_info.json")),
-                 self._getExtraPath("extra-"+baseTomo+"_info.json"))
-        cleanPath(self._getTmpPath("tmpDir"))
-
-        self.createOutput(inputTomo)
+        cleanPath(self._getTmpPath())
 
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
@@ -170,41 +163,39 @@ class EmanProtTempMatch(ProtTomoPicking):
         coord3DSet.append(coord)
 
 
-    def createOutput(self, inputTomo):
-
-        tomoName = inputTomo.getFileName()
-        baseTomo = os.path.basename(tomoName)
-        baseTomo = os.path.splitext(baseTomo)[0]
-
-        jsonFnbase = pwutils.join(self._getExtraPath(), 'extra-%s_info.json' % baseTomo)
-        jsonBoxDict = loadJson(jsonFnbase)
+    def createOutputStep(self):
 
         # Create a Set of 3D Coordinates per class
         coord3DSetDict = {}
         coord3DMap = {}
+        suffix = self._getOutputSuffix(SetOfCoordinates3D)
+        coord3DSet = self._createSetOfCoordinates3D(self.inputSet.get(), suffix)
+        coord3DSet.setBoxSize(self.boxSize.get())
+        coord3DSet.setName("tomoCoord")
+        coord3DSet.setVolumes(self.inputSet.get())
 
-        for key, classItem in jsonBoxDict["class_list"].iteritems():
-            index = int(key)
-            suffix = self._getOutputSuffix(SetOfCoordinates3D)
-            coord3DSet = self._createSetOfCoordinates3D(inputTomo, suffix)
+        for tomo in self.inputSet.get():
+            inputTomo = tomo.clone()
+            tomoName = os.path.basename(tomo.getFileName())
+            tomoName = os.path.splitext(tomoName)[0]
 
-            coord3DSet.setBoxSize(self.boxSize.get())
-            coord3DSet.setName(baseTomo)
+            jsonFnbase = pwutils.join(self._getExtraPath(), 'extra-%s_info.json' % tomoName)
+            jsonBoxDict = loadJson(jsonFnbase)
 
-            name = self.OUTPUT_PREFIX + suffix
-            args = {}
-            args[name] = coord3DSet
-            self._defineOutputs(**args)
-            self._defineSourceRelation(inputTomo, coord3DSet)
+            for key, classItem in jsonBoxDict["class_list"].iteritems():
+                index = int(key)
+                coord3DSetDict[index] = coord3DSet
+                name = self.OUTPUT_PREFIX + suffix
+                coord3DMap[index] = name
+                args = {}
+                args[name] = coord3DSet
+                # Populate Set of 3D Coordinates with 3D Coordinates
+                self._readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo)
 
-            coord3DSetDict[index] = coord3DSet
-            coord3DMap[index] = name
-
-        # Populate Set of 3D Coordinates with 3D Coordinates
-        self._readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo)
+        self._defineOutputs(**args)
+        self._defineSourceRelation(self.inputSet.get(), coord3DSet)
 
         # Update Outputs
         for index, coord3DSet in coord3DSetDict.iteritems():
             coord3DSet.setObjComment(self.getSummary(coord3DSet))
-            coord3DSet.setVolumes(inputTomo)
             self._updateOutputSet(coord3DMap[index], coord3DSet, state=coord3DSet.STREAM_CLOSED)
