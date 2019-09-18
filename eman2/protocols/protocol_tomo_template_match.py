@@ -103,6 +103,8 @@ class EmanProtTempMatch(ProtTomoPicking):
 
         if self.boxSize.get()==-1:
             self.box = self.ref.get().getDim()[0]
+        else:
+            self.box = self.boxSize.get()
 
         volFile = os.path.abspath(self.ref.get().getFileName())
         params = ""
@@ -170,6 +172,7 @@ class EmanProtTempMatch(ProtTomoPicking):
         coord3DSet.setBoxSize(self.box)
         coord3DSet.setName("tomoCoord")
         coord3DSet.setVolumes(self.inputSet.get())
+        coord3DSet.setSamplingRate(self.inputSet.get().getSamplingRate())
 
         for tomo in self.inputSet.get():
             inputTomo = tomo.clone()
