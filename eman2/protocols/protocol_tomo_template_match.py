@@ -124,7 +124,7 @@ class EmanProtTempMatch(ProtTomoPicking):
             tomoName = os.path.basename(tomo.getFileName())
             tomoName = os.path.splitext(tomoName)[0]
             tomoCoord = "extra-" + tomoName + "_info.json"
-            moveFile(self._getTmpPath(os.path.join("tmpDir", "info", tomoCoord)),
+            moveFile(self._getTmpPath(os.path.join("info", tomoCoord)),
                      self._getExtraPath("extra-" + tomoName + "_info.json"))
 
         cleanPath(self._getTmpPath())
