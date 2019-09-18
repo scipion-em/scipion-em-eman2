@@ -24,6 +24,7 @@
 # *
 # **************************************************************************
 
+import os
 
 from pyworkflow import utils as pwutils
 import pyworkflow.em as pwem
@@ -31,6 +32,8 @@ import pyworkflow.protocol.params as params
 
 from tomo.protocols import ProtTomoBase
 from tomo.objects import SetOfSubTomograms, SubTomogram
+
+from pyworkflow.utils.path import moveFile, cleanPath, makePath
 
 import eman2
 from eman2.constants import *
@@ -76,8 +79,8 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
                            '*Note*: In the _other_ case, ensure that provided '
                            'tomogram and coordinates are related ')
 
-        form.addParam('inputTomogram', params.PointerParam,
-                      pointerClass='Tomogram',
+        form.addParam('inputTomograms', params.PointerParam,
+                      pointerClass='SetOfTomograms',
                       condition='downsampleType != %s' % SAME_AS_PICKING,
                       important=True, label='Input tomogram',
                       help='Select the tomogram from which to extract.')
@@ -124,20 +127,20 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         """ Return True if other micrographs are used for extract. """
         return self.downsampleType == OTHER
 
-    def getInputTomogram(self):
+    def getInputTomograms(self):
         """ Return the tomogram associated to the SetOfCoordinates3D or
         Other micrographs. """
         if not self._tomosOther():
             return self.inputCoordinates.get().getVolumes()
         else:
-            return self.inputTomogram.get()
+            return self.inputTomograms.get()
 
     def _insertAllSteps(self):
         self._insertFunctionStep('writeSetOfCoordinates3D')
         self._insertFunctionStep('extractParticles')
         self._insertFunctionStep('createOutputStep')
 
-    def readSetOfTomograms(self, workDir, tomogramsSet):
+    def readSetOfTomograms(self, workDir, tomogramsSet, coordSet):
 
         subtomogram = SubTomogram()
 
@@ -146,55 +149,85 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         for index in range(1, n + 1):
             subtomogram.cleanObjId()
             subtomogram.setLocation(index, workDir)
-            subtomogram.setCoordinate3D(self.coordDict[index-1])
-            subtomogram.setAcquisition(self.getInputTomogram().getAcquisition())
+            subtomogram.setCoordinate3D(coordSet[index-1])
+            subtomogram.setAcquisition(self.getInputTomograms().getAcquisition())
             tomogramsSet.append(subtomogram)
 
     def createOutputStep(self):
 
         suffix = self._getOutputSuffix(SetOfSubTomograms)
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(suffix)
-        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomogram().getSamplingRate())
+        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomograms().getSamplingRate())
         self.outputSubTomogramsSet.setCoordinates3D(self.inputCoordinates)
 
-        self.readSetOfTomograms(self._getExtraPath(pwutils.join('sptboxer_01', 'basename.hdf')),
-                                self.outputSubTomogramsSet)
+        for item in self.inputSet:
+
+            for ind, tomoFile in enumerate(self.tomoFiles):
+                if tomoFile == item.getFileName():
+                    break
+
+            coordSet = self.lines[ind]
+
+            self.readSetOfTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile,"hdf")),
+                                    self.outputSubTomogramsSet, coordSet)
 
         self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
         self._defineSourceRelation(self.inputCoordinates, self.outputSubTomogramsSet)
 
     def writeSetOfCoordinates3D(self):
-        self.coordsFileName = self._getExtraPath(
-            pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'))
-        self.coordDict = []
 
-        out = file(self.coordsFileName, "w")
-        for coord3DSet in self.inputCoordinates.get().iterCoordinates():
-            out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
-            self.coordDict.append(coord3DSet.clone())
+        self.lines = []
+        self.tomoFiles = []
+        self.inputSet = self.getInputTomograms()
 
-        out.close()
+        for item in self.inputSet:
+            coordDict = []
+            tomo = item.clone()
+            self.coordsFileName = self._getExtraPath(
+                pwutils.replaceBaseExt(tomo.getFileName(), 'coords'))
+
+            out = file(self.coordsFileName, "w")
+            for coord3DSet in self.inputCoordinates.get().iterCoordinates():
+                if tomo.getFileName() == coord3DSet.getVolName():
+                    out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
+                    coordDict.append(coord3DSet.clone())
+
+            if coordDict:
+                self.lines.append(coordDict)
+                self.tomoFiles.append(tomo.getFileName())
+
+            out.close()
 
     # --------------------------- STEPS functions -----------------------------
     def extractParticles(self):
 
-        args = '%s --coords %s --boxsize %d' % (
-            self.getInputTomogram().getFileName(), pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'),
-            self.inputCoordinates.get().getBoxSize())
+        for item in self.inputSet:
+            args = ""
+            tomo = item.clone()
 
-        if self.doInvert:
-            args += ' --invert'
+            args = args + '%s ' % (tomo.getFileName())
 
-        if self.doNormalize:
-            args += ' --normproc %s' % self.getEnumText('normproc')
+            args = args + "--coords % s --boxsize % d" % (
+                pwutils.replaceBaseExt(tomo.getFileName(), 'coords'),
+                    self.inputCoordinates.get().getBoxSize())
 
-        if self.cshrink > 1:
-            args += ' --cshrink %d' % self.cshrink
+            if self.doInvert:
+                args += ' --invert'
 
-        program = eman2.Plugin.getProgram('e2spt_boxer_old.py')
+            if self.doNormalize:
+                args += ' --normproc %s' % self.getEnumText('normproc')
 
-        self.runJob(program, args,
-                    cwd=self._getExtraPath())
+            if self.cshrink > 1:
+                args += ' --cshrink %d' % self.cshrink
+
+            program = eman2.Plugin.getProgram('e2spt_boxer_old.py')
+
+            self.runJob(program, args, cwd=self._getExtraPath())
+
+            moveFile(self._getExtraPath(os.path.join('sptboxer_01', 'basename.hdf')),
+                     self._getExtraPath(pwutils.replaceBaseExt(tomo.getFileName(), 'hdf')))
+
+            cleanPath(self._getExtraPath("sptboxer_01"))
 
     def _validate(self):
         errors = []

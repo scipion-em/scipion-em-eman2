@@ -26,6 +26,7 @@
 
 import os
 import glob
+import ntpath
 
 from tomo.objects import SetOfTomograms
 from pyworkflow import utils as pwutils
@@ -87,7 +88,7 @@ class EmanProtTempMatch(ProtTomoPicking):
                       help='')
         form.addParam('boxSize', IntParam, default=126, label='Box size')
 
-        form.addParallelSection(threads=8, mpi=1)
+        form.addParallelSection(threads=1, mpi=2)
 
     # --------------------------- INSERT steps functions ----------------------
 
