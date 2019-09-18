@@ -74,7 +74,7 @@ class EmanProtTempMatch(ProtTomoPicking):
         form.addParam('nptcl', IntParam, default=500,
                       label='Number of particles',
                       help='Maximum number of particles')
-        form.addParam('dthr', FloatParam, default=16.0,
+        form.addParam('dthr', FloatParam, default=-1,
                       label='Distance threshold',
                       help='')
         form.addParam('vthr', FloatParam, default=2.0,
@@ -86,29 +86,25 @@ class EmanProtTempMatch(ProtTomoPicking):
         form.addParam('sym', StringParam, default='c1',
                       label='Point-group symmetry',
                       help='')
-        form.addParam('boxSize', IntParam, default=126, label='Box size')
+        form.addParam('boxSize', IntParam, default=-1, label='Box size')
 
-        form.addParallelSection(threads=1, mpi=2)
+        form.addParallelSection(threads=1, mpi=1)
 
     # --------------------------- INSERT steps functions ----------------------
 
     def _insertAllSteps(self):
-        self._insertFunctionStep("convertInput")
         self._insertFunctionStep('tempMatchStep')
         self._insertFunctionStep("createOutputStep")
 
 
     # --------------------------- STEPS functions -----------------------------
 
-    def convertInput(self):
-        img = ImageHandler()
-        makePath(self._getTmpPath("Vol"))
-        img.convert(self.ref.get(), self._getTmpPath(os.path.join("Vol","ref_vol.mrc")))
-
     def tempMatchStep(self):
 
-        makePath(self._getTmpPath("tmpDir"))
-        volFile = os.path.abspath(self._getTmpPath(os.path.join("Vol","ref_vol.mrc")))
+        if self.boxSize.get()==-1:
+            self.box = self.ref.get().getDim()[0]
+
+        volFile = os.path.abspath(self.ref.get().getFileName())
         params = ""
 
         for tomo in self.inputSet.get():
@@ -116,13 +112,13 @@ class EmanProtTempMatch(ProtTomoPicking):
 
         params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s --rmedge --rmgold --boxsz=%d" %(
                  volFile, self.nptcl.get(), self.dthr.get(), self.vthr.get(), self.delta.get(), self.sym.get(),
-                 self.boxSize.get())
+                 self.box)
 
-        self.runJob(eman2.Plugin.getTemplateCommand(), params, cwd=os.path.abspath(self._getTmpPath("tmpDir")),
+        self.runJob(eman2.Plugin.getTemplateCommand(), params, cwd=os.path.abspath(self._getTmpPath()),
                     env=eman2.Plugin.getEnviron())
 
         #Move output files to Extra Path
-        moveFile(self._getTmpPath(os.path.join("tmpDir","ccc.hdf")),self._getExtraPath("particles" + ".hdf"))
+        moveFile(self._getTmpPath("ccc.hdf"),self._getExtraPath("particles" + ".hdf"))
 
         for tomo in self.inputSet.get():
             tomoName = os.path.basename(tomo.getFileName())
@@ -171,7 +167,7 @@ class EmanProtTempMatch(ProtTomoPicking):
         coord3DMap = {}
         suffix = self._getOutputSuffix(SetOfCoordinates3D)
         coord3DSet = self._createSetOfCoordinates3D(self.inputSet.get(), suffix)
-        coord3DSet.setBoxSize(self.boxSize.get())
+        coord3DSet.setBoxSize(self.box)
         coord3DSet.setName("tomoCoord")
         coord3DSet.setVolumes(self.inputSet.get())
 
