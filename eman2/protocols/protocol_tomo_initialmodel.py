@@ -24,19 +24,24 @@
 # *
 # **************************************************************************
 
+import json
+import re
 from glob import glob
+from itertools import count
 
-from pyworkflow.protocol import params
+import numpy
+
 import pyworkflow.em as pwem
-from pyworkflow.em.data import Volume
+from pyworkflow.protocol import params
+from pyworkflow.em.data import Transform
 from pyworkflow.utils.path import makePath
-from pyworkflow import utils as pwutils
+from pyworkflow.object import Float
 
 import eman2
 from eman2.convert import writeSetOfParticles
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import SubTomogram
+from tomo.objects import SubTomogram, SetOfSubTomograms
 
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
@@ -50,6 +55,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
     to look at the other answers as well.
     """
     _label = 'tomo initial model'
+    E2SPT_OUTPUT_DIR = 'sptsgd_00'
 
     @classmethod
     def isDisabled(cls):
@@ -122,11 +128,6 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
-        # self.convertImagesStep()
-        # self.prepareDefinition()
-        # self.launchInitialModelStep()
-        # self._getOutput()
-
         self._insertFunctionStep('convertImagesStep')
         self._insertFunctionStep('createInitialModelStep')
         self._insertFunctionStep('createOutputStep')
@@ -158,7 +159,8 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
             'numberOfBatches': self.numberOfBatches.get(),
             'mask': self.mask.get(),
             'shrink': self.shrink.get(),
-            'reference': self.reference.get().getFileName()
+            'reference': self.reference.get().getFileName(),
+            'outputPath': self._getExtraPath(self.E2SPT_OUTPUT_DIR),
          }
         args = '%s/*.hdf' % self._getExtraPath("particles")
         if command_params['reference']:
@@ -175,53 +177,89 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         if self.applySim.get():
             args += ' --applysim'
         if command_params['mask']:
-            args += '--mask=%(mask)s'
+            args += ' --mask=%(mask)s'
+
+        args += ' --path=%(outputPath)s'
 
         program = eman2.Plugin.getProgram("e2spt_sgd.py")
         self._log.info('Launching: ' + program + ' ' + args % command_params)
-        self.runJob(program, args % command_params,
-                    cwd=self._getExtraPath())
+        self.runJob(program, args % command_params)
 
     def createOutputStep(self):
+        particles = self.particles.get()
 
-        # Create Initial Model
-        subtomo = SubTomogram()
-        self._getExtraPath(pwutils.join('sptsgd_00', 'output.hdf'))
+        # Output 1: Subtomogram
+        subTomogram = SubTomogram()
+        subTomogram.setFileName(self._getExtraPath(self.E2SPT_OUTPUT_DIR, 'output.hdf'))
+        subTomogram.copyInfo(particles)
 
-        subtomo.setFileName()
-        # subtomo.copyInfo(setOfSubtomograms)
+        # Output 2: setOfSubTomograms
+        setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfSubTomograms.copyInfo(particles)
+        particlesParams = dict(self._getParticlesParams())
 
+        def updateSubTomogram(subTomogram, index):
+            particleParams = particlesParams.get(index)
+            if not particleParams:
+                raise Exception("Could not get params for particle %d" % index)
+            setattr(subTomogram, 'coverage', Float(particleParams["coverage"]))
+            setattr(subTomogram, 'score', Float(particleParams["score"]))
+            # Create 4x4 matrix from 4x3 e2spt_sgd align matrix and append row [0,0,0,1]
+            am = particleParams["alignMatrix"]
+            matrix = numpy.matrix([am[0:4], am[4:8], am[8:12], [0, 0, 0, 1]])
+            subTomogram.setTransform(Transform(matrix))
 
-        # Create intermmediate steps
-        setOfSubtomograms = self.particles.get()
-        setOfSubtomograms.clone()
+        setOfSubTomograms.copyItems(particles, updateItemCallback=updateSubTomogram, itemDataIterator=count(0))
 
+        self._defineOutputs(subTomogram=subTomogram, setOfSubTomograms=setOfSubTomograms)
+        self._defineSourceRelation(self.particles, subTomogram)
+        self._defineSourceRelation(self.particles, setOfSubTomograms)
 
+    def _getParticlesParams(self):
+        """
+        Return an iterator containing the values of the last iteration of e2spt_sgd.py.
 
+        Yields (particleIndex, Dict[{coverage: float, score: float, alignMatrix: list[float]}]).
+        """
+        # JSON files with particles params: path/to/sptsgd_00/particle_parms_NN.json
+        particleParamsPaths = glob(self._getExtraPath(self.E2SPT_OUTPUT_DIR, 'particle_parms_*.json'))
+        if not particleParamsPaths:
+            return
 
-        volumes = self._createSetOfVolumes()
-        shrink = self.shrink.get()
-        samplingRate = self.samplingRate.get()
-        volumes.setSamplingRate(samplingRate * shrink)
-        outputVols = self._getVolumes()
-        for k, volFn in enumerate(outputVols):
-            vol = Volume()
-            vol.setFileName(volFn)
-            vol.setObjComment('eman initial model %02d' % (k + 1))
-            volumes.append(vol)
+        lastParticleParamsPath = sorted(particleParamsPaths)[-1]
+        particlesParams = json.load(open(lastParticleParamsPath))
 
-        self._defineOutputs(outputVolumes=volumes)
-        self._defineSourceRelation(self.inputSet, volumes)
+        for key, values in particlesParams.items():
+            # key: '(path/to/particles/basename.hdf', nParticle)'
+            # values: '{"coverage": 1.0, "score": 2.0, "xform.align3d": {"matrix": [...]}}'
+            match = re.search(r'(\d+)\)$', key)
+            if not match:
+                continue
+            particleIndex = int(match.group(1))
+            coverage = values.get("coverage")
+            score = values.get("score")
+            alignMatrix = values.get("xform.align3d", {}).get("matrix")
 
-    # def _runSteps(self, startIndex):
-    #     # Redefine run to change to workingDir path
-    #     # Change to protocol working directory
-    #     self._enterWorkingDir()
-    #     ProtTomoBase._runSteps(self, startIndex)
+            if coverage and score and alignMatrix:
+                customParticleParams = dict(
+                    coverage=coverage,
+                    score=score,
+                    alignMatrix=alignMatrix
+                )
+                yield (particleIndex, customParticleParams)
 
-    def _getVolumes(self):
-        outputVols = glob(self._getExtraPath('initial_models/model_??_??.hdf'))
-        outputVols.sort()
-        return outputVols
+    def _methods(self):
+        particles = self.particles.get()
+        return [
+            "Created an initial model using e2spt_sgd.py (stochastic gradient descent)",
+            "A total of %d particles of dimensions %s were used (shrink %d)"
+               % (particles.getSize(), particles.getDimensions(), self.shrink.get()),
+        ]
 
+    def _summary(self):
+        particles = self.particles.get()
 
+        return filter(bool, [
+            "Particles: %d" % particles.getSize(),
+            self.reference and "Reference file used: %s" % self.reference.get().getFileName(),
+        ])

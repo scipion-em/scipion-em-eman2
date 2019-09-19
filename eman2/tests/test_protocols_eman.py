@@ -516,6 +516,95 @@ class TestEmanTomoExtraction(TestEmanBase):
         self.assertTrue(output.getCoordinates3D().getObjValue())
         return protTomoExtraction
 
+class TestEmanTomoInitialModel(TestEmanBase):
+    """This class check if the protocol to extract particles
+    in Relion works properly.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from tomo.tests import DataSet
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('tomo-em')
+        cls.tomogram = cls.dataset.getFile('tomo1')
+        cls.coords3D = cls.dataset.getFile('eman_coordinates')
+        cls.inputSetOfSubTomogram = cls.dataset.getFile('subtomo')
+
+    def _runTomoSubtomogramInitialModel(self):
+        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
+        protImportTomogram = self.newProtocol(ProtImportTomograms,
+                                 filesPath=self.tomogram,
+                                 samplingRate=5)
+
+        self.launchProtocol(protImportTomogram)
+        self.assertIsNotNone(protImportTomogram.outputTomogram,
+                             "There was a problem with tomogram output")
+
+        protImportCoordinates3d = self.newProtocol(ProtImportCoordinates3D,
+                                                   auto=ProtImportCoordinates3D.IMPORT_FROM_EMAN,
+                                                   filesPath=self.coords3D,
+                                                   importTomogram=protImportTomogram.outputTomogram,
+                                                   filesPattern='', boxSize=32,
+                                                   samplingRate=5)
+
+        self.launchProtocol(protImportCoordinates3d)
+        self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
+                             "There was a problem with coordinates 3d output")
+        protImportSubTomograms = self.newProtocol(EmanProtTomoExtraction,
+                                                  inputTomogram=protImportTomogram.outputTomogram,
+                                                  inputCoordinates=protImportCoordinates3d.outputCoordinates,
+                                                  downsampleType=0,
+                                                  doInvert=False,
+                                                  doNormalize=False,
+                                                  cshrink=1)
+
+        self.launchProtocol(protImportSubTomograms)
+        self.assertIsNotNone(protImportSubTomograms.outputSetOfSubtomogram,
+                             "There was a problem with SetOfSubtomogram output")
+
+        particles = protImportSubTomograms.outputSetOfSubtomogram
+        reference = protImportTomogram.outputTomogram
+
+        protInitialModel = self.newProtocol(EmanProtTomoInitialModel,
+                                            particles=particles,
+                                            reference=reference,
+                                            symmetry="c1",
+                                            gaussFilter=-1.5,
+                                            filterto=0.03,
+                                            fourier=False,
+                                            batchSize=20,
+                                            learningRate=1,
+                                            numberOfIterations=2,
+                                            numberOfBatches=1,
+                                            shrink=4,
+                                            applySim=False)
+
+        self.launchProtocol(protInitialModel)
+        self.assertIsNotNone(protInitialModel.subTomogram,
+                             "There was a problem with subTomogram output")
+        self.assertIsNotNone(protInitialModel.setOfSubTomograms,
+                             "There was a problem with setOfSubtomograms output")
+
+        return protInitialModel
+
+    def test_initialModelOutput(self):
+        protInitialModel = self._runTomoSubtomogramInitialModel()
+
+        subTomogram = protInitialModel.subTomogram
+        self.assertEqual(os.path.basename(subTomogram.getFileName()), "output.hdf")
+        self.assertEqual(subTomogram.getSamplingRate(), 5.0)
+
+        setOfSubTomograms = protInitialModel.setOfSubTomograms
+        self.assertEqual(setOfSubTomograms.getSize(), 5)
+        for subTomogram in setOfSubTomograms:
+            self.assertEqual(subTomogram.getSamplingRate(), 5)
+            self.assertTrue(hasattr(subTomogram, "coverage"))
+            self.assertTrue(hasattr(subTomogram, "score"))
+            matrix = subTomogram.getTransform().getMatrix()
+            self.assertEqual(matrix.shape, (4, 4))
+
+        return protInitialModel
+
 class TestEmanTomoSubtomogramRefinement(TestEmanBase):
     """This class check if the protocol Subtomogram refinement works properly.
     """
