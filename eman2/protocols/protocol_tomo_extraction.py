@@ -166,9 +166,6 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
 
     def writeSetOfCoordinates3D(self):
-
-        # print('--------------------',self.inputCoordinates.get().getVolumes().get())
-
         self.coordsFileName = self._getExtraPath(
             pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'))
         self.coordDict = []

@@ -23,14 +23,18 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import json
+import fileinput
+import sys
+from os.path import exists
 
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.protocol.params import BooleanParam
+from pyworkflow.protocol.params import BooleanParam, PointerParam
 from pyworkflow import utils as pwutils
 
 import eman2
-from eman2.convert import loadJson
+from eman2.convert import loadJson, writeJson
 
 from tomo.protocols import ProtTomoPicking
 from tomo.objects import Coordinate3D, SetOfCoordinates3D
@@ -56,6 +60,9 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                       label='Read in Memory',
                       help='This will read the entire tomogram into memory.'
                            'Much faster, but you must have enough ram.')
+        form.addParam('inputCoordinates', PointerParam, label="Input Coordinates",
+                      allowsNull=True, pointerClass='SetOfCoordinates3D',
+                      help='Select the SetOfCoordinates3D.')
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
@@ -119,15 +126,43 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     # --------------------------- STEPS functions -----------------------------
     def launchBoxingGUIStep(self, tomo):
-        program = eman2.Plugin.getProgram("e2spt_boxer.py")
+        inputCoor = self.inputCoordinates.get()
+        if inputCoor is not None:
+            infoDir = 'info'
+            fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
+            pathInputCoor = pwutils.join(infoDir, fnInputCoor)
+            if not exists(pathInputCoor):
+                pwutils.makePath(infoDir)
+            f = open(pathInputCoor, 'w')
+            initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": 32,\n"name": "particles_00"\n}\n}\n}'
+            f.write(initFile)
+            f.close()
+            linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (0, 0, 0) # Change 0s by first coor
+            r = open(pathInputCoor, "r")
+            contents = r.readlines()
+            r.close()
+            contents.insert(2, linCoor)
+            w = open(pathInputCoor, "w")
+            contents = "".join(contents)
+            w.write(contents)
+            w.close()
+            for coor in inputCoor.iterCoordinates():
+                linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ()) # coor.getXYZ()
+                r = open(pathInputCoor, "r")
+                contents = r.readlines()
+                r.close()
+                contents.insert(2, linCoor)
+                w = open(pathInputCoor, "w")
+                contents = "".join(contents)
+                w.write(contents)
+                w.close()
 
+        program = eman2.Plugin.getProgram("e2spt_boxer.py")
         arguments = "%(inputTomogram)s"
         if self.inMemory:
             arguments += " --inmemory"
-
         self._log.info('Launching: ' + program + ' ' + arguments % tomo)
         self.runJob(program, arguments % tomo)
-
         # Open dialog to request confirmation to create output
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
             self._leaveDir()  # going back to project dir
@@ -139,7 +174,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         if not eman2.Plugin.isTomoAvailableVersion():
             errors.append('Your EMAN2 version does not support the tomo boxer. '
                           'Please update your installation to EMAN 2.3 or newer.')
-
         return errors
 
     def _runSteps(self, startIndex):
