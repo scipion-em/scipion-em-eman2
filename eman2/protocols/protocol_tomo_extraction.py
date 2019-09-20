@@ -179,8 +179,11 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
     # --------------------------- STEPS functions -----------------------------
     def extractParticles(self):
-        TsCoord = self.inputCoordinates.get().getSamplingRate()
         TsTomo = self.getInputTomogram().getSamplingRate()
+        if self.inputCoordinates.get().getSamplingRate() is not None:
+            TsCoord = self.inputCoordinates.get().getSamplingRate()
+        else:
+            TsCoord = TsTomo
         self.cshrink = float(TsCoord/(TsTomo*self.downFactor.get()))
         fnTomo = self.getInputTomogram().getFileName()
         args = '%s --coords %s --boxsize %d' % (fnTomo, pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'),
