@@ -164,7 +164,6 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
         self._defineSourceRelation(self.inputCoordinates, self.outputSubTomogramsSet)
 
-
     def writeSetOfCoordinates3D(self):
         self.coordsFileName = self._getExtraPath(
             pwutils.replaceBaseExt(self.getInputTomogram().getFileName(), 'coords'))
@@ -177,8 +176,11 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
     # --------------------------- STEPS functions -----------------------------
     def extractParticles(self):
-        TsCoord =self.inputCoordinates.get().getSamplingRate()
         TsTomo = self.inputTomogram.get().getSamplingRate()
+        if self.inputCoordinates.get().getSamplingRate() is not None:
+            TsCoord = self.inputCoordinates.get().getSamplingRate()
+        else:
+            TsCoord = TsTomo
         self.cshrink = float(TsCoord/(TsTomo*self.downFactor.get()))
         self.boxSize = self.boxSize.get()
         fnTomo = self.getInputTomogram().getFileName()
