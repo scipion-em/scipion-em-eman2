@@ -88,6 +88,45 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
                 self._readCoordinates3D(box, tomo, coord3DSet)
 
+    def _coordinates2json(self, inputCoor):
+        cwd = os.getcwd()
+        infoDir = pwutils.join(cwd, 'info')
+        self._leaveWorkingDir()
+        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
+        pathInputCoor = pwutils.join(infoDir, fnInputCoor)
+        if not exists(pathInputCoor):
+            pwutils.makePath(infoDir)
+        f = open(pathInputCoor, 'w')
+        initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": 32,\n"name": "particles_00"\n}\n}\n}'
+        f.write(initFile)
+        f.close()
+        firstItem = inputCoor.getFirstItem()
+        linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (firstItem.getX(), firstItem.getY(), firstItem.getZ())
+        r = open(pathInputCoor, "r")
+        contents = r.readlines()
+        r.close()
+        contents.insert(2, linCoor)
+        w = open(pathInputCoor, "w")
+        contents = "".join(contents)
+        w.write(contents)
+        w.close()
+        idx = 1
+        for coor in inputCoor.iterCoordinates():
+            if idx == 1:
+                idx += 1
+                continue
+            else:
+                linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
+                r = open(pathInputCoor, "r")
+                contents = r.readlines()
+                r.close()
+                contents.insert(2, linCoor)
+                w = open(pathInputCoor, "w")
+                contents = "".join(contents)
+                w.write(contents)
+                w.close()
+        self._enterWorkingDir()
+
     def _createOutput(self, outputDir):
         jsonFnbase = pwutils.join(outputDir, 'info',
                                   'extra-%s_info.json'
@@ -138,45 +177,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
             self._leaveDir()  # going back to project dir
             self._createOutput(self.getWorkingDir())
-
-    def _coordinates2json(self, inputCoor):
-        cwd = os.getcwd()
-        infoDir = pwutils.join(cwd, 'info')
-        self._leaveWorkingDir()
-        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
-        pathInputCoor = pwutils.join(infoDir, fnInputCoor)
-        if not exists(pathInputCoor):
-            pwutils.makePath(infoDir)
-        f = open(pathInputCoor, 'w')
-        initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": 32,\n"name": "particles_00"\n}\n}\n}'
-        f.write(initFile)
-        f.close()
-        firstItem = inputCoor.getFirstItem()
-        linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (firstItem.getX(), firstItem.getY(), firstItem.getZ())
-        r = open(pathInputCoor, "r")
-        contents = r.readlines()
-        r.close()
-        contents.insert(2, linCoor)
-        w = open(pathInputCoor, "w")
-        contents = "".join(contents)
-        w.write(contents)
-        w.close()
-        idx = 1
-        for coor in inputCoor.iterCoordinates():
-            if idx == 1:
-                idx += 1
-                continue
-            else:
-                linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
-                r = open(pathInputCoor, "r")
-                contents = r.readlines()
-                r.close()
-                contents.insert(2, linCoor)
-                w = open(pathInputCoor, "w")
-                contents = "".join(contents)
-                w.write(contents)
-                w.close()
-        self._enterWorkingDir()
 
     def _validate(self):
         errors = []
