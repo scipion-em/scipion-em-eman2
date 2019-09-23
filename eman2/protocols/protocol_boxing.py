@@ -33,7 +33,8 @@ from pyworkflow.utils.properties import Message
 from pyworkflow.utils.path import join, getExt
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.em.protocol import ProtParticlePicking
-from pyworkflow.protocol.params import BooleanParam, IntParam
+from pyworkflow.protocol.params import (BooleanParam, IntParam,
+                                        StringParam)
 
 import eman2
 from eman2.convert import loadJson, readSetOfCoordinates
@@ -43,6 +44,19 @@ class EmanProtBoxing(ProtParticlePicking):
     """ Semi-automated particle picker for SPA. Uses EMAN2 e2boxer.py.
     """
     _label = 'boxer'
+
+    def _createFilenameTemplates(self):
+        """ Centralize the names of the files. """
+
+        myDict = {'goodRefsFn': self._getExtraPath('info/boxrefs.hdf'),
+                  'badRefsFn': self._getExtraPath('info/boxrefsbad.hdf'),
+                  'bgRefsFn': self._getExtraPath('info/boxrefsbg.hdf'),
+                  'nnetFn': self._getExtraPath('nnet_pickptcls.hdf'),
+                  'nnetClFn': self._getExtraPath('nnet_classify.hdf'),
+                  'trainoutFn': self._getExtraPath('trainout_pickptcl.hdf'),
+                  'trainoutClFn': self._getExtraPath('trainout_classify.hdf')
+                  }
+        self._updateFilenamesDict(myDict)
 
     def __init__(self, **args):
         ProtParticlePicking.__init__(self, **args)
@@ -66,6 +80,14 @@ class EmanProtBoxing(ProtParticlePicking):
                       label='Particle size (px)',
                       help="Longest axis of particle in pixels (diameter, "
                            "not radius).")
+        if self._isVersion23():
+            form.addParam('device', StringParam, default='cpu',
+                          condition='useNewBoxer',
+                          label='Device',
+                          help='For Convnet training only.\n'
+                               'Pick a device to use. Choose from cpu, '
+                               'gpu, or gpuX (X=0,1,...) when multiple '
+                               'gpus are available. Default is cpu.')
 
         form.addParam('invertY', BooleanParam, default=False,
                       label='Invert Y coordinates',
@@ -77,9 +99,10 @@ class EmanProtBoxing(ProtParticlePicking):
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
+        self._createFilenameTemplates()
         self.inputMics = self.inputMicrographs.get()
         micList = [os.path.relpath(mic.getFileName(),
-                                   self.workingDir.get()) for mic in self.inputMics]
+                                   self.getCoordsDir()) for mic in self.inputMics]
 
         self._params = {'inputMics': ' '.join(micList)}
         # Launch Boxing GUI
@@ -94,10 +117,10 @@ class EmanProtBoxing(ProtParticlePicking):
         boxerVersion = 'old' if not useNewBoxer else 'new'
         boxer = eman2.Plugin.getBoxerCommand(boxerVersion=boxerVersion)
         program = eman2.Plugin.getProgram(boxer)
-        arguments = "%(inputMics)s"
+        arguments = ''
 
         if useNewBoxer:
-            arguments += " --apix=%(pixSize)f --boxsize=%(boxSize)d"
+            arguments = " --apix=%(pixSize)f --boxsize=%(boxSize)d"
             arguments += " --ptclsize=%(ptclSize)d --gui --threads=%(thr)d --no_ctf"
             self._params.update({
                 'pixSize': self.inputMics.getSamplingRate(),
@@ -105,20 +128,23 @@ class EmanProtBoxing(ProtParticlePicking):
                 'ptclSize': self.particleSize.get(),
                 'thr': self.numberOfThreads.get()
             })
+            if self._isVersion23():
+                arguments += " --device=%s" % self.device.get()
+
+        arguments += " %(inputMics)s"
 
         # Run the command with formatted parameters
         self._log.info('Launching: ' + program + ' ' + arguments % self._params)
-        self.runJob(program, arguments % self._params)
+        self.runJob(program, arguments % self._params, cwd=self.getCoordsDir())
 
         # Open dialog to request confirmation to create output
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
             self.check_gauss()
-            self._leaveDir()  # going back to project dir
-            self._createOutput(self.getWorkingDir())
+            self._createOutput(self.getCoordsDir())
 
     def check_gauss(self):
         if self._useNewBoxer():
-            # gauss picker is not implemented for Eman v.2.21 yet
+            # gauss picker is not implemented for new e2boxer
             pass
         else:
             # Function to check if gaussian algorithm was used to pick
@@ -130,7 +156,7 @@ class EmanProtBoxing(ProtParticlePicking):
                 jsonGaussDict = loadJson(gaussJsonFile)
                 gaussParsDict = None
                 micList = [os.path.relpath(mic.getFileName(),
-                                           self.workingDir.get()) for mic in self.inputMics]
+                                           self.getCoordsDir()) for mic in self.inputMics]
                 # Go over the list of input micrographs and see if
                 # gaussian was used to pick any of them
                 for mic in micList:
@@ -156,15 +182,11 @@ class EmanProtBoxing(ProtParticlePicking):
                     boxer = eman2.Plugin.getBoxerCommand(boxerVersion='old')
                     program = eman2.Plugin.getProgram(boxer)
                     self._log.info('Launching: ' + program + ' ' + arguments % self._params)
-                    self.runJob(program, arguments % self._params)
+                    self.runJob(program, arguments % self._params, cwd=self.getCoordsDir())
 
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
-
-        if self.useNewBoxer and not eman2.Plugin.isNewVersion():
-            errors.append('Your EMAN2 version does not support new boxer. '
-                          'Please update your installation to EMAN 2.21 or newer.')
 
         return errors
 
@@ -185,11 +207,8 @@ class EmanProtBoxing(ProtParticlePicking):
         return warnings
 
     # --------------------------- UTILS functions -----------------------------
-    def _runSteps(self, startIndex):
-        # Redefine run to change to workingDir path
-        # Change to protocol working directory
-        self._enterWorkingDir()
-        ProtParticlePicking._runSteps(self, startIndex)
+    def getCoordsDir(self):
+        return self._getExtraPath()
 
     def getFiles(self):
         filePaths = self.inputMicrographs.get().getFiles() | ProtParticlePicking.getFiles(self)
@@ -201,3 +220,6 @@ class EmanProtBoxing(ProtParticlePicking):
 
     def _useNewBoxer(self):
         return True if self.useNewBoxer else False
+
+    def _isVersion23(self):
+        return eman2.Plugin.isVersion('2.3')

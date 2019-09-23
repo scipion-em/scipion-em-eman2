@@ -37,7 +37,17 @@ issn = "1047-8477",
 doi = "http://dx.doi.org/10.1016/j.jsb.2006.05.009",
 url = "http://www.sciencedirect.com/science/article/pii/S1047847706001894",
 author = "Guang Tang and Liwei Peng and Philip R. Baldwin and Deepinder S. Mann and Wen Jiang and Ian Rees and Steven J. Ludtke",
-keywords = "EMAN, Single particle analysis , cryoEMTEM, Software, Image processing, Electron microscopy}
+keywords = "EMAN, Single particle analysis , cryoEM, TEM, Software, Image processing, Electron microscopy"}
 
+@article{Bell2016,
+title = "High resolution single particle refinement in EMAN2.1.",
+journal = "Methods",
+volume = "100",
+pages = "25 - 34",
+year = "2016",
+doi = "http://dx.doi.org/10.1016/j.ymeth.2016.02.018",
+url = "http://www.sciencedirect.com/science/article/pii/S1046202316300342",
+author = "James M. Bell and Muyuan Chen and Philip R. Baldwin and Steven J. Ludtke",
+keywords = "CryoEM, Single particle analysis, Image processing, 3-D reconstruction, Structural biology"}
 
 """

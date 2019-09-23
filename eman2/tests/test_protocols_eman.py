@@ -24,16 +24,13 @@
 # *
 # **************************************************************************
 
-
-from pyworkflow.tests import *
+from pyworkflow.tests import BaseTest, setupTestProject, DataSet
 import pyworkflow.em as pwem
 from pyworkflow.utils import importFromPlugin
 
 import eman2
 from eman2 import *
 from eman2.protocols import *
-
-
 
 class TestEmanBase(BaseTest):
     @classmethod
@@ -152,6 +149,30 @@ class TestEmanInitialModelGroel(TestEmanInitialModelMda):
         cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
 
 
+class TestEmanInitialModelSGD(TestEmanBase):
+    @classmethod
+    def setUpClass(cls):
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('groel')
+        cls.averages = cls.dataset.getFile('averages')
+        cls.symmetry = 'd7'
+        cls.numberOfIterations = 20
+        cls.numberOfModels = 2
+        cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
+
+    def test_initialmodel(self):
+        protIniModel = self.newProtocol(EmanProtInitModelSGD,
+                                        symmetry=self.symmetry,
+                                        numberOfIterations=self.numberOfIterations,
+                                        numberOfModels=self.numberOfModels,
+                                        numberOfThreads=4)
+        protIniModel.inputType.set(0)  # averages
+        protIniModel.inputAvg.set(self.protImportAvg.outputAverages)
+        self.launchProtocol(protIniModel)
+        self.assertIsNotNone(protIniModel.outputVolumes,
+                             "There was a problem with eman initial model SGD protocol")
+
+
 class TestEmanReconstruct(TestEmanBase):
     def test_ReconstructEman(self):
         print("Import Set of particles with angles")
@@ -201,8 +222,6 @@ class TestEmanRefine2D(TestEmanBase):
         cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
 
     def test_Refine2DEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print("Run Eman Refine 2D")
         protRefine = self.newProtocol(EmanProtRefine2D,
                                       numberOfIterations=2, numberOfClassAvg=5,
@@ -217,17 +236,23 @@ class TestEmanRefine2DBispec(TestEmanBase):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
-        TestEmanBase.setData('mda')
-        cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
+        TestEmanBase.setData('relion_tutorial')
+        cls.partsFn = cls.dataset.getFile('import/case2/particles.sqlite')
+        cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_Refine2DBispecEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol exists only for EMAN2.21 or higher!')
         print("Run Eman Refine 2D bispec")
+        protCtf = self.newProtocol(EmanProtCTFAuto,
+                                   numberOfThreads=3)
+        protCtf.inputParticles.set(self.protImport.outputParticles)
+        self.launchProtocol(protCtf)
+        self.assertIsNotNone(protCtf.outputParticles_flip_fullRes,
+                             "There was a problem with eman ctf auto protocol")
+
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
+                                      inputBispec=protCtf,
                                       numberOfIterations=2, numberOfClassAvg=5,
                                       classIter=2, nbasisfp=5)
-        protRefine.inputParticles.set(self.protImport.outputParticles)
         self.launchProtocol(protRefine)
         self.assertIsNotNone(protRefine.outputClasses,
                              "There was a problem with eman refine2d bispec protocol")
@@ -258,7 +283,7 @@ class TestEmanTiltValidate(TestEmanBase):
 
         print("Importing coordinate pairs")
         protImportCoords = self.newProtocol(pwem.ProtImportCoordinatesPairs,
-                                            importFrom=2,  # from eman
+                                            importFrom=1,  # from eman
                                             patternUntilted=self.patternU,
                                             patternTilted=self.patternT,
                                             boxSize=256)
@@ -306,8 +331,6 @@ class TestEmanCtfAuto(TestEmanBase):
         cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_CtfAutoEman(self):
-        if not eman2.Plugin.isNewVersion():
-            raise Exception('This protocol works only for EMAN2.21 or higher!')
         print("Run Eman CTF Auto")
         protCtf = self.newProtocol(EmanProtCTFAuto,
                                    numberOfThreads=3)
@@ -333,9 +356,6 @@ class TestEmanAutopick(TestEmanBase):
         cls.protImportAvg = cls.runImportAverages(cls.avgFn, 4.4)
 
     def test_AutopickEman(self):
-        if not eman2.Plugin.isNewVersion():
-            print('This protocol exists only for EMAN2.21 or higher! Skipping test..')
-            return
         print("Run Eman auto picking")
         protPick = self.newProtocol(EmanProtAutopick,
                                     boxerMode=1,  # by_ref
@@ -348,7 +368,7 @@ class TestEmanAutopick(TestEmanBase):
                              "There was a problem with e2boxer auto protocol")
 
     def test_AutopickSparx(self):
-        if not eman2.Plugin.isNewVersion():
+        if not eman2.Plugin.isVersion('2.21'):
             print("Run Eman auto picking with gauss/sparx")
             protPick2 = self.newProtocol(SparxGaussianProtPicking,
                                          boxSize=128,
@@ -365,7 +385,7 @@ class TestEmanAutopick(TestEmanBase):
             print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
 
     def test_AutopickSparxPointer(self):
-        if not eman2.Plugin.isNewVersion():
+        if not eman2.Plugin.isVersion('2.21'):
             print("Simulating an automatic protocol to estimate the boxSize")
             protAutoBoxSize = self.newProtocol(pwem.ProtOutputTest,
                                                iBoxSize=64,  # output is twice
@@ -387,3 +407,111 @@ class TestEmanAutopick(TestEmanBase):
                                  "There was a problem with e2boxer gauss auto protocol")
         else:
             print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
+
+
+class TestEmanTomoExtraction(TestEmanBase):
+    """This class check if the protocol to extract particles
+    in Relion works properly.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from tomo.tests import DataSet
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('tomo-em')
+        cls.tomogram = cls.dataset.getFile('tomo1')
+        cls.coords3D = cls.dataset.getFile('eman_coordinates')
+
+    def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, cshrink = 1):
+        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
+        protImportTomogram = self.newProtocol(ProtImportTomograms,
+                                 filesPath=self.tomogram,
+                                 samplingRate=5)
+
+        self.launchProtocol(protImportTomogram)
+
+        protImportCoordinates3d = self.newProtocol(ProtImportCoordinates3D,
+                                 auto=ProtImportCoordinates3D.IMPORT_FROM_EMAN,
+                                 filesPath= self.coords3D,
+                                 importTomogram=protImportTomogram.outputTomogram,
+                                 filesPattern='', boxSize=32,
+                                 samplingRate=5)
+
+        self.launchProtocol(protImportCoordinates3d)
+        self.assertIsNotNone(protImportTomogram.outputTomogram,
+                             "There was a problem with tomogram output")
+        self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
+                             "There was a problem with coordinates 3d output")
+
+        if downsampleType == 1:
+            protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
+                                              inputTomogram=protImportTomogram.outputTomogram,
+                                              inputCoordinates=protImportCoordinates3d.outputCoordinates,
+                                              downsampleType=downsampleType,
+                                              doInvert=doInvert,
+                                              doNormalize=doNormalize,
+                                              cshrink=cshrink)
+        else:
+            protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
+                                              inputCoordinates=protImportCoordinates3d.outputCoordinates,
+                                              downsampleType=downsampleType,
+                                              doInvert=doInvert,
+                                              doNormalize=doNormalize,
+                                              cshrink=cshrink)
+        self.launchProtocol(protTomoExtraction)
+        self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
+                             "There was a problem with SetOfSubtomogram output")
+        return protTomoExtraction
+
+    def test_extractParticlesWithoutDownSampleType(self):
+        protTomoExtraction = self._runTomoExtraction()
+        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
+
+        return protTomoExtraction
+
+    def test_extractParticlesWithDownSample(self):
+        protTomoExtraction = self._runTomoExtraction(downsampleType = 1)
+        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
+
+        return protTomoExtraction
+
+    def test_extractParticlesWithDoInvert(self):
+        protTomoExtraction = self._runTomoExtraction(doInvert=True)
+        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
+
+        return protTomoExtraction
+
+    def test_extractParticlesWithDoNormalize(self):
+        protTomoExtraction = self._runTomoExtraction(doNormalize=True)
+        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
+
+        return protTomoExtraction
+
+    def test_extractParticlesModifiedCshrink(self):
+        protTomoExtraction = self._runTomoExtraction(cshrink = 2)
+        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
+
+        return protTomoExtraction
+
+    def test_extractParticlesWithAllOptions(self):
+        protTomoExtraction = self._runTomoExtraction(cshrink = 2, doNormalize=True, doInvert=True)
+        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
+        return protTomoExtraction

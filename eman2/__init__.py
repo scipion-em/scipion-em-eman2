@@ -30,7 +30,7 @@ import subprocess
 import pyworkflow.em
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2DIR, V2_12, V2_21
+from .constants import EMAN2_HOME, V2_21, V2_3
 
 
 _logo = "eman2_logo.png"
@@ -41,22 +41,19 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 
 
 class Plugin(pyworkflow.em.Plugin):
-    _homeVar = EMAN2DIR
-    _pathVars = [EMAN2DIR]
-    _supportedVersions = [V2_12, V2_21]
+    _homeVar = EMAN2_HOME
+    _pathVars = [EMAN2_HOME]
+    _supportedVersions = [V2_21, V2_3]
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2DIR, 'eman-2.21')
+        cls._defineEmVar(EMAN2_HOME, 'eman-2.3')
 
     @classmethod
     def getEnviron(cls):
         """ Setup the environment variables needed to launch Eman. """
         environ = pwutils.Environ(os.environ)
         pathList = [cls.getHome(d) for d in ['lib', 'bin']]
-
-        if not cls.isNewVersion():
-            pathList.append(cls.getHome('extlib', 'site-packages'))
 
         # This environment variable is used to setup OpenGL (Mesa)
         # library in remote desktops
@@ -72,14 +69,15 @@ class Plugin(pyworkflow.em.Plugin):
             'SCIPION_MPI_FLAGS': os.environ.get('EMANMPIOPTS', '')
         }, position=pwutils.Environ.REPLACE)
 
-        if not cls.isNewVersion():
-            environ.update({'EMAN_PYTHON': cls.getHome('Python/bin/python')},
-                           position=pwutils.Environ.END)
         return environ
 
     @classmethod
-    def isNewVersion(cls):
-        return not cls.getActiveVersion().startswith("2.1")
+    def isVersion(cls, version='2.3'):
+        return cls.getActiveVersion().startswith(version)
+
+    @classmethod
+    def isTomoAvailableVersion(cls):
+        return cls.isVersion('2.3')
 
     @classmethod
     def getProgram(cls, program, python=False):
@@ -87,11 +85,7 @@ class Plugin(pyworkflow.em.Plugin):
         program = os.path.join(cls.getHome('bin'), program)
 
         if python:
-            if cls.isNewVersion():
-                python = cls.getHome('bin/python')
-            else:
-                python = cls.getHome('Python/bin/python')
-
+            python = cls.getHome('bin/python')
             return '%(python)s %(program)s ' % locals()
         else:
             return '%(program)s ' % locals()
@@ -101,13 +95,8 @@ class Plugin(pyworkflow.em.Plugin):
         return cls.getProgram(program, python) + args
 
     @classmethod
-    def getBoxerCommand(cls, emanVersion=None, boxerVersion='new'):
-        """ Returns the Boxer command depending on Eman2 version.
-         If emanVersion is None, the current active version will be used.
-        """
-        emanVersion = emanVersion or cls.getActiveVersion()
-        new = emanVersion in [V2_12] or boxerVersion == 'new'
-        cmd = 'e2boxer.py' if new else 'e2boxer_old.py'
+    def getBoxerCommand(cls, boxerVersion='new'):
+        cmd = 'e2boxer.py' if boxerVersion == 'new' else 'e2boxer_old.py'
 
         return os.path.join(cls.getHome('bin'), cmd)
 
@@ -128,22 +117,24 @@ class Plugin(pyworkflow.em.Plugin):
 
     @classmethod
     def defineBinaries(cls, env):
-        eman2_commands = [('./eman2-installer',
-                           'eman2.*rc')]
-
-        env.addPackage('eman', version='2.12',
-                       tar='eman2.12.linux64.tgz',
-                       commands=eman2_commands)
-
         SW_EM = env.getEmFolder()
 
         eman22_commands = [
             ('./eman2.21.linux64.centos7.sh -b -p "%s/eman-2.21"' %
              SW_EM, '%s/eman-2.21/bin/python' % SW_EM)]
 
+        shell = os.environ.get("SHELL", "bash")
+        eman23_commands = [
+            (shell + ' ./eman2.3.linux64.sh -b -p "%s/eman-2.3"' %
+             SW_EM, '%s/eman-2.3/bin/python' % SW_EM)]
+
         env.addPackage('eman', version='2.21',
                        tar='eman2.21.linux64.centos7.tgz',
-                       commands=eman22_commands,
+                       commands=eman22_commands)
+
+        env.addPackage('eman', version='2.3',
+                       tar='eman2.3.linux64.tgz',
+                       commands=eman23_commands,
                        default=True)
 
 
