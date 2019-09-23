@@ -580,9 +580,9 @@ class TestEmanTomoInitialModel(TestEmanBase):
                                             applySim=False)
 
         self.launchProtocol(protInitialModel)
-        self.assertIsNotNone(protInitialModel.subTomogram,
+        self.assertIsNotNone(protInitialModel.outputSubTomogram,
                              "There was a problem with subTomogram output")
-        self.assertIsNotNone(protInitialModel.setOfSubTomograms,
+        self.assertIsNotNone(protInitialModel.outputSetOfSubTomograms,
                              "There was a problem with setOfSubtomograms output")
 
         return protInitialModel
@@ -590,12 +590,14 @@ class TestEmanTomoInitialModel(TestEmanBase):
     def test_initialModelOutput(self):
         protInitialModel = self._runTomoSubtomogramInitialModel()
 
-        subTomogram = protInitialModel.subTomogram
+        subTomogram = protInitialModel.outputSubTomogram
         self.assertEqual(os.path.basename(subTomogram.getFileName()), "output.hdf")
         self.assertEqual(subTomogram.getSamplingRate(), 5.0)
 
-        setOfSubTomograms = protInitialModel.setOfSubTomograms
+        setOfSubTomograms = protInitialModel.outputSetOfSubTomograms
         self.assertEqual(setOfSubTomograms.getSize(), 5)
+        self.assertEqual(setOfSubTomograms.getCoordinates3D().getObjValue().getSize(), 5)
+
         for subTomogram in setOfSubTomograms:
             self.assertEqual(subTomogram.getSamplingRate(), 5)
             self.assertTrue(hasattr(subTomogram, "coverage"))

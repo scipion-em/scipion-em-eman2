@@ -29,13 +29,16 @@
 # **************************************************************************
 
 import glob
+import itertools
 import json
 import numpy
 import os
+import re
 
 import pyworkflow.em as em
 import pyworkflow.utils as pwutils
-from pyworkflow.em.data import Coordinate, Particle
+from pyworkflow.em.data import Coordinate, Particle, Transform
+from pyworkflow.object import Float
 from pyworkflow.em.convert import ImageHandler
 import pyworkflow.em.metadata as md
 
@@ -418,3 +421,59 @@ def calculatePhaseShift(ampcont):
     ctfPhaseShift = numpy.rad2deg(PhaseShift)
 
     return ctfPhaseShift
+
+def getLastParticlesParams(directory):
+    """
+    Return a dictionary containing the params values of the last iteration.
+
+    Key: Particle index (int)
+    Value: Dict[{coverage: float, score: float, alignMatrix: list[float]}]
+    """
+    # JSON files with particles params: path/to/particle_parms_NN.json
+    particleParamsPaths = glob.glob(os.path.join(directory, 'particle_parms_*.json'))
+    if not particleParamsPaths:
+        raise Exception("Particle params files not found")
+
+    lastParticleParamsPath = sorted(particleParamsPaths)[-1]
+    particlesParams = json.load(open(lastParticleParamsPath))
+    output = {}
+
+    for key, values in particlesParams.items():
+        # key: '(path/to/particles/basename.hdf', nParticle)'
+        # values: '{"coverage": 1.0, "score": 2.0, "xform.align3d": {"matrix": [...]}}'
+        match = re.search(r'(\d+)\)$', key)
+        if not match:
+            continue
+        particleIndex = int(match.group(1))
+        coverage = values.get("coverage")
+        score = values.get("score")
+        alignMatrix = values.get("xform.align3d", {}).get("matrix")
+
+        if coverage and score and alignMatrix:
+            customParticleParams = dict(
+                coverage=coverage,
+                score=score,
+                alignMatrix=alignMatrix
+            )
+            output[particleIndex] = customParticleParams
+
+    return output
+
+def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particlesParams):
+    """Update a set of subtomgrams from a template, copy info and attributes coverage/score/transform"""
+    outputSetOfSubTomograms.copyInfo(inputSetOfSubTomograms)
+
+    def updateSubTomogram(subTomogram, index):
+        particleParams = particlesParams.get(index)
+        if not particleParams:
+            raise Exception("Could not get params for particle %d" % index)
+        setattr(subTomogram, 'coverage', Float(particleParams["coverage"]))
+        setattr(subTomogram, 'score', Float(particleParams["score"]))
+        # Create 4x4 matrix from 4x3 e2spt_sgd align matrix and append row [0,0,0,1]
+        am = particleParams["alignMatrix"]
+        matrix = numpy.matrix([am[0:4], am[4:8], am[8:12], [0, 0, 0, 1]])
+        subTomogram.setTransform(Transform(matrix))
+
+    outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,
+                                      updateItemCallback=updateSubTomogram,
+                                      itemDataIterator=itertools.count(0))
