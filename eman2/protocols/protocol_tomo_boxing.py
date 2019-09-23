@@ -23,9 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-import json
-import fileinput
-import sys
+
 from os.path import exists
 import os
 
@@ -35,7 +33,7 @@ from pyworkflow.protocol.params import BooleanParam, PointerParam
 from pyworkflow import utils as pwutils
 
 import eman2
-from eman2.convert import loadJson, writeJson
+from eman2.convert import loadJson
 
 from tomo.protocols import ProtTomoPicking
 from tomo.objects import Coordinate3D, SetOfCoordinates3D
@@ -129,49 +127,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
     def launchBoxingGUIStep(self, tomo):
         inputCoor = self.inputCoordinates.get()
         if inputCoor is not None:
-            cwd = os.getcwd()
-            infoDir = pwutils.join(cwd,'info')
-            self._leaveWorkingDir()
-            fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
-            pathInputCoor = pwutils.join(infoDir, fnInputCoor)
-            if not exists(pathInputCoor):
-                pwutils.makePath(infoDir)
-            f = open(pathInputCoor, 'w')
-            initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": 32,\n"name": "particles_00"\n}\n}\n}'
-            f.write(initFile)
-            f.close()
-            firstItem = inputCoor.getFirstItem()
-            linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (firstItem.getX(),
-                                                          firstItem.getY(),
-                                                          firstItem.getZ())
-            r = open(pathInputCoor, "r")
-            contents = r.readlines()
-            r.close()
-            contents.insert(2, linCoor)
-            w = open(pathInputCoor, "w")
-            contents = "".join(contents)
-            w.write(contents)
-            w.close()
-            idx = 1
-            for coor in inputCoor.iterCoordinates():
-                if idx == 1:
-                    print('------------continue-----------------', idx)
-                    idx += 1
-                    continue
-                else:
-                    linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
-                    print('------------else-----------------', linCoor)
-                    r = open(pathInputCoor, "r")
-                    contents = r.readlines()
-                    r.close()
-                    contents.insert(2, linCoor) # Do not read first line (already read above)
-                    w = open(pathInputCoor, "w")
-                    contents = "".join(contents)
-                    w.write(contents)
-                    w.close()
-            self._enterWorkingDir()
-
-
+            self._coordinates2json(inputCoor)
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
         arguments = "%(inputTomogram)s"
         if self.inMemory:
@@ -182,6 +138,45 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
             self._leaveDir()  # going back to project dir
             self._createOutput(self.getWorkingDir())
+
+    def _coordinates2json(self, inputCoor):
+        cwd = os.getcwd()
+        infoDir = pwutils.join(cwd, 'info')
+        self._leaveWorkingDir()
+        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
+        pathInputCoor = pwutils.join(infoDir, fnInputCoor)
+        if not exists(pathInputCoor):
+            pwutils.makePath(infoDir)
+        f = open(pathInputCoor, 'w')
+        initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": 32,\n"name": "particles_00"\n}\n}\n}'
+        f.write(initFile)
+        f.close()
+        firstItem = inputCoor.getFirstItem()
+        linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (firstItem.getX(), firstItem.getY(), firstItem.getZ())
+        r = open(pathInputCoor, "r")
+        contents = r.readlines()
+        r.close()
+        contents.insert(2, linCoor)
+        w = open(pathInputCoor, "w")
+        contents = "".join(contents)
+        w.write(contents)
+        w.close()
+        idx = 1
+        for coor in inputCoor.iterCoordinates():
+            if idx == 1:
+                idx += 1
+                continue
+            else:
+                linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
+                r = open(pathInputCoor, "r")
+                contents = r.readlines()
+                r.close()
+                contents.insert(2, linCoor)
+                w = open(pathInputCoor, "w")
+                contents = "".join(contents)
+                w.write(contents)
+                w.close()
+        self._enterWorkingDir()
 
     def _validate(self):
         errors = []
