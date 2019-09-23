@@ -176,12 +176,14 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
     # --------------------------- STEPS functions -----------------------------
     def extractParticles(self):
-        TsTomo = self.inputTomogram.get().getSamplingRate()
+        # Compute cshrink parameter of eman to have tomogram and coordinates at same sampling rate
+        # If coordinates do not have sampling rate the protocol assumes the same sampling rate as tomogram
+        samplingRateTomo = self.inputTomogram.get().getSamplingRate()
         if self.inputCoordinates.get().getSamplingRate() is not None:
-            TsCoord = self.inputCoordinates.get().getSamplingRate()
+            sampligRateCoord = self.inputCoordinates.get().getSamplingRate()
         else:
-            TsCoord = TsTomo
-        self.cshrink = float(TsCoord/(TsTomo*self.downFactor.get()))
+            sampligRateCoord = samplingRateTomo
+        self.cshrink = float(sampligRateCoord/(samplingRateTomo*self.downFactor.get()))
         self.boxSize = self.boxSize.get()
         fnTomo = self.getInputTomogram().getFileName()
         if self.downFactor.get() != 1:
