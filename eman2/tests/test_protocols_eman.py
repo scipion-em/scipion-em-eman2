@@ -676,23 +676,28 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
                                               maxtilt=maxtilt)
 
         self.launchProtocol(protTomoRefinement)
+        self.assertIsNotNone(protTomoRefinement.outputSubTomogram,
+                             "There was a problem with subTomogram output")
         self.assertIsNotNone(protTomoRefinement.outputSetOfSubTomograms,
                              "There was a problem with SetOfSubTomograms output")
         return protTomoRefinement
 
-    def test_defaultSubtomogramRefinement(self):
+    def test_defaultSubTomogramRefinement(self):
         protTomoSubtomogramRefinement = self._runTomoSubtomogramRefinement()
-        output = getattr(protTomoSubtomogramRefinement, 'outputSetOfSubTomograms', None)
-        self.assertTrue(output.getDimensions() == (32, 32, 32))
-        self.assertTrue(output.getSize() == 5)
-        self.assertTrue(output.getCoordinates3D().getObjValue().getSize() == 5)
+        outputSetOfSubTomograms = protTomoSubtomogramRefinement.outputSetOfSubTomograms
+        outputSubTomogram = protTomoSubtomogramRefinement.outputSubTomogram
 
-        self.assertTrue(getattr(output.get(0).getFirstItem(), 'coverage') == 0.266831338406)
-        self.assertTrue(getattr(output.get(0).getFirstItem(), 'score') == -0.522264659405)
-        self.assertTrue(output.get(0).getFirstItem().getTransform().getMatrix() == "[0.0864490494132042, -0.8278283476829529, 0.5542804002761841, -6.000000476837158, 0.12387499958276749, -0.5431138277053833, -0.8304711580276489, 1.0, 0.9885249137878418, 0.14045491814613342, 0.05559556558728218, -1.9999998807907104]")
+        self.assertEqual(outputSetOfSubTomograms.getDimensions(), (32, 32, 32))
+        self.assertEqual(outputSetOfSubTomograms.getSize(), 5)
+        self.assertEqual(outputSetOfSubTomograms.getCoordinates3D().getObjValue().getSize(), 5)
+        for subTomogram in outputSetOfSubTomograms:
+            self.assertEqual(subTomogram.getSamplingRate(), 5)
+            self.assertTrue(hasattr(subTomogram, "coverage"))
+            self.assertTrue(hasattr(subTomogram, "score"))
+            matrix = subTomogram.getTransform().getMatrix()
+            self.assertEqual(matrix.shape, (4, 4))
 
-        output = getattr(protTomoSubtomogramRefinement, 'outputSubTomogram', None)
-        self.assertTrue(output is not None)
-        self.assertTrue("threed" in output.getBaseName())
-        self.assertTrue(output.getSamplingRate() == 5)
+        self.assertTrue("threed" in outputSubTomogram.getFileName())
+        self.assertEqual(outputSubTomogram.getSamplingRate(), 5)
+
         return protTomoSubtomogramRefinement

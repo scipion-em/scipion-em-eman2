@@ -26,6 +26,9 @@
 # *
 # **************************************************************************
 from types import NoneType
+from glob import glob
+import os
+import re
 
 from pyworkflow import utils as pwutils
 import pyworkflow.protocol.params as params
@@ -35,8 +38,8 @@ from pyworkflow.protocol import STEPS_PARALLEL, Float
 
 from tomo.protocols import ProtTomoBase
 
-from eman2.convert import writeSetOfSubTomograms
-from tomo.objects import SubTomogram
+from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, updateSetOfSubTomograms
+from tomo.objects import SubTomogram, SetOfSubTomograms
 import eman2
 
 SAME_AS_PICKING = 0
@@ -47,6 +50,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     _outputClassName = 'SubTomogramRefinement'
     _label = 'subtomogram refinement'
     OUTPUT_PREFIX = 'outputSetOfClassesSubTomograms'
+    OUTPUT_DIR = "spt_00"
 
     def __init__(self, **kwargs):
         pwem.EMProtocol.__init__(self, **kwargs)
@@ -137,12 +141,14 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         args += ' --pkeep=%f ' % self.pkeep
         args += ' --sym=%s ' % self.sym
         args += ' --maxtilt=%s ' % self.maxtilt
+        args += ' --path=%s ' % self.getOutputPath()
         if self.niter > 1:
             args += ' --niter=%d' % self.niter
         if self.goldcontinue:
             args += ' --goldcontinue '
         if self.localfilter:
             args += ' --localfilter '
+
         print("command: e2spt_refine.py " + args)
         program = eman2.Plugin.getProgram('e2spt_refine.py')
         self.runJob(program, args)
@@ -150,52 +156,39 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     def runMLStep(self, params):
         pass
 
+    def getLastFromOutputPath(self, pattern):
+        threedPaths = glob(self.getOutputPath("*"))
+        imagePaths = sorted(path for path in threedPaths if re.match(pattern, os.path.basename(path)))
+        if not imagePaths:
+            raise Exception("No file in output directory matches pattern: %s" % pattern)
+        else:
+            return imagePaths[-1]
+
     def createOutputStep(self):
-        pwutils.getFiles(self.workingDir.get())
-        files = pwutils.getFiles(".")
-        folder = self.getLastOutputFolder(files)
+        lastImage = self.getLastFromOutputPath("threed_\d+.hdf")
+        samplingRate = self.inputRef.get().getSamplingRate()
+        inputSetOfSubTomograms = self.inputSetOfSubTomogram.get()
 
-        folderPattern = folder.replace("/","\/").replace(".", "\.")
-        lastImage= self.getOutputFile(folderPattern, folder, files, "\/(threed_)(\d)+(\.hdf)$")
-        lastParam= self.getOutputFile(folderPattern, folder, files, "\/(particle_parms_)(\d)+(\.json)$")
-
-        self.inputSetOfSubTomogram.get().setSamplingRate(self.inputRef.get().getSamplingRate())
-        self.fillRefinementValuesOnSetOfSubtomogram(lastParam, self.inputSetOfSubTomogram.get(0))
-
+        # Output 1: Subtomogram
         subTomogram = SubTomogram()
-        subTomogram.cleanObjId()
-        subTomogram.setLocation(0, lastImage)
+        subTomogram.setFileName(lastImage)
+        subTomogram.copyInfo(inputSetOfSubTomograms)
+        subTomogram.setSamplingRate(samplingRate)
 
-        subTomogram.setSamplingRate(self.inputRef.get().getSamplingRate())
-        self._defineOutputs(outputSubTomogram=subTomogram)
+        # Output 2: setOfSubTomograms
+        particleParams = getLastParticlesParams(self.getOutputPath())
+        outputSetOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        outputSetOfSubTomograms.copyInfo(inputSetOfSubTomograms)
+        outputSetOfSubTomograms.setCoordinates3D(inputSetOfSubTomograms.getCoordinates3D())
+        outputSetOfSubTomograms.setSamplingRate(samplingRate) # diff
+        updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particleParams)
 
-        self._defineOutputs(outputSetOfSubTomograms=self.inputSetOfSubTomogram.get(0))
+        self._defineOutputs(outputSubTomogram=subTomogram, outputSetOfSubTomograms=outputSetOfSubTomograms)
+        self._defineSourceRelation(self.inputSetOfSubTomogram, subTomogram)
+        self._defineSourceRelation(self.inputSetOfSubTomogram, outputSetOfSubTomograms)
 
-        self._defineSourceRelation(self.inputSetOfSubTomogram.get(), self.outputSetOfSubTomograms)
-
-    def fillRefinementValuesOnSetOfSubtomogram(self, lastParam, setOfSubTomograms):
-        import json
-        jsonParams = json.load(open(lastParam))
-
-        keys = list()
-        for item in jsonParams:
-            keys.append(item)
-        keys.sort()
-
-        coverageDict = list()
-        scoreDict = list()
-        transformDict = list()
-        for key in keys:
-            coverage = Float((jsonParams[key]['coverage']))
-            score = Float((jsonParams[key]['score']))
-            coverageDict.append(coverage)
-            scoreDict.append(score)
-            transformDict.append(Transform(jsonParams[key]['xform.align3d']['matrix']))
-
-        for item in setOfSubTomograms.iterItems():
-            setattr(item, 'coverage', coverageDict.pop(0))
-            setattr(item, 'score', scoreDict.pop(0))
-            item.setTransform(transformDict.pop(0))
+    def getOutputPath(self, *args):
+        return self._getExtraPath(self.OUTPUT_DIR, *args)
 
     def getOutputFile(self, folderpattern, folder, files, pattern):
         pattern = "^" + folderpattern + pattern
@@ -219,31 +212,31 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     #--------------- INFO functions -------------------------
 
-    def _validate(self):
-        errors = []
-
-        if not eman2.Plugin.isNewVersion():
-            errors.append('Your EMAN2 version does not support the subtomogram refinement. '
-                          'Please update your installation to EMAN 2.23 or newer.')
-
-        return errors
+    @classmethod
+    def isDisabled(cls):
+        return not eman2.Plugin.isTomoAvailableVersion()
 
     def _citations(self):
         return []
 
     def _summary(self):
         summary = []
-        summary.append("SetOfClassesSubTomograms source: %s" % (self.inputSetOfSubTomogram.get().getFileName()))
+        summary.append("Set Of SubTomograms source: %s" % (self.inputSetOfSubTomogram.get().getFileName()))
 
         if not isinstance(self.inputRef.get(), NoneType):
             summary.append("Referenced Tomograms source: %s" % (self.inputRef.get().getFileName()))
 
         if self.getOutputsSize() >= 1:
-            summary.append("Subtomogram Averaging Completed")
+            summary.append("Subtomogram refinement Completed")
         else:
-            summary.append("Subtomogram Averaging not ready yet.")
+            summary.append("Subtomogram refinement not ready yet.")
 
         return summary
 
     def _methods(self):
-        return []
+        inputSetOfSubTomgrams = self.inputSetOfSubTomogram.get()
+        return [
+            "Applied refinement using e2spt_refine (stochastic gradient descent)",
+            "A total of %d particles of dimensions %s were used"
+            % (inputSetOfSubTomgrams.getSize(), inputSetOfSubTomgrams.getDimensions()),
+        ]
