@@ -27,6 +27,7 @@ import json
 import fileinput
 import sys
 from os.path import exists
+import os
 
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
@@ -128,7 +129,9 @@ class EmanProtTomoBoxing(ProtTomoPicking):
     def launchBoxingGUIStep(self, tomo):
         inputCoor = self.inputCoordinates.get()
         if inputCoor is not None:
-            infoDir = 'info'
+            cwd = os.getcwd()
+            infoDir = pwutils.join(cwd,'info')
+            self._leaveWorkingDir()
             fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
             pathInputCoor = pwutils.join(infoDir, fnInputCoor)
             if not exists(pathInputCoor):
@@ -137,9 +140,10 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": 32,\n"name": "particles_00"\n}\n}\n}'
             f.write(initFile)
             f.close()
-            linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (inputCoor.getFirstItem().getX(),
-                                                          inputCoor.getFirstItem().getY(),
-                                                          inputCoor.getFirstItem().getZ())
+            firstItem = inputCoor.getFirstItem()
+            linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (firstItem.getX(),
+                                                          firstItem.getY(),
+                                                          firstItem.getZ())
             r = open(pathInputCoor, "r")
             contents = r.readlines()
             r.close()
@@ -148,16 +152,25 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             contents = "".join(contents)
             w.write(contents)
             w.close()
+            idx = 1
             for coor in inputCoor.iterCoordinates():
-                linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
-                r = open(pathInputCoor, "r")
-                contents = r.readlines()[1:]
-                r.close()
-                contents.insert(2, linCoor) # Do not read first line (already read above) # change to 3
-                w = open(pathInputCoor, "w")
-                contents = "".join(contents)
-                w.write(contents)
-                w.close()
+                if idx == 1:
+                    print('------------continue-----------------', idx)
+                    idx += 1
+                    continue
+                else:
+                    linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
+                    print('------------else-----------------', linCoor)
+                    r = open(pathInputCoor, "r")
+                    contents = r.readlines()
+                    r.close()
+                    contents.insert(2, linCoor) # Do not read first line (already read above)
+                    w = open(pathInputCoor, "w")
+                    contents = "".join(contents)
+                    w.write(contents)
+                    w.close()
+            self._enterWorkingDir()
+
 
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
         arguments = "%(inputTomogram)s"
