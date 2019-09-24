@@ -120,14 +120,14 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         form.addParallelSection(threads=4, mpi=1)
 
     # --------------------------- INSERT steps functions ----------------------
-    def _micsOther(self):
+    def _tomosOther(self):
         """ Return True if other micrographs are used for extract. """
         return self.downsampleType == OTHER
 
     def getInputTomogram(self):
         """ Return the tomogram associated to the SetOfCoordinates3D or
         Other micrographs. """
-        if not self._micsOther():
+        if not self._tomosOther():
             return self.inputCoordinates.get().getVolumes()
         else:
             return self.inputTomogram.get()
@@ -212,7 +212,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             msg = ("A total of %s subtomograms of size %s were extracted"
                    % (str(self.inputCoordinates.get().getSize()), self.inputCoordinates.get().getBoxSize()))
 
-            if self._micsOther():
+            if self._tomosOther():
                 msg += (" from another set of micrographs: %s"
                         % self.getObjectTag('inputMicrographs'))
 
@@ -223,7 +223,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             methodsMsgs.append("Set of Subtomograms not ready yet")
 
         if self.doInvert:
-             methodsMsgs.append("Inverted contrast on images.")
+            methodsMsgs.append("Inverted contrast on images.")
         if self.cshrink > 1:
             methodsMsgs.append("Coordinates multiple by factor %d."
                                % self.cshrink)
