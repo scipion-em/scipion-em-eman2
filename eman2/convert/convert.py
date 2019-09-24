@@ -422,6 +422,7 @@ def calculatePhaseShift(ampcont):
 
     return ctfPhaseShift
 
+
 def getLastParticlesParams(directory):
     """
     Return a dictionary containing the params values of the last iteration.
@@ -458,6 +459,7 @@ def getLastParticlesParams(directory):
             output[particleIndex] = customParticleParams
 
     return output
+
 
 def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particlesParams):
     """Update a set of subtomgrams from a template, copy info and attributes coverage/score/transform"""

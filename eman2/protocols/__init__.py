@@ -21,7 +21,7 @@
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
-# *
+# *co
 # **************************************************************************
 
 from protocol_boxing import EmanProtBoxing
@@ -43,5 +43,5 @@ try:
     from protocol_tomo_initialmodel.py import EmanProtTomoInitialModel
 except ImportError:
     raise ImportError(
-       'To use a Tomography protocol scipion-em-tomo plugin is required.'
-       ' See https://github.com/scipion-em/scipion-em-tomo for further details')
+        'To use a Tomography protocol scipion-em-tomo plugin is required.'
+        ' See https://github.com/scipion-em/scipion-em-tomo for further details')

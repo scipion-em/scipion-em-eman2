@@ -3,6 +3,7 @@
 # *
 # * Authors:     Adrian Quintana (adrian@eyeseetea.com) [1]
 # *              Ignacio del Cano  (idelcano@eyeseetea.com) [1]
+# *              Arnau Sanchez  (arnau@eyeseetea.com) [1]
 # *
 # * [1] EyeSeeTea Ltd, London, UK
 # *
