@@ -21,7 +21,7 @@
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
-# *co
+# *
 # **************************************************************************
 
 from protocol_boxing import EmanProtBoxing

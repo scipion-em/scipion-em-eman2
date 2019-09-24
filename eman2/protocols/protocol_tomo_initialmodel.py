@@ -45,7 +45,7 @@ from tomo.objects import SubTomogram, SetOfSubTomograms
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
     """
-    This protocol wraps *e2spt_sgd.py.py* EMAN2 program.
+    This protocol wraps *e2spt_sgd.py* EMAN2 program.
 
     It will take a set of class-averages/projections and build a set
     of 3-D models suitable for use as initial models in single
