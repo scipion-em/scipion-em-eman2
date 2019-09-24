@@ -40,7 +40,7 @@ try:
     from protocol_tomo_boxing import EmanProtTomoBoxing
     from protocol_tomo_extraction import EmanProtTomoExtraction
     from protocol_tomo_subtomogram_refinement import EmanProtTomoRefinement
-    from protocol_tomo_initialmodel.py import EmanProtTomoInitialModel
+    from protocol_tomo_initialmodel import EmanProtTomoInitialModel
 except ImportError:
     raise ImportError(
         'To use a Tomography protocol scipion-em-tomo plugin is required.'
