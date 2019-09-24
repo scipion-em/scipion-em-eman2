@@ -410,8 +410,8 @@ class TestEmanAutopick(TestEmanBase):
 
 
 class TestEmanTomoExtraction(TestEmanBase):
-    """This class check if the protocol to extract particles
-    in Relion works properly.
+    """This class check if the protocol to extract subtomograms
+    in Eman works properly.
     """
 
     @classmethod
@@ -422,7 +422,7 @@ class TestEmanTomoExtraction(TestEmanBase):
         cls.tomogram = cls.dataset.getFile('tomo1')
         cls.coords3D = cls.dataset.getFile('eman_coordinates')
 
-    def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, cshrink = 1):
+    def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, boxSize = 32, downFactor = 1):
         from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
@@ -450,14 +450,16 @@ class TestEmanTomoExtraction(TestEmanBase):
                                               downsampleType=downsampleType,
                                               doInvert=doInvert,
                                               doNormalize=doNormalize,
-                                              cshrink=cshrink)
+                                              boxSize=boxSize,
+                                              downFactor=downFactor)
         else:
             protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
                                               downsampleType=downsampleType,
                                               doInvert=doInvert,
                                               doNormalize=doNormalize,
-                                              cshrink=cshrink)
+                                              boxSize=boxSize,
+                                              downFactor=downFactor)
         self.launchProtocol(protTomoExtraction)
         self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
                              "There was a problem with SetOfSubtomogram output")
@@ -469,7 +471,6 @@ class TestEmanTomoExtraction(TestEmanBase):
         self.assertTrue(output)
         self.assertTrue(output.hasCoordinates3D())
         self.assertTrue(output.getCoordinates3D().getObjValue())
-
         return protTomoExtraction
 
     def test_extractParticlesWithDownSample(self):
@@ -478,7 +479,6 @@ class TestEmanTomoExtraction(TestEmanBase):
         self.assertTrue(output)
         self.assertTrue(output.hasCoordinates3D())
         self.assertTrue(output.getCoordinates3D().getObjValue())
-
         return protTomoExtraction
 
     def test_extractParticlesWithDoInvert(self):
@@ -487,7 +487,6 @@ class TestEmanTomoExtraction(TestEmanBase):
         self.assertTrue(output)
         self.assertTrue(output.hasCoordinates3D())
         self.assertTrue(output.getCoordinates3D().getObjValue())
-
         return protTomoExtraction
 
     def test_extractParticlesWithDoNormalize(self):
@@ -496,20 +495,26 @@ class TestEmanTomoExtraction(TestEmanBase):
         self.assertTrue(output)
         self.assertTrue(output.hasCoordinates3D())
         self.assertTrue(output.getCoordinates3D().getObjValue())
-
         return protTomoExtraction
 
-    def test_extractParticlesModifiedCshrink(self):
-        protTomoExtraction = self._runTomoExtraction(cshrink = 2)
+    def test_extractParticlesModifiedDownFactor(self):
+        protTomoExtraction = self._runTomoExtraction(downFactor = 2)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
         self.assertTrue(output)
         self.assertTrue(output.hasCoordinates3D())
         self.assertTrue(output.getCoordinates3D().getObjValue())
+        return protTomoExtraction
 
+    def test_extractParticlesModifiedBoxSize(self):
+        protTomoExtraction = self._runTomoExtraction(boxSize = 64)
+        output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
+        self.assertTrue(output)
+        self.assertTrue(output.hasCoordinates3D())
+        self.assertTrue(output.getCoordinates3D().getObjValue())
         return protTomoExtraction
 
     def test_extractParticlesWithAllOptions(self):
-        protTomoExtraction = self._runTomoExtraction(cshrink = 2, doNormalize=True, doInvert=True)
+        protTomoExtraction = self._runTomoExtraction(boxSize = 64, downFactor = 2, doNormalize=True, doInvert=True)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
         self.assertTrue(output)
         self.assertTrue(output.hasCoordinates3D())
