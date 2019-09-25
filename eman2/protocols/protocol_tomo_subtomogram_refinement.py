@@ -34,20 +34,31 @@ import re
 from pyworkflow import utils as pwutils
 import pyworkflow.protocol.params as params
 import pyworkflow.em as pwem
-from pyworkflow.em import Transform
-from pyworkflow.protocol import STEPS_PARALLEL, Float
-
-from tomo.protocols import ProtTomoBase
+from pyworkflow.protocol import STEPS_PARALLEL
 
 from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, updateSetOfSubTomograms
-from tomo.objects import SubTomogram, SetOfSubTomograms
 import eman2
+
+from tomo.protocols import ProtTomoBase
+from tomo.objects import SubTomogram, SetOfSubTomograms
+
 
 SAME_AS_PICKING = 0
 
 
 class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
-    """Protocol to performs a conventional iterative subtomogram averaging using the full set of particles."""
+    """
+    This protocol wraps *e2spt_refine.py* EMAN2 program.
+
+    Protocol to performs a conventional iterative subtomogram averaging
+    using the full set of particles.
+    It will take a set of subtomograms (particles) and a subtomogram(reference,
+    potentially comming from the initial model protocol)
+    and 3D reconstruct a subtomogram.
+    It also builds a set of subtomograms that contains the original particles
+    plus the score, coverage and align matrix per subtomogram .
+    """
+
     _outputClassName = 'SubTomogramRefinement'
     _label = 'subtomogram refinement'
     OUTPUT_PREFIX = 'outputSetOfClassesSubTomograms'
@@ -64,7 +75,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         form.addParam('inputSetOfSubTomogram', params.PointerParam,
                       pointerClass='SetOfSubTomograms',
                       important=True, label='Input SubTomograms',
-                      help='Select the SetOfSubTomograms.')
+                      help='Select the set of subtomograms to perform the reconstruction.')
         form.addParam('inputRef', params.PointerParam,
                       pointerClass='Volume',
                       default=None, label='Input Ref Tomogram',
@@ -150,12 +161,9 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         if self.localfilter:
             args += ' --localfilter '
 
-        print("command: e2spt_refine.py " + args)
         program = eman2.Plugin.getProgram('e2spt_refine.py')
+        self._log.info('Launching: ' + program + ' ' + args)
         self.runJob(program, args)
-
-    def runMLStep(self, params):
-        pass
 
     def getLastFromOutputPath(self, pattern):
         threedPaths = glob(self.getOutputPath("*"))
@@ -193,19 +201,17 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def getOutputFile(self, folderpattern, folder, files, pattern):
         pattern = "^" + folderpattern + pattern
-        import re
         outputList = list()
         for file in files:
             if re.match(pattern, file) is not None:
                 outputList.append(file.replace(folder, ""))
         lastIteration = max(re.findall(r'\d+', ''.join(outputList)))
 
-        output= [file for file in outputList if lastIteration in file]
+        output = [file for file in outputList if lastIteration in file]
         return folder+output.pop()
 
     def getLastOutputFolder(self, files):
         folder = "./spt_"
-        import re
         validFolders = [file for file in files if folder in file]
         folderSuffix = max(re.findall(r'\d+', ''.join(validFolders)))
         folder = folder + folderSuffix
@@ -216,9 +222,6 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
     @classmethod
     def isDisabled(cls):
         return not eman2.Plugin.isTomoAvailableVersion()
-
-    def _citations(self):
-        return []
 
     def _summary(self):
         summary = []

@@ -25,13 +25,6 @@
 # *
 # **************************************************************************
 
-import json
-import re
-from glob import glob
-from itertools import count
-
-import numpy
-
 import pyworkflow.em as pwem
 from pyworkflow.protocol import params
 from pyworkflow.utils.path import makePath
@@ -47,11 +40,10 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
     """
     This protocol wraps *e2spt_sgd.py* EMAN2 program.
 
-    It will take a set of class-averages/projections and build a set
-    of 3-D models suitable for use as initial models in single
-    particle reconstruction. The output set is theoretically sorted
-    in order of quality (best one is numbered 1), though it's best
-    to look at the other answers as well.
+    It will take a set of subtomograms (particles) and a subtomogram(reference)
+    and build a subtomogram suitable for use as initial models in tomography.
+    It also builds a set of subtomograms that contains the original particles
+    plus the score, coverage and align matrix per subtomogram .
     """
     _label = 'tomo initial model'
     OUTPUT_DIR = 'sptsgd_00'
@@ -82,7 +74,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
                       label='Mask',
                       allowsNull=True,
                       pointerClass='VolumeMask',
-                      help='Select the subtomogram to use as reference')
+                      help='Select a 3D Mask to be applied to the initial model')
 
         form.addSection(label='Optimization')
         form.addParam('symmetry', params.TextParam, default='c1',
