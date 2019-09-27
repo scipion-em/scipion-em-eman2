@@ -32,6 +32,7 @@ import glob
 import json
 import numpy
 import os
+from os.path import exists
 
 import pyworkflow.em as em
 import pyworkflow.utils as pwutils
@@ -416,3 +417,41 @@ def calculatePhaseShift(ampcont):
     ctfPhaseShift = numpy.rad2deg(PhaseShift)
 
     return ctfPhaseShift
+
+
+def coordinates2json(self, inputCoor):
+    cwd = os.getcwd()
+    infoDir = pwutils.join(cwd, 'info')
+    self._leaveWorkingDir()
+    fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
+    pathInputCoor = pwutils.join(infoDir, fnInputCoor)
+    if not exists(pathInputCoor):
+        pwutils.makePath(infoDir)
+    f = open(pathInputCoor, 'w')
+    initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": %d,\n"name": "particles_00"\n}\n}\n}' \
+               % inputCoor.getBoxSize()
+    f.write(initFile)
+    f.close()
+    firstItem = inputCoor.getFirstItem()
+    linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (firstItem.getX(), firstItem.getY(), firstItem.getZ())
+    r = open(pathInputCoor, "r")
+    contents = r.readlines()
+    r.close()
+    contents.insert(2, linCoor)
+    w = open(pathInputCoor, "w")
+    contents = "".join(contents)
+    w.write(contents)
+    w.close()
+    iterCoor = inputCoor.iterCoordinates()
+    next(iterCoor)
+    for coor in iterCoor:
+        linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
+        r = open(pathInputCoor, "r")
+        contents = r.readlines()
+        r.close()
+        contents.insert(2, linCoor)
+        w = open(pathInputCoor, "w")
+        contents = "".join(contents)
+        w.write(contents)
+        w.close()
+    self._enterWorkingDir()
