@@ -32,8 +32,6 @@ from tomo.objects import SetOfSubTomograms, SubTomogram
 import eman2
 from eman2.constants import *
 
-import xmippLib
-
 # Tomogram type constants for particle extraction
 SAME_AS_PICKING = 0
 OTHER = 1
@@ -88,7 +86,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         form.addParam('downFactor', params.FloatParam, default=1.0,
                       label='Downsampling factor',
-                      help='Select a value greater than 1.0 to reduce the size '
+                      help='Select a value lower than 1.0 to reduce the size '
                            'of subtomograms after extraction. '
                            'If 1.0 is used, no downsample is applied. '
                            'Non-integer downsample factors are possible. ')
@@ -145,11 +143,8 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             subtomogram.cleanObjId()
             subtomogram.setLocation(index, workDir)
             if self.downFactor.get() != 1:
-                I = xmippLib.Image(subtomogram.getLocation())
-                x, y, z, _ = I.getDimensions()
-                I.scale(int(x / self.downFactor.get()), int(y / self.downFactor.get()), int(z / self.downFactor.get()))
                 fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % index)
-                I.write(fnSubtomo)
+                pwem.ImageHandler.scaleSplines(subtomogram.getLocation(),fnSubtomo,self.downFactor.get())
                 subtomogram.setLocation(fnSubtomo)
             subtomogram.setCoordinate3D(self.coordDict[index-1])
             subtomogram.setAcquisition(self.getInputTomogram().getAcquisition())
