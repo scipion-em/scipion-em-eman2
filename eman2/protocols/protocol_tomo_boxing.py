@@ -24,16 +24,13 @@
 # *
 # **************************************************************************
 
-from os.path import exists
-import os
-
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.protocol.params import BooleanParam, PointerParam
+from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED
 from pyworkflow import utils as pwutils
 
 import eman2
-from eman2.convert import loadJson
+from eman2.convert import loadJson, coordinates2json
 
 from tomo.protocols import ProtTomoPicking
 from tomo.objects import Coordinate3D, SetOfCoordinates3D
@@ -56,7 +53,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         ProtTomoPicking._defineParams(self, form)
 
         form.addParam('inMemory', BooleanParam, default=False,
-                      label='Read in Memory',
+                      label='Read in Memory', expertLevel=LEVEL_ADVANCED,
                       help='This will read the entire tomogram into memory.'
                            'Much faster, but you must have enough ram.')
         form.addParam('inputCoordinates', PointerParam, label="Input Coordinates",
@@ -87,45 +84,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                 coord3DSet.enableAppend()
 
                 self._readCoordinates3D(box, tomo, coord3DSet)
-
-    def _coordinates2json(self, inputCoor):
-        cwd = os.getcwd()
-        infoDir = pwutils.join(cwd, 'info')
-        self._leaveWorkingDir()
-        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
-        pathInputCoor = pwutils.join(infoDir, fnInputCoor)
-        if not exists(pathInputCoor):
-            pwutils.makePath(infoDir)
-        f = open(pathInputCoor, 'w')
-        initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": 32,\n"name": "particles_00"\n}\n}\n}'
-        f.write(initFile)
-        f.close()
-        firstItem = inputCoor.getFirstItem()
-        linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (firstItem.getX(), firstItem.getY(), firstItem.getZ())
-        r = open(pathInputCoor, "r")
-        contents = r.readlines()
-        r.close()
-        contents.insert(2, linCoor)
-        w = open(pathInputCoor, "w")
-        contents = "".join(contents)
-        w.write(contents)
-        w.close()
-        idx = 1
-        for coor in inputCoor.iterCoordinates():
-            if idx == 1:
-                idx += 1
-                continue
-            else:
-                linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
-                r = open(pathInputCoor, "r")
-                contents = r.readlines()
-                r.close()
-                contents.insert(2, linCoor)
-                w = open(pathInputCoor, "w")
-                contents = "".join(contents)
-                w.write(contents)
-                w.close()
-        self._enterWorkingDir()
 
     def _createOutput(self, outputDir):
         jsonFnbase = pwutils.join(outputDir, 'info',
@@ -166,7 +124,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
     def launchBoxingGUIStep(self, tomo):
         inputCoor = self.inputCoordinates.get()
         if inputCoor is not None:
-            self._coordinates2json(inputCoor)
+            coordinates2json(self, inputCoor)
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
         arguments = "%(inputTomogram)s"
         if self.inMemory:
