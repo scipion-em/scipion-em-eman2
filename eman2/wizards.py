@@ -126,9 +126,14 @@ class EmanTomoExtractionWizard(EmWizard):
 
     def show(self, form):
         tomoExtractProt = form.protocol
-        boxSize = tomoExtractProt.inputCoordinates.get().getBoxSize()
+        inputCoordinates = tomoExtractProt.inputCoordinates.get()
+        if not inputCoordinates:
+            print('You must specify input coordinates')
+            return
+
+        boxSize = inputCoordinates.getBoxSize()
         if not boxSize:
-            tomoExtractProt.showInfo('These coordinates do not have box size. Please, enter box size manually.')
+            print('These coordinates do not have box size. Please, enter box size manually.')
             return
 
         if tomoExtractProt.downFactor.get() != 1:
