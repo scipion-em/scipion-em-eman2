@@ -33,7 +33,8 @@ from pyworkflow.utils import makePath, cleanPath, readProperties
 
 import eman2
 from eman2.convert import writeSetOfMicrographs
-from eman2.protocols import SparxGaussianProtPicking
+from eman2.protocols import SparxGaussianProtPicking, EmanProtTomoExtraction
+
 
 # =============================================================================
 # PICKER
@@ -118,3 +119,24 @@ class SparxGaussianPickerWizard(EmWizard):
         if myprops['applyChanges'] == 'true':
             for param in params:
                 form.setVar(param, myprops[param + '.value'])
+
+
+class EmanTomoExtractionWizard(EmWizard):
+    _targets = [(EmanProtTomoExtraction, ['boxSize'])]
+
+    def show(self, form):
+        tomoExtractProt = form.protocol
+        inputCoordinates = tomoExtractProt.inputCoordinates.get()
+        if not inputCoordinates:
+            print('You must specify input coordinates')
+            return
+
+        boxSize = inputCoordinates.getBoxSize()
+        if not boxSize:
+            print('These coordinates do not have box size. Please, enter box size manually.')
+            return
+
+        if tomoExtractProt.downFactor.get() != 1:
+            boxSize = float(boxSize/tomoExtractProt.downFactor.get())
+
+        form.setVar('boxSize', boxSize)
