@@ -32,7 +32,6 @@ import glob
 import json
 import numpy
 import os
-from os.path import exists
 
 import pyworkflow.em as em
 import pyworkflow.utils as pwutils
@@ -283,7 +282,7 @@ def convertImage(inputLoc, outputLoc):
             return loc
 
     proc = eman2.Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
-                                                        _getFn(outputLoc)))
+                                                                     _getFn(outputLoc)))
     proc.wait()
 
 
@@ -298,7 +297,7 @@ def iterLstFile(filename):
 
 
 def geometryFromMatrix(matrix, inverseTransform):
-    from pyworkflow.em.convert.transformations import  translation_from_matrix, euler_from_matrix
+    from pyworkflow.em.convert.transformations import translation_from_matrix, euler_from_matrix
     if inverseTransform:
         from numpy.linalg import inv
         matrix = inv(matrix)
@@ -313,7 +312,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     """ Create the transformation matrix from a given
     2D shifts in X and Y...and the 3 euler angles.
     """
-    from pyworkflow.em.convert.transformations import  euler_matrix
+    from pyworkflow.em.convert.transformations import euler_matrix
     from numpy import deg2rad
     radAngles = -deg2rad(angles)
 
@@ -419,39 +418,13 @@ def calculatePhaseShift(ampcont):
     return ctfPhaseShift
 
 
-def coordinates2json(self, inputCoor):
-    cwd = os.getcwd()
-    infoDir = pwutils.join(cwd, 'info')
-    self._leaveWorkingDir()
-    fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
-    pathInputCoor = pwutils.join(infoDir, fnInputCoor)
-    if not exists(pathInputCoor):
-        pwutils.makePath(infoDir)
-    f = open(pathInputCoor, 'w')
-    initFile = '{\n"boxes_3d": [\n\n],\n"class_list": {\n"0": {\n"boxsize": %d,\n"name": "particles_00"\n}\n}\n}' \
-               % inputCoor.getBoxSize()
-    f.write(initFile)
-    f.close()
-    firstItem = inputCoor.getFirstItem()
-    linCoor = '[%d, %d, %d, "manual", 0.0, 0]' % (firstItem.getX(), firstItem.getY(), firstItem.getZ())
-    r = open(pathInputCoor, "r")
-    contents = r.readlines()
-    r.close()
-    contents.insert(2, linCoor)
-    w = open(pathInputCoor, "w")
-    contents = "".join(contents)
-    w.write(contents)
-    w.close()
-    iterCoor = inputCoor.iterCoordinates()
-    next(iterCoor)
-    for coor in iterCoor:
-        linCoor = '[%d, %d, %d, "manual", 0.0, 0],\n' % (coor.getX(), coor.getY(), coor.getZ())
-        r = open(pathInputCoor, "r")
-        contents = r.readlines()
-        r.close()
-        contents.insert(2, linCoor)
-        w = open(pathInputCoor, "w")
-        contents = "".join(contents)
-        w.write(contents)
-        w.close()
-    self._enterWorkingDir()
+def coordinates2json(pathInputCoor, inputCoor):
+    coords = []
+    for coor in inputCoor.iterCoordinates():
+        coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
+
+    coordDict = {"boxes_3d": coords,
+                 "class_list": {"0": {"boxsize": inputCoor.getBoxSize(), "name": "particles_00"}}
+                 }
+
+    writeJson(coordDict, pathInputCoor)

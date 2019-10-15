@@ -24,6 +24,8 @@
 # *
 # **************************************************************************
 
+import os
+
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED
@@ -119,12 +121,24 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             coord3DSet.setObjComment(self.getSummary(coord3DSet))
             self._updateOutputSet(coord3DMap[index], coord3DSet, state=coord3DSet.STREAM_CLOSED)
 
-
     # --------------------------- STEPS functions -----------------------------
+    def _createInputCoordsFile(self):
+        cwd = os.getcwd()
+        infoDir = pwutils.join(cwd, 'info')
+        self._leaveWorkingDir()
+        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
+        pathInputCoor = pwutils.join(infoDir, fnInputCoor)
+        if not os.path.exists(pathInputCoor):
+            pwutils.makePath(infoDir)
+        return pathInputCoor
+
     def launchBoxingGUIStep(self, tomo):
         inputCoor = self.inputCoordinates.get()
         if inputCoor is not None:
-            coordinates2json(self, inputCoor)
+            pathInputCoor = self._createInputCoordsFile()
+            coordinates2json(pathInputCoor, inputCoor)
+            self._enterWorkingDir()
+
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
         arguments = "%(inputTomogram)s"
         if self.inMemory:
@@ -190,4 +204,3 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         else:
             summary.append(Message.TEXT_NO_OUTPUT_CO)
         return summary
-
