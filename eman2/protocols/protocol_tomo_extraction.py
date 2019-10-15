@@ -150,7 +150,6 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             subtomogram.setAcquisition(self.getInputTomogram().getAcquisition())
             tomogramsSet.append(subtomogram)
 
-
     def createOutputStep(self):
         suffix = self._getOutputSuffix(SetOfSubTomograms)
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(suffix)
@@ -160,7 +159,6 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
                                 self.outputSubTomogramsSet)
         self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
         self._defineSourceRelation(self.inputCoordinates, self.outputSubTomogramsSet)
-
 
     def writeSetOfCoordinates3D(self):
         self.coordsFileName = self._getExtraPath(
