@@ -209,13 +209,13 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
     # --------------------------- STEPS functions -----------------------------
     def extractParticles(self):
-        TsCoord = self.inputCoordinates.get().getSamplingRate()
+        samplingRateCoord = self.inputCoordinates.get().getSamplingRate()
 
         for item in self.inputSet:
             args = ""
             tomo = item.clone()
-            TsTomo = tomo.getSamplingRate()
-            self.cshrink = float(TsCoord / (TsTomo * self.downFactor.get()))
+            samplingRateTomo = tomo.getSamplingRate()
+            self.cshrink = float(samplingRateCoord / (samplingRateTomo * self.downFactor.get()))
 
             args = args + '%s ' % (tomo.getFileName())
 

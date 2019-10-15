@@ -116,12 +116,6 @@ class Plugin(pyworkflow.em.Plugin):
         return proc
 
     @classmethod
-    def getTemplateCommand(cls):
-        cmd = "e2spt_tempmatch.py"
-
-        return os.path.join(cls.getHome('bin'), cmd)
-
-    @classmethod
     def defineBinaries(cls, env):
         SW_EM = env.getEmFolder()
 

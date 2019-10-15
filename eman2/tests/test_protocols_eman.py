@@ -515,3 +515,53 @@ class TestEmanTomoExtraction(TestEmanBase):
         self.assertTrue(output.hasCoordinates3D())
         self.assertTrue(output.getCoordinates3D().getObjValue())
         return protTomoExtraction
+
+class TestEmanTomoTempMatch(TestEmanBase):
+    """This class check if the protocol to extract particles
+    in Relion works properly.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from tomo.tests import DataSet
+        setupTestProject(cls)
+        cls.dataset = DataSet.getDataSet('tomo-em')
+        cls.tomogram = cls.dataset.getFile('tomo1')
+
+    def _runTomoTempMatch(self):
+        from tomo.protocols import ProtImportTomograms
+        protImportTomogram = self.newProtocol(ProtImportTomograms,
+                                 filesPath=self.tomogram,
+                                 samplingRate=5)
+
+        self.launchProtocol(protImportTomogram)
+
+        self.assertIsNotNone(protImportTomogram.outputTomograms,
+                             "There was a problem with tomogram output")
+
+        from pyworkflow.em.protocol import ProtImportVolumes
+
+        self.dataset = DataSet.getDataSet('eman')
+        self.vol = self.dataset.getFile('volume')
+        self.protImportVol = self.runImportVolumes(self.vol, 3.5)
+
+        self.assertIsNotNone(self.protImportVol.outputVolume,
+                             "There was a problem with SetOfSubtomogram output")
+
+        # protImportVol.setObjLabel('from files')
+        # self.launchProtocol(protImportVol)
+
+        protTomoTempMatch = self.newProtocol(EmanProtTomoTempMatch,
+                                             inputSet=protImportTomogram.outputTomograms,
+                                             ref=self.protImportVol.outputVolume,
+                                             sym="c1")
+
+        self.launchProtocol(protTomoTempMatch)
+        # self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
+        #                      "There was a problem with SetOfSubtomogram output")
+        return protTomoTempMatch
+
+    def test_TempMatch(self):
+        protTomoTempMatch = self._runTomoTempMatch()
+
+        return protTomoTempMatch

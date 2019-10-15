@@ -25,26 +25,21 @@
 # **************************************************************************
 
 import os
-import glob
-import ntpath
 
-from tomo.objects import SetOfTomograms
 from pyworkflow import utils as pwutils
 from pyworkflow.protocol.params import (PointerParam, IntParam,
-                                        BooleanParam, LEVEL_ADVANCED,
                                         StringParam, FloatParam)
-from pyworkflow.em.convert import ImageHandler
-from pyworkflow.em.data import Volume
-from pyworkflow.utils.path import moveFile, cleanPath, makePath
+
+from pyworkflow.utils.path import moveFile, cleanPath
 
 import eman2
 from eman2.convert import loadJson
 
 from tomo.protocols import ProtTomoPicking
-from tomo.objects import Coordinate3D, SetOfCoordinates3D
+from tomo.objects import Coordinate3D, SetOfCoordinates3D, SetOfTomograms
 
 
-class EmanProtTempMatch(ProtTomoPicking):
+class EmanProtTomoTempMatch(ProtTomoPicking):
     """
     This protocol wraps *e2spt_tempmatch.py* EMAN2 program.
 
@@ -112,11 +107,13 @@ class EmanProtTempMatch(ProtTomoPicking):
         for tomo in self.inputSet.get():
             params = params + " %s" % tomo.getFileName()
 
-        params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s --rmedge --rmgold --boxsz=%d" %(
-                 volFile, self.nptcl.get(), self.dthr.get(), self.vthr.get(), self.delta.get(), self.sym.get(),
-                 self.box)
+        params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s " \
+                          "--rmedge --rmgold --boxsz=%d" % (volFile, self.nptcl.get(), self.dthr.get(),
+                          self.vthr.get(), self.delta.get(), self.sym.get(), self.box)
 
-        self.runJob(eman2.Plugin.getTemplateCommand(), params, cwd=os.path.abspath(self._getTmpPath()),
+        program = eman2.Plugin.getProgram("e2spt_tempmatch.py")
+
+        self.runJob(program, params, cwd=os.path.abspath(self._getTmpPath()),
                     env=eman2.Plugin.getEnviron())
 
         #Move output files to Extra Path
