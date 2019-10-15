@@ -165,12 +165,11 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
             for ind, tomoFile in enumerate(self.tomoFiles):
                 if tomoFile == item.getFileName():
-                    break
+                    
+                    coordSet = self.lines[ind]
 
-            coordSet = self.lines[ind]
-
-            self.readSetOfTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile,"hdf")),
-                                    self.outputSubTomogramsSet, coordSet)
+                    self.readSetOfTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile,"hdf")),
+                                            self.outputSubTomogramsSet, coordSet)
 
         self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
         self._defineSourceRelation(self.inputCoordinates, self.outputSubTomogramsSet)
@@ -196,6 +195,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             if coordDict:
                 self.lines.append(coordDict)
                 self.tomoFiles.append(tomo.getFileName())
+                self.samplingRateTomo = tomo.getSamplingRate()
 
             out.close()
 
@@ -203,18 +203,17 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     def extractParticles(self):
         # Compute cshrink parameter to have tomogram and coordinates at same sampling rate
         # If coordinates do not have sampling rate, protocol assumes tomogram sampling rate
+
         samplingRateCoord = self.inputCoordinates.get().getSamplingRate()
 
-        for item in self.inputSet:
+        for tomo in self.tomoFiles:
             args = ""
-            tomo = item.clone()
-            samplingRateTomo = tomo.getSamplingRate()
-            self.cshrink = float(samplingRateCoord / (samplingRateTomo * self.downFactor.get()))
+            self.cshrink = float(samplingRateCoord / (self.samplingRateTomo * self.downFactor.get()))
 
-            args = args + '%s ' % (tomo.getFileName())
+            args = args + '%s ' % (tomo)
 
             args = args + "--coords % s --boxsize % d" % (
-                pwutils.replaceBaseExt(tomo.getFileName(), 'coords'),
+                pwutils.replaceBaseExt(tomo, 'coords'),
                     self.boxSize.get())
 
             if self.doInvert:
@@ -231,7 +230,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             self.runJob(program, args, cwd=self._getExtraPath())
 
             moveFile(self._getExtraPath(os.path.join('sptboxer_01', 'basename.hdf')),
-                     self._getExtraPath(pwutils.replaceBaseExt(tomo.getFileName(), 'hdf')))
+                     self._getExtraPath(pwutils.replaceBaseExt(tomo, 'hdf')))
 
             cleanPath(self._getExtraPath("sptboxer_01"))
 
