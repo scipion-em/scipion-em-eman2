@@ -29,7 +29,6 @@ import os
 from pyworkflow import utils as pwutils
 import pyworkflow.em as pwem
 import pyworkflow.protocol.params as params
-
 from tomo.protocols import ProtTomoBase
 from tomo.objects import SetOfSubTomograms, SubTomogram
 
@@ -37,8 +36,6 @@ from pyworkflow.utils.path import moveFile, cleanPath, makePath
 
 import eman2
 from eman2.constants import *
-
-import xmippLib
 
 # Tomogram type constants for particle extraction
 SAME_AS_PICKING = 0
@@ -94,7 +91,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         form.addParam('downFactor', params.FloatParam, default=1.0,
                       label='Downsampling factor',
-                      help='Select a value greater than 1.0 to reduce the size '
+                      help='Select a value lower than 1.0 to reduce the size '
                            'of subtomograms after extraction. '
                            'If 1.0 is used, no downsample is applied. '
                            'Non-integer downsample factors are possible. ')
@@ -151,21 +148,17 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             subtomogram.cleanObjId()
             subtomogram.setLocation(index, workDir)
             if self.downFactor.get() != 1:
-                I = xmippLib.Image(subtomogram.getLocation())
-                x, y, z, _ = I.getDimensions()
-                I.scale(int(x / self.downFactor.get()), int(y / self.downFactor.get()), int(z / self.downFactor.get()))
                 fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % index)
-                I.write(fnSubtomo)
+                pwem.ImageHandler.scaleSplines(subtomogram.getLocation(),fnSubtomo,self.downFactor.get())
                 subtomogram.setLocation(fnSubtomo)
             subtomogram.setCoordinate3D(coordSet[index-1])
             subtomogram.setAcquisition(self.getInputTomograms().getAcquisition())
             tomogramsSet.append(subtomogram)
 
-
     def createOutputStep(self):
         suffix = self._getOutputSuffix(SetOfSubTomograms)
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(suffix)
-        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomograms().getSamplingRate())
+        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomograms().getSamplingRate()*self.cshrink)
         self.outputSubTomogramsSet.setCoordinates3D(self.inputCoordinates)
 
         for item in self.inputSet:
@@ -181,7 +174,6 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
         self._defineSourceRelation(self.inputCoordinates, self.outputSubTomogramsSet)
-
 
     def writeSetOfCoordinates3D(self):
 
@@ -209,6 +201,8 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
     # --------------------------- STEPS functions -----------------------------
     def extractParticles(self):
+        # Compute cshrink parameter to have tomogram and coordinates at same sampling rate
+        # If coordinates do not have sampling rate, protocol assumes tomogram sampling rate
         samplingRateCoord = self.inputCoordinates.get().getSamplingRate()
 
         for item in self.inputSet:
