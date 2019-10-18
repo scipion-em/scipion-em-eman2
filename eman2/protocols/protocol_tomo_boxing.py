@@ -96,20 +96,21 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         # Create a Set of 3D Coordinates per class
         coord3DSetDict = {}
         coord3DMap = {}
+        setTomograms = self.getParentSet()
         for key, classItem in jsonBoxDict["class_list"].iteritems():
             index = int(key)
             suffix = self._getOutputSuffix(SetOfCoordinates3D)
             coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
             coord3DSet.setBoxSize(int(classItem["boxsize"]))
             coord3DSet.setName(classItem["name"])
-            coord3DSet.setVolumes(self.inputTomogram._objValue.outputTomograms)
-            coord3DSet.setSamplingRate(self.inputTomogram._objValue.outputTomograms.getSamplingRate())
+            coord3DSet.setVolumes(setTomograms)
+            coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
 
             name = self.OUTPUT_PREFIX + suffix
             args = {}
             args[name] = coord3DSet
             self._defineOutputs(**args)
-            self._defineSourceRelation(self.inputTomogram._objValue.outputTomograms, coord3DSet)
+            self._defineSourceRelation(setTomograms, coord3DSet)
 
             coord3DSetDict[index] = coord3DSet
             coord3DMap[index] = name
@@ -164,6 +165,10 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         # Change to protocol working directory
         self._enterWorkingDir()
         ProtTomoPicking._runSteps(self, startIndex)
+
+    def getParentSet(self):
+        parentObj = self.inputTomogram.getObjValue()
+        return getattr(parentObj, 'outputTomograms')
 
     def getMethods(self, output):
         msg = 'User picked %d particles ' % output.getSize()

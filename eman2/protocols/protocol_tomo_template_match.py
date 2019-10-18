@@ -81,7 +81,8 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         form.addParam('sym', StringParam, default='c1',
                       label='Point-group symmetry',
                       help='')
-        form.addParam('boxSize', IntParam, default=-1, label='Box size')
+        form.addParam('boxSize', IntParam, important=True, label='Box size',
+                      help="The wizard selects same box size as reference size")
 
         form.addParallelSection(threads=1, mpi=1)
 
@@ -96,10 +97,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
 
     def tempMatchStep(self):
 
-        if self.boxSize.get()==-1:
-            self.box = self.ref.get().getDim()[0]
-        else:
-            self.box = self.boxSize.get()
+        self.box = self.boxSize.get()
 
         volFile = os.path.abspath(self.ref.get().getFileName())
         params = ""

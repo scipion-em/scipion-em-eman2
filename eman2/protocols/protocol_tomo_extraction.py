@@ -165,7 +165,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
             for ind, tomoFile in enumerate(self.tomoFiles):
                 if tomoFile == item.getFileName():
-                    
+
                     coordSet = self.lines[ind]
 
                     self.readSetOfTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile,"hdf")),
