@@ -262,9 +262,9 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         if self.doInvert:
             methodsMsgs.append("Inverted contrast on images.")
-        if self.cshrink > 1:
-            methodsMsgs.append("Coordinates multiple by factor %d."
-                               % self.cshrink)
+        if self.downFactor.get() != 1:
+            methodsMsgs.append("Subtomograms downsample by factor %d."
+                               % self.downFactor.get())
         if self.doNormalize:
             methodsMsgs.append("Particles were normalised. Using normalization method %s") % self.getEnumText('normproc')
 
