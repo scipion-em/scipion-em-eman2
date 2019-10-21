@@ -60,14 +60,12 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         form.addSection(label='Input')
         form.addParam('particles', params.PointerParam,
                       pointerClass='SetOfSubTomograms',
-                      # pointerCondition='hasRepresentatives',
                       label="Particles", important=True,
                       help='Select the set of subtomograms to build an initial model')
 
         form.addParam('reference', params.PointerParam,
-                      pointerClass='SubTomogram',
-                      # pointerCondition='hasRepresentatives',
-                      label="Reference", important=True,
+                      pointerClass='SubTomogram', allowsNull=True,
+                      label="Reference",
                       help='Select the subtomogram to use as reference')
 
         form.addParam('mask', params.PointerParam,
@@ -78,6 +76,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
 
         form.addSection(label='Optimization')
         form.addParam('symmetry', params.TextParam, default='c1',
+                      expertLevel=params.LEVEL_ADVANCED,
                       label='Symmetry',
                       help='Specify the symmetry.\nChoices are: c(n), d(n), '
                            'h(n), tet, oct, icos.\n'
@@ -85,9 +84,11 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
                            'for a detailed description of symmetry in Eman.')
 
         form.addParam('gaussFilter', params.FloatParam, default=-1,
+                      expertLevel=params.LEVEL_ADVANCED,
                       label='Gauss',
                       help='The Gaussian filter level')
         form.addParam('filterto', params.FloatParam, default=0.02,
+                      expertLevel=params.LEVEL_ADVANCED,
                       label='Filterto',
                       help='Filter map to frequency after each iteration. Default is 0.02')
         form.addParam('fourier', params.BooleanParam, default=True,
@@ -98,6 +99,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
                       label='Batch Size',
                       help='SGD batch size')
         form.addParam('learningRate', params.FloatParam, default=0.1,
+                      expertLevel=params.LEVEL_ADVANCED,
                       label='Learn Rate',
                       help='Learning Rate. Default is 0.1')
         form.addParam('numberOfIterations', params.IntParam, default=5,
@@ -114,6 +116,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
                            'shrink the input particles by an integer amount '
                            'prior to reconstruction. Default = 1, no shrinking')
         form.addParam('applySim', params.BooleanParam, default=False,
+                      expertLevel=params.LEVEL_ADVANCED,
                       label='Apply Symmetry',
                       help='Apply Symmetry')
 

@@ -433,6 +433,7 @@ def coordinates2json(pathInputCoor, inputCoor):
 
     writeJson(coordDict, pathInputCoor)
 
+
 def getLastParticlesParams(directory):
     """
     Return a dictionary containing the params values of the last iteration.

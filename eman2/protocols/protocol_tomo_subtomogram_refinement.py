@@ -97,24 +97,31 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
                        label='Particle keep:',
                        help='Fraction of particles to keep')
         form.addParam('goldstandard', pwem.IntParam, default=-1,
-                       label='GoldStandard:',
+                       expertLevel=params.LEVEL_ADVANCED,
+                       label='Gold standard:',
                        help='initial resolution for gold standard refinement')
         form.addParam('goldcontinue', params.BooleanParam, default=False,
+                       expertLevel=params.LEVEL_ADVANCED,
                        label='Gold continue',
                        help='continue from an existing gold standard refinement')
         form.addParam('maskFile', params.PointerParam, allowsNull=True,
+                       expertLevel=params.LEVEL_ADVANCED,
                        pointerClass='VolumeMask', label='Mask file',
                        help='Select the mask object')
         form.addParam('setsf', params.PointerParam, allowsNull=True,
+                      expertLevel=params.LEVEL_ADVANCED,
                        pointerClass='VolumeMask', label='Structure factor',
                        help='Select the structure factor')
         form.addParam('sym', params.StringParam, default='c1',
+                      expertLevel=params.LEVEL_ADVANCED,
                        label='Symmetry',
                       help='Symmetry (Default: c1')
         form.addParam('localfilter', params.BooleanParam, default=False,
+                      expertLevel=params.LEVEL_ADVANCED,
                        label='Local filter',
                       help='use tophat local')
         form.addParam('maxtilt', params.FloatParam, default=90.0,
+                      expertLevel=params.LEVEL_ADVANCED,
                        label='maxtilt',
                        help='Explicitly zeroes data beyond specified tilt angle.'
                             'Assumes tilt axis exactly on Y and zero tilt in X-Y'
