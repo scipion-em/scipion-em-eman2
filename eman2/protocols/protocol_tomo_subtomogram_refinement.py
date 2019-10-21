@@ -77,7 +77,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
                       important=True, label='Input SubTomograms',
                       help='Select the set of subtomograms to perform the reconstruction.')
         form.addParam('inputRef', params.PointerParam,
-                      pointerClass='Volume',
+                      pointerClass='Volume', allowsNull=True,
                       default=None, label='Input Ref Tomogram',
                       help='3D reference for initial model generation.'
                            'No reference is used by default.')
