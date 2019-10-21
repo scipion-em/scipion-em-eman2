@@ -149,7 +149,6 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         writeSetOfSubTomograms(self.inputSetOfSubTomogram.get(), storePath)
 
     def refinementSubtomogram(self):
-
         """ Run the Subtomogram refinement. """
         args = ' %s' % self.newFn
         if not isinstance(self.inputRef.get(), NoneType):

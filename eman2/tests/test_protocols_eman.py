@@ -623,7 +623,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         cls.dataset = DataSet.getDataSet('tomo-em')
         cls.tomogram = cls.dataset.getFile('tomo1')
         cls.inputSetOfSubTomogram = cls.dataset.getFile('subtomo')
-        cls.coords3D = cls.dataset.getFile('eman_coordinates')
+        cls.coords3D = cls.dataset.getFile('overview_wbp.txt')
 
     def _runTomoSubtomogramRefinement(self, niter=2, mass=500.0, threads=1, pkeep=0.8, goldstandard=-1,
                                       goldcontinue=False, sym="c1", localfilter=False, maxtilt =90.0):
@@ -649,13 +649,14 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         doInvert = False
         doNormalize = False
         cshrink = 1
+        boxSize=32
         protImportSubTomograms = self.newProtocol(EmanProtTomoExtraction,
                                               inputTomogram=protImportTomogram.outputTomogram,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
                                               downsampleType=0,
                                               doInvert=doInvert,
                                               doNormalize=doNormalize,
-                                              cshrink=cshrink)
+                                              boxSize=boxSize)
 
         self.launchProtocol(protImportSubTomograms)
         self.assertIsNotNone(protImportSubTomograms.outputSetOfSubtomogram,

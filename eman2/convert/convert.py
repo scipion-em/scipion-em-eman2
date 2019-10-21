@@ -453,6 +453,7 @@ def getLastParticlesParams(directory):
     for key, values in particlesParams.items():
         # key: '(path/to/particles/basename.hdf', nParticle)'
         # values: '{"coverage": 1.0, "score": 2.0, "xform.align3d": {"matrix": [...]}}'
+        import re
         match = re.search(r'(\d+)\)$', key)
         if not match:
             continue
@@ -484,7 +485,11 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
         setattr(subTomogram, 'score', Float(particleParams["score"]))
         # Create 4x4 matrix from 4x3 e2spt_sgd align matrix and append row [0,0,0,1]
         am = particleParams["alignMatrix"]
-        matrix = numpy.matrix([am[0:4], am[4:8], am[8:12], [0, 0, 0, 1]])
+        angles = numpy.matrix([am[0:3], am[4:7], am[8:11], [0, 0, 0]])
+        samplingRate = outputSetOfSubTomograms.getSamplingRate()
+        shift = numpy.matrix([am[3] * samplingRate, am[7] * samplingRate, am[11] * samplingRate, 1])
+        matrix = numpy.concatenate((angles, shift.T), axis=1)
+
         subTomogram.setTransform(Transform(matrix))
 
     outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,
