@@ -40,7 +40,7 @@ from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, update
 import eman2
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import SubTomogram, SetOfSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfSubTomograms
 
 
 SAME_AS_PICKING = 0
@@ -179,10 +179,10 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         inputSetOfSubTomograms = self.inputSetOfSubTomogram.get()
 
         # Output 1: Subtomogram
-        subTomogram = SubTomogram()
-        subTomogram.setFileName(lastImage)
-        subTomogram.copyInfo(inputSetOfSubTomograms)
-        subTomogram.setSamplingRate(samplingRate)
+        averageSubTomogram = AverageSubTomogram()
+        averageSubTomogram.setFileName(lastImage)
+        averageSubTomogram.copyInfo(inputSetOfSubTomograms)
+        averageSubTomogram.setSamplingRate(samplingRate)
 
         # Output 2: setOfSubTomograms
         particleParams = getLastParticlesParams(self.getOutputPath())
@@ -192,8 +192,8 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         outputSetOfSubTomograms.setSamplingRate(samplingRate) # diff
         updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particleParams)
 
-        self._defineOutputs(outputSubTomogram=subTomogram, outputSetOfSubTomograms=outputSetOfSubTomograms)
-        self._defineSourceRelation(self.inputSetOfSubTomogram, subTomogram)
+        self._defineOutputs(outputSubTomogram=averageSubTomogram, outputSetOfSubTomograms=outputSetOfSubTomograms)
+        self._defineSourceRelation(self.inputSetOfSubTomogram, averageSubTomogram)
         self._defineSourceRelation(self.inputSetOfSubTomogram, outputSetOfSubTomograms)
 
     def getOutputPath(self, *args):
