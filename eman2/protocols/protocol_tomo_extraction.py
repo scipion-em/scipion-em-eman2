@@ -42,7 +42,7 @@ SAME_AS_PICKING = 0
 OTHER = 1
 
 class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
-    """ Manual picker for Tomo. Uses EMAN2 e2spt_boxer.py.
+    """ Extraction for Tomo. Uses EMAN2 e2spt_boxer_old.py.
     """
     _label = 'tomo extraction'
     OUTPUT_PREFIX = 'outputSetOfSubtomogram'
