@@ -29,10 +29,10 @@ import os
 from pyworkflow import utils as pwutils
 import pyworkflow.em as pwem
 import pyworkflow.protocol.params as params
+from pyworkflow.utils.path import moveFile, cleanPath, makePath
+
 from tomo.protocols import ProtTomoBase
 from tomo.objects import SetOfSubTomograms, SubTomogram
-
-from pyworkflow.utils.path import moveFile, cleanPath, makePath
 
 import eman2
 from eman2.constants import *

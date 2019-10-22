@@ -420,7 +420,7 @@ class TestEmanTomoExtraction(TestEmanBase):
         setupTestProject(cls)
         cls.dataset = DataSet.getDataSet('tomo-em')
         cls.tomogram = cls.dataset.getFile('tomo1')
-        cls.coords3D = cls.dataset.getFile('eman_coordinates')
+        cls.coords3D = cls.dataset.getFile('overview_wbp.txt')
 
     def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, boxSize = 32, downFactor = 1):
         from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
@@ -433,19 +433,19 @@ class TestEmanTomoExtraction(TestEmanBase):
         protImportCoordinates3d = self.newProtocol(ProtImportCoordinates3D,
                                  auto=ProtImportCoordinates3D.IMPORT_FROM_EMAN,
                                  filesPath= self.coords3D,
-                                 importTomogram=protImportTomogram.outputTomogram,
+                                 importTomograms=protImportTomogram.outputTomograms,
                                  filesPattern='', boxSize=32,
                                  samplingRate=5)
 
         self.launchProtocol(protImportCoordinates3d)
-        self.assertIsNotNone(protImportTomogram.outputTomogram,
+        self.assertIsNotNone(protImportTomogram.outputTomograms,
                              "There was a problem with tomogram output")
         self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
                              "There was a problem with coordinates 3d output")
 
         if downsampleType == 1:
             protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
-                                              inputTomogram=protImportTomogram.outputTomogram,
+                                              inputTomograms=protImportTomogram.outputTomograms,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
                                               downsampleType=downsampleType,
                                               doInvert=doInvert,
@@ -454,6 +454,7 @@ class TestEmanTomoExtraction(TestEmanBase):
                                               downFactor=downFactor)
         else:
             protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
+                                              inputTomograms=protImportTomogram.outputTomograms,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
                                               downsampleType=downsampleType,
                                               doInvert=doInvert,
@@ -522,8 +523,8 @@ class TestEmanTomoExtraction(TestEmanBase):
         return protTomoExtraction
 
 class TestEmanTomoTempMatch(TestEmanBase):
-    """This class check if the protocol to extract particles
-    in Relion works properly.
+    """This class check if the program Template Matching
+    from Eman works properly.
     """
 
     @classmethod
@@ -559,6 +560,7 @@ class TestEmanTomoTempMatch(TestEmanBase):
         protTomoTempMatch = self.newProtocol(EmanProtTomoTempMatch,
                                              inputSet=protImportTomogram.outputTomograms,
                                              ref=self.protImportVol.outputVolume,
+                                             boxSize=128,
                                              sym="c1")
 
         self.launchProtocol(protTomoTempMatch)

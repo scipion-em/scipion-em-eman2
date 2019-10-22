@@ -26,10 +26,10 @@
 
 import os
 
+from pyworkflow.utils.properties import Message
 from pyworkflow import utils as pwutils
 from pyworkflow.protocol.params import (PointerParam, IntParam,
-                                        StringParam, FloatParam)
-
+                                        StringParam, FloatParam, LEVEL_ADVANCED)
 from pyworkflow.utils.path import moveFile, cleanPath
 
 import eman2
@@ -71,17 +71,17 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                       help='Maximum number of particles')
         form.addParam('dthr', FloatParam, default=-1,
                       label='Distance threshold',
-                      help='')
+                      help='', expertLevel=LEVEL_ADVANCED)
         form.addParam('vthr', FloatParam, default=2.0,
                       label='Value threshold',
-                      help='')
+                      help='', expertLevel=LEVEL_ADVANCED)
         form.addParam('delta', FloatParam, default=30.0,
                       label='Delta angle',
-                      help='')
+                      help='', expertLevel=LEVEL_ADVANCED)
         form.addParam('sym', StringParam, default='c1',
                       label='Point-group symmetry',
                       help='')
-        form.addParam('boxSize', IntParam, important=True, label='Box size',
+        form.addParam('boxSize', FloatParam, important=True, label='Box size',
                       help="The wizard selects same box size as reference size")
 
         form.addParallelSection(threads=1, mpi=1)
@@ -126,18 +126,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
 
         cleanPath(self._getTmpPath())
 
-    # --------------------------- INFO functions ------------------------------
-    def _validate(self):
-        errors = []
-        return errors
-
     # --------------------------- UTILS functions ------------------------------
-    def getSummary(self, coord3DSet):
-        summary = []
-        summary.append("Number of particles picked: %s" % coord3DSet.getSize())
-        summary.append("Particle size: %s" % coord3DSet.getBoxSize())
-        return "\n".join(summary)
-
     def _readSetOfCoordinates3D(self, jsonBoxDict, coord3DSetDict, inputTomo):
         if jsonBoxDict.has_key("boxes_3d"):
             boxes = jsonBoxDict["boxes_3d"]
@@ -194,3 +183,26 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         for index, coord3DSet in coord3DSetDict.iteritems():
             coord3DSet.setObjComment(self.getSummary(coord3DSet))
             self._updateOutputSet(coord3DMap[index], coord3DSet, state=coord3DSet.STREAM_CLOSED)
+
+    # --------------------------- INFO functions ------------------------------
+    def _validate(self):
+        errors = []
+        return errors
+
+    def getSummary(self, coord3DSet):
+        summary = []
+        summary.append("Number of particles picked: %s" % coord3DSet.getSize())
+        summary.append("Particle size: %s" % coord3DSet.getBoxSize())
+        return "\n".join(summary)
+
+    def _summary(self):
+        summary = []
+        if not self.isFinished():
+            summary.append("Output 3D Coordinates not ready yet.")
+
+        if self.getOutputsSize() >= 1:
+            for key, output in self.iterOutputAttributes():
+                summary.append("*%s:* \n %s " % (key, output.getObjComment()))
+        else:
+            summary.append(Message.TEXT_NO_OUTPUT_CO)
+        return summary

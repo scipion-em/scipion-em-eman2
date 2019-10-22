@@ -93,7 +93,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                                   % pwutils.removeBaseExt(self.inputTomo.getFileName()))
         jsonBoxDict = loadJson(jsonFnbase)
 
-        # Create a Set of 3D Coordinates per class
         coord3DSetDict = {}
         coord3DMap = {}
         setTomograms = self.getParentSet()
@@ -201,7 +200,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     def _summary(self):
         summary = []
-        if self.isFinished():
+        if not self.isFinished():
             summary.append("Output 3D Coordinates not ready yet.")
 
         if self.getOutputsSize() >= 1:
