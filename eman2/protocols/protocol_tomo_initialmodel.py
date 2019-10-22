@@ -33,7 +33,7 @@ import eman2
 from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import SubTomogram, SetOfSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfSubTomograms
 
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
@@ -183,9 +183,9 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         particles = self.particles.get()
 
         # Output 1: Subtomogram
-        subTomogram = SubTomogram()
-        subTomogram.setFileName(self.getOutputPath('output.hdf'))
-        subTomogram.copyInfo(particles)
+        averageSubTomogram = AverageSubTomogram()
+        averageSubTomogram.setFileName(self.getOutputPath('output.hdf'))
+        averageSubTomogram.copyInfo(particles)
         # Sampling rate from reference of particles?
 
         # Output 2: setOfSubTomograms
@@ -196,8 +196,8 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         updateSetOfSubTomograms(particles, setOfSubTomograms, particleParams)
         # Sampling rate from reference of particles?
 
-        self._defineOutputs(outputSubTomogram=subTomogram, outputSetOfSubTomograms=setOfSubTomograms)
-        self._defineSourceRelation(self.particles, subTomogram)
+        self._defineOutputs(averageSubTomogram=averageSubTomogram, outputSetOfSubTomograms=setOfSubTomograms)
+        self._defineSourceRelation(self.particles, averageSubTomogram)
         self._defineSourceRelation(self.particles, setOfSubTomograms)
 
     def getOutputPath(self, *args):
