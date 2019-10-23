@@ -30,13 +30,13 @@ from pyworkflow.utils.properties import Message
 from pyworkflow import utils as pwutils
 from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         StringParam, FloatParam, LEVEL_ADVANCED)
-from pyworkflow.utils.path import moveFile, cleanPath
+from pyworkflow.utils.path import moveFile
 
 import eman2
-from eman2.convert import loadJson
+from eman2.convert import loadJson, readSetOfCoordinates3D
 
 from tomo.protocols import ProtTomoPicking
-from tomo.objects import Coordinate3D, SetOfCoordinates3D, SetOfTomograms
+from tomo.objects import SetOfCoordinates3D
 
 
 class EmanProtTomoTempMatch(ProtTomoPicking):
@@ -124,30 +124,8 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
             moveFile(self._getTmpPath(os.path.join("info", tomoCoord)),
                      self._getExtraPath("extra-" + tomoName + "_info.json"))
 
-        cleanPath(self._getTmpPath())
-
     # --------------------------- UTILS functions ------------------------------
-    def _readSetOfCoordinates3D(self, jsonBoxDict, coord3DSetDict, inputTomo):
-        if jsonBoxDict.has_key("boxes_3d"):
-            boxes = jsonBoxDict["boxes_3d"]
-
-            for box in boxes:
-                classKey = box[5]
-                coord3DSet = coord3DSetDict[classKey]
-                coord3DSet.enableAppend()
-
-                self._readCoordinates3D(box, coord3DSet, inputTomo)
-
-    def _readCoordinates3D(self, box, coord3DSet, inputTomo):
-        x, y, z = box[:3]
-        coord = Coordinate3D()
-        coord.setPosition(x, y, z)
-        coord.setVolume(inputTomo)
-        coord3DSet.append(coord)
-
-
     def createOutputStep(self):
-
         # Create a Set of 3D Coordinates per class
         coord3DSetDict = {}
         coord3DMap = {}
@@ -174,7 +152,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                 args = {}
                 args[name] = coord3DSet
                 # Populate Set of 3D Coordinates with 3D Coordinates
-                self._readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo)
+                readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo)
 
         self._defineOutputs(**args)
         self._defineSourceRelation(self.inputSet.get(), coord3DSet)

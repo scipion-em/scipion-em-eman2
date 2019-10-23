@@ -32,7 +32,7 @@ from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCE
 from pyworkflow import utils as pwutils
 
 import eman2
-from eman2.convert import loadJson, coordinates2json
+from eman2.convert import loadJson, coordinates2json, readSetOfCoordinates3D
 
 from tomo.protocols import ProtTomoPicking
 from tomo.objects import Coordinate3D, SetOfCoordinates3D
@@ -69,24 +69,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         # Launch Boxing GUI
         self._insertFunctionStep('launchBoxingGUIStep', self._params, interactive=True)
 
-    def _readCoordinates3D(self, box, tomo, coord3DSet):
-        x, y, z = box[:3]
-        coord = Coordinate3D()
-        coord.setPosition(x, y, z)
-        coord.setVolume(tomo)
-        coord3DSet.append(coord)
-
-    def _readSetOfCoordinates3D(self, jsonBoxDict, tomo, coord3DSetDict):
-        if jsonBoxDict.has_key("boxes_3d"):
-            boxes = jsonBoxDict["boxes_3d"]
-
-            for box in boxes:
-                classKey = box[5]
-                coord3DSet = coord3DSetDict[classKey]
-                coord3DSet.enableAppend()
-
-                self._readCoordinates3D(box, tomo, coord3DSet)
-
     def _createOutput(self, outputDir):
         jsonFnbase = pwutils.join(outputDir, 'info',
                                   'extra-%s_info.json'
@@ -115,7 +97,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             coord3DMap[index] = name
 
         # Populate Set of 3D Coordinates with 3D Coordinates
-        self._readSetOfCoordinates3D(jsonBoxDict, self.inputTomo, coord3DSetDict)
+        readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, self.inputTomo)
 
         # Update Outputs
         for index, coord3DSet in coord3DSetDict.iteritems():

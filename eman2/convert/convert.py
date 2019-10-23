@@ -43,6 +43,8 @@ import pyworkflow.em.metadata as md
 
 import eman2
 
+from tomo.objects import Coordinate3D
+
 
 def loadJson(jsonFn):
     """ This function loads the Json dictionary into memory """
@@ -135,6 +137,17 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
         readCoordinates(mic, micPosFn, coordSet, invertY)
     coordSet.setBoxSize(size)
 
+def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo):
+    if jsonBoxDict.has_key("boxes_3d"):
+        boxes = jsonBoxDict["boxes_3d"]
+
+        for box in boxes:
+            classKey = box[5]
+            coord3DSet = coord3DSetDict[classKey]
+            coord3DSet.enableAppend()
+
+            readCoordinates3D(box, coord3DSet, inputTomo)
+
 
 def readCoordinates(mic, fileName, coordsSet, invertY=False):
     if pwutils.exists(fileName):
@@ -153,6 +166,13 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coord.setPosition(x, y)
                 coord.setMicrograph(mic)
                 coordsSet.append(coord)
+
+def readCoordinates3D(box, coord3DSet, inputTomo):
+    x, y, z = box[:3]
+    coord = Coordinate3D()
+    coord.setPosition(x, y, z)
+    coord.setVolume(inputTomo)
+    coord3DSet.append(coord)
 
 def writeSetOfSubTomograms(micSet, filename):
     writeSetOfParticles(micSet, filename)
