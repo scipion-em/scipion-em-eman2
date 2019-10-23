@@ -182,7 +182,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     def _summary(self):
         summary = []
-        if not self.isFinished():
+        if self.isFinished():
             summary.append("Output 3D Coordinates not ready yet.")
 
         if self.getOutputsSize() >= 1:
