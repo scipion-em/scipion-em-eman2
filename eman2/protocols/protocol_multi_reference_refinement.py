@@ -48,12 +48,11 @@ SAME_AS_PICKING = 0
 
 class EmanProtMultiReferenceRefinement(pwem.EMProtocol, ProtTomoBase):
     """
-    This protocol wraps *e2spt_refine.py* EMAN2 program.
+    This protocol wraps *e2spt_classify.py* EMAN2 program.
 
     Protocol to performs a conventional iterative subtomogram averaging
     using the full set of particles.
-    It will take a set of subtomograms (particles) and a subtomogram(reference,
-    potentially comming from the initial model protocol)
+    It will take a set of subtomograms (particles) and a set of Averages(reference)
     and 3D reconstruct a subtomogram.
     It also builds a set of subtomograms that contains the original particles
     plus the score, coverage and align matrix per subtomogram .
