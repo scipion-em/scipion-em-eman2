@@ -2,8 +2,7 @@
 # **************************************************************************
 # *
 # * Authors:     Adrian Quintana (adrian@eyeseetea.com) [1]
-# *              Ignacio del Cano  (idelcano@eyeseetea.com) [1]
-# *              Arnau Sanchez  (arnau@eyeseetea.com) [1]
+# *              Matias Garcia   (matias@eyeseetea.com) [1]
 # *
 # * [1] EyeSeeTea Ltd, London, UK
 # *
@@ -36,17 +35,13 @@ import pyworkflow.protocol.params as params
 import pyworkflow.em as pwem
 from pyworkflow.protocol import STEPS_PARALLEL
 
-from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, updateSetOfSubTomograms
+from eman2.convert import writeSetOfSubTomograms
 import eman2
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfSubTomograms
 
 
-SAME_AS_PICKING = 0
-
-
-class EmanProtMultiReferenceRefinement(pwem.EMProtocol, ProtTomoBase):
+class EmanProtoTomoMultiReferenceRefinement(pwem.EMProtocol, ProtTomoBase):
     """
     This protocol wraps *e2spt_classify.py* EMAN2 program.
 
@@ -148,12 +143,12 @@ class EmanProtMultiReferenceRefinement(pwem.EMProtocol, ProtTomoBase):
         args = ' %s' % self.newFn
         if not isinstance(self.inputRef.get(), NoneType):
             args += (' --refs=%s ' % self.newFn)
-        args += ' --mass=%f' % self.mass
         args += ' --tarres=%f' % self.tarres
-        args += ' --mask=%s' % self.mask
         args += ' --threads=%d' % self.threads
         args += ' --sym=%s ' % self.sym
         args += ' --path=%s ' % self.getOutputPath()
+        if self.mask:
+            args += ' --mask=%s' % self.mask
         if self.niter > 1:
             args += ' --niter=%d' % self.niter
         if self.localfilter:

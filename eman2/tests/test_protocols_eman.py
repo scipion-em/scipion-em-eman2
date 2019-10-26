@@ -722,7 +722,7 @@ class TestEmanTomoMultiReferenceRefinement(TestEmanBase):
 
     def _runTomoMultiReferenceRefinement(self, niter=2, mass=500.0, threads=1, tarres=20.0,
                                       sym="c1", localfilter=False):
-        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms, ProtImportSubTomograms
+        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
@@ -762,7 +762,7 @@ class TestEmanTomoMultiReferenceRefinement(TestEmanBase):
                                               samplingRate=5)
         self.launchProtocol(protImportTomogram)
 
-        protMultiReferenceRefinement = self.newProtocol(EmanProtMultiReferenceRefinement,
+        protMultiReferenceRefinement = self.newProtocol(EmanProtoTomoMultiReferenceRefinement,
                                               inputSetOfSubTomogram=protImportSubTomograms.outputSetOfSubtomogram,
                                               inputRef=protImportTomogram.outputTomogram,
                                               niter=niter,
@@ -780,7 +780,7 @@ class TestEmanTomoMultiReferenceRefinement(TestEmanBase):
                              "There was a problem with SetOfSubTomograms output")
         return protMultiReferenceRefinement
 
-    def test_defaultMultiReferenceRefinement(self):
+    def test_defaultTomoMultiReferenceRefinement(self):
         protTomoMultiReferenceRefinement = self._runTomoMultiReferenceRefinement()
         outputSetOfSubTomograms = protTomoMultiReferenceRefinement.outputSetOfSubTomograms
         outputSubTomogram = protTomoMultiReferenceRefinement.outputSubTomogram
