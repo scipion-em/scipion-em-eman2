@@ -30,6 +30,7 @@ from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         EnumParam, PointerParam,
                                         StringParam, USE_GPU,
                                         GPU_LIST, BooleanParam)
+from pyworkflow.protocol import STEPS_PARALLEL
 from pyworkflow.em.protocol import ProtParticlePickingAuto
 from pyworkflow.utils import makePath, createLink
 
@@ -58,6 +59,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
     def __init__(self, **kwargs):
         ProtParticlePickingAuto.__init__(self, **kwargs)
+        self.stepsExecutionMode = STEPS_PARALLEL
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -111,7 +113,8 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                       label="Good references",
                       help="Good particle references.")
 
-        form.addParallelSection(threads=1, mpi=0)
+        self._defineStreamingParams(form)
+        form.addParallelSection(threads=1, mpi=1)
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertInitialSteps(self):
@@ -140,8 +143,34 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                     createLink(boxerProt._getFileName(fn),
                                self._getFileName(fn))
 
-    def _pickMicrograph(self, mic, *args):
-        micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())
+    def _pickMicrograph(self, mic, args):
+        self._pickMicrographList([mic], args)
+
+    def _pickMicrographList(self, micList, args):
+        micFnList = []
+
+        for mic in micList:
+            micFn = os.path.relpath(mic.getFileName(), self.getCoordsDir())
+            micFnList.append(micFn)
+
+        params = args + ' ' + ' '.join(micFnList)
+        program = eman2.Plugin.getBoxerCommand()
+        self.runJob(program, params, cwd=self.getCoordsDir())
+
+    def createOutputStep(self):
+        pass
+
+    # --------------------------- INFO functions ------------------------------
+    def _validate(self):
+        errors = []
+
+        if self.useGpu and (self.boxerMode.get() != AUTO_CONVNET):
+            errors.append("You can use GPU only for neural net picker!")
+
+        return errors
+
+    # --------------------------- UTILS functions -----------------------------
+    def _getPickArgs(self):
         params = " --apix=%f --no_ctf" % self.inputMicrographs.get().getSamplingRate()
         params += " --boxsize=%d" % self.boxSize.get()
         params += " --ptclsize=%d" % self.particleSize.get()
@@ -159,24 +188,8 @@ class EmanProtAutopick(ProtParticlePickingAuto):
             else:
                 params += " --device=cpu"
 
-        params += ' %s' % micFile
-        program = eman2.Plugin.getBoxerCommand()
+        return [params]
 
-        self.runJob(program, params, cwd=self.getCoordsDir())
-
-    def createOutputStep(self):
-        pass
-
-    # --------------------------- INFO functions ------------------------------
-    def _validate(self):
-        errors = []
-
-        if self.useGpu and (self.boxerMode.get() != AUTO_CONVNET):
-            errors.append("You can use GPU only for neural net picker!")
-
-        return errors
-
-    # --------------------------- UTILS functions -----------------------------
     def getCoordsDir(self):
         return self._getExtraPath()
 
