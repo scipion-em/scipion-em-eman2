@@ -24,7 +24,6 @@
 # *
 # **************************************************************************
 
-
 from pyworkflow.tests import *
 import pyworkflow.em as pwem
 from pyworkflow.utils import importFromPlugin
