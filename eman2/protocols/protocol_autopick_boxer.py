@@ -59,7 +59,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
     def __init__(self, **kwargs):
         ProtParticlePickingAuto.__init__(self, **kwargs)
-        self.stepsExecutionMode = STEPS_PARALLEL
+        #self.stepsExecutionMode = STEPS_PARALLEL
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -114,7 +114,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                       help="Good particle references.")
 
         self._defineStreamingParams(form)
-        form.addParallelSection(threads=1, mpi=1)
+        form.addParallelSection(threads=1, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertInitialSteps(self):
@@ -163,6 +163,9 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
+
+        if self.boxerMode.get() != AUTO_CONVNET and not self.goodRefs:
+            errors.append('You need to provide good references for picking!')
 
         if self.useGpu and (self.boxerMode.get() != AUTO_CONVNET):
             errors.append("You can use GPU only for neural net picker!")
