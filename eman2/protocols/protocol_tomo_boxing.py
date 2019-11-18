@@ -35,7 +35,7 @@ import eman2
 from eman2.convert import loadJson, coordinates2json, readSetOfCoordinates3D
 
 from tomo.protocols import ProtTomoPicking
-from tomo.objects import Coordinate3D, SetOfCoordinates3D
+from tomo.objects import SetOfCoordinates3D
 
 
 class EmanProtTomoBoxing(ProtTomoPicking):

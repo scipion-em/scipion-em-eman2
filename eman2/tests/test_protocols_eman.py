@@ -732,17 +732,12 @@ class TestEmanTomoTempMatch(TestEmanBase):
         self.assertIsNotNone(protImportTomogram.outputTomograms,
                              "There was a problem with tomogram output")
 
-        from pyworkflow.em.protocol import ProtImportVolumes
-
         self.dataset = DataSet.getDataSet('eman')
         self.vol = self.dataset.getFile('volume')
         self.protImportVol = self.runImportVolumes(self.vol, 3.5)
 
         self.assertIsNotNone(self.protImportVol.outputVolume,
                              "There was a problem with SetOfSubtomogram output")
-
-        # protImportVol.setObjLabel('from files')
-        # self.launchProtocol(protImportVol)
 
         protTomoTempMatch = self.newProtocol(EmanProtTomoTempMatch,
                                              inputSet=protImportTomogram.outputTomograms,
@@ -751,8 +746,6 @@ class TestEmanTomoTempMatch(TestEmanBase):
                                              sym="c1")
 
         self.launchProtocol(protTomoTempMatch)
-        # self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
-        #                      "There was a problem with SetOfSubtomogram output")
         return protTomoTempMatch
 
     def test_TempMatch(self):
