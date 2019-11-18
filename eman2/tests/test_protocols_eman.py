@@ -569,11 +569,14 @@ class TestEmanTomoInitialModel(TestEmanBase):
                              "There was a problem with SetOfSubtomogram output")
 
         particles = protImportSubTomograms.outputSetOfSubtomogram
-        reference = protImportTomogram.outputTomograms
+        # reference = protImportTomogram.outputTomograms.iterItems().next()
+
+        reference = protImportSubTomograms.outputSetOfSubtomogram.getFirstItem()
+        newreference = pwem.Pointer(reference)
 
         protInitialModel = self.newProtocol(EmanProtTomoInitialModel,
                                             particles=particles,
-                                            reference=reference,
+                                            # reference=newreference,
                                             symmetry="c1",
                                             gaussFilter=-1.5,
                                             filterto=0.03,
@@ -584,8 +587,10 @@ class TestEmanTomoInitialModel(TestEmanBase):
                                             numberOfBatches=1,
                                             shrink=4,
                                             applySim=False)
+        protInitialModel.reference.set(reference)
 
         self.launchProtocol(protInitialModel)
+
         self.assertIsNotNone(protInitialModel.outputSubTomogram,
                              "There was a problem with subTomogram output")
         self.assertIsNotNone(protInitialModel.outputSetOfSubTomograms,
@@ -649,7 +654,6 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
                              "There was a problem with coordinates 3d output")
         doInvert = False
         doNormalize = False
-        cshrink = 1
         boxSize=32
         protImportSubTomograms = self.newProtocol(EmanProtTomoExtraction,
                                               inputTomograms=protImportTomogram.outputTomograms,
