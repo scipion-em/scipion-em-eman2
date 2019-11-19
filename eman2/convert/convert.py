@@ -29,17 +29,21 @@
 # **************************************************************************
 
 import glob
+import itertools
 import json
 import numpy
 import os
 
 import pyworkflow.em as em
 import pyworkflow.utils as pwutils
-from pyworkflow.em.data import Coordinate, Particle
+from pyworkflow.em.data import Coordinate, Particle, Transform
+from pyworkflow.object import Float
 from pyworkflow.em.convert import ImageHandler
 import pyworkflow.em.metadata as md
 
 import eman2
+
+from tomo.objects import Coordinate3D
 
 
 def loadJson(jsonFn):
@@ -133,6 +137,17 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
         readCoordinates(mic, micPosFn, coordSet, invertY)
     coordSet.setBoxSize(size)
 
+def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo):
+    if jsonBoxDict.has_key("boxes_3d"):
+        boxes = jsonBoxDict["boxes_3d"]
+
+        for box in boxes:
+            classKey = box[5]
+            coord3DSet = coord3DSetDict[classKey]
+            coord3DSet.enableAppend()
+
+            readCoordinates3D(box, coord3DSet, inputTomo)
+
 
 def readCoordinates(mic, fileName, coordsSet, invertY=False):
     if pwutils.exists(fileName):
@@ -152,6 +167,15 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coord.setMicrograph(mic)
                 coordsSet.append(coord)
 
+def readCoordinates3D(box, coord3DSet, inputTomo):
+    x, y, z = box[:3]
+    coord = Coordinate3D()
+    coord.setPosition(x, y, z)
+    coord.setVolume(inputTomo)
+    coord3DSet.append(coord)
+
+def writeSetOfSubTomograms(micSet, filename):
+    writeSetOfParticles(micSet, filename)
 
 def writeSetOfMicrographs(micSet, filename):
     """ Simplified function borrowed from xmipp. """
@@ -282,7 +306,7 @@ def convertImage(inputLoc, outputLoc):
             return loc
 
     proc = eman2.Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
-                                                        _getFn(outputLoc)))
+                                                                     _getFn(outputLoc)))
     proc.wait()
 
 
@@ -297,7 +321,7 @@ def iterLstFile(filename):
 
 
 def geometryFromMatrix(matrix, inverseTransform):
-    from pyworkflow.em.convert.transformations import  translation_from_matrix, euler_from_matrix
+    from pyworkflow.em.convert.transformations import translation_from_matrix, euler_from_matrix
     if inverseTransform:
         from numpy.linalg import inv
         matrix = inv(matrix)
@@ -312,7 +336,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     """ Create the transformation matrix from a given
     2D shifts in X and Y...and the 3 euler angles.
     """
-    from pyworkflow.em.convert.transformations import  euler_matrix
+    from pyworkflow.em.convert.transformations import euler_matrix
     from numpy import deg2rad
     radAngles = -deg2rad(angles)
 
@@ -416,3 +440,78 @@ def calculatePhaseShift(ampcont):
     ctfPhaseShift = numpy.rad2deg(PhaseShift)
 
     return ctfPhaseShift
+
+
+def coordinates2json(pathInputCoor, inputCoor):
+    coords = []
+    for coor in inputCoor.iterCoordinates():
+        coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
+
+    coordDict = {"boxes_3d": coords,
+                 "class_list": {"0": {"boxsize": inputCoor.getBoxSize(), "name": "particles_00"}}
+                 }
+
+    writeJson(coordDict, pathInputCoor)
+
+
+def getLastParticlesParams(directory):
+    """
+    Return a dictionary containing the params values of the last iteration.
+
+    Key: Particle index (int)
+    Value: Dict[{coverage: float, score: float, alignMatrix: list[float]}]
+    """
+    # JSON files with particles params: path/to/particle_parms_NN.json
+    particleParamsPaths = glob.glob(os.path.join(directory, 'particle_parms_*.json'))
+    if not particleParamsPaths:
+        raise Exception("Particle params files not found")
+
+    lastParticleParamsPath = sorted(particleParamsPaths)[-1]
+    particlesParams = json.load(open(lastParticleParamsPath))
+    output = {}
+
+    for key, values in particlesParams.items():
+        # key: '(path/to/particles/basename.hdf', nParticle)'
+        # values: '{"coverage": 1.0, "score": 2.0, "xform.align3d": {"matrix": [...]}}'
+        import re
+        match = re.search(r'(\d+)\)$', key)
+        if not match:
+            continue
+        particleIndex = int(match.group(1))
+        coverage = values.get("coverage")
+        score = values.get("score")
+        alignMatrix = values.get("xform.align3d", {}).get("matrix")
+
+        if coverage and score and alignMatrix:
+            customParticleParams = dict(
+                coverage=coverage,
+                score=score,
+                alignMatrix=alignMatrix
+            )
+            output[particleIndex] = customParticleParams
+
+    return output
+
+
+def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particlesParams):
+    """Update a set of subtomgrams from a template, copy info and attributes coverage/score/transform"""
+    outputSetOfSubTomograms.copyInfo(inputSetOfSubTomograms)
+
+    def updateSubTomogram(subTomogram, index):
+        particleParams = particlesParams.get(index)
+        if not particleParams:
+            raise Exception("Could not get params for particle %d" % index)
+        setattr(subTomogram, 'coverage', Float(particleParams["coverage"]))
+        setattr(subTomogram, 'score', Float(particleParams["score"]))
+        # Create 4x4 matrix from 4x3 e2spt_sgd align matrix and append row [0,0,0,1]
+        am = particleParams["alignMatrix"]
+        angles = numpy.matrix([am[0:3], am[4:7], am[8:11], [0, 0, 0]])
+        samplingRate = outputSetOfSubTomograms.getSamplingRate()
+        shift = numpy.matrix([am[3] * samplingRate, am[7] * samplingRate, am[11] * samplingRate, 1])
+        matrix = numpy.concatenate((angles, shift.T), axis=1)
+
+        subTomogram.setTransform(Transform(matrix))
+
+    outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,
+                                      updateItemCallback=updateSubTomogram,
+                                      itemDataIterator=itertools.count(0))
