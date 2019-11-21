@@ -556,27 +556,23 @@ class TestEmanTomoInitialModel(TestEmanBase):
         self.launchProtocol(protImportCoordinates3d)
         self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
                              "There was a problem with coordinates 3d output")
-        protImportSubTomograms = self.newProtocol(EmanProtTomoExtraction,
-                                                  inputTomograms=protImportTomogram.outputTomograms,
-                                                  inputCoordinates=protImportCoordinates3d.outputCoordinates,
-                                                  downsampleType=0,
-                                                  doInvert=False,
-                                                  doNormalize=False,
-                                                  boxSize=32)
+        protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
+                                              inputTomograms=protImportTomogram.outputTomograms,
+                                              inputCoordinates=protImportCoordinates3d.outputCoordinates,
+                                              downsampleType=0,
+                                              doInvert=False,
+                                              doNormalize=False,
+                                              boxSize=32)
 
-        self.launchProtocol(protImportSubTomograms)
-        self.assertIsNotNone(protImportSubTomograms.outputSetOfSubtomogram,
+        self.launchProtocol(protTomoExtraction)
+        self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
                              "There was a problem with SetOfSubtomogram output")
 
-        particles = protImportSubTomograms.outputSetOfSubtomogram
-        # reference = protImportTomogram.outputTomograms.iterItems().next()
-
-        reference = protImportSubTomograms.outputSetOfSubtomogram.getFirstItem()
-        newreference = pwem.Pointer(reference)
+        particles = protTomoExtraction.outputSetOfSubtomogram
 
         protInitialModel = self.newProtocol(EmanProtTomoInitialModel,
                                             particles=particles,
-                                            # reference=newreference,
+                                            reference=protTomoExtraction,
                                             symmetry="c1",
                                             gaussFilter=-1.5,
                                             filterto=0.03,
@@ -587,7 +583,7 @@ class TestEmanTomoInitialModel(TestEmanBase):
                                             numberOfBatches=1,
                                             shrink=4,
                                             applySim=False)
-        protInitialModel.reference.set(reference)
+        protInitialModel.reference.setExtended("outputSetOfSubtomogram.1")
 
         self.launchProtocol(protInitialModel)
 
