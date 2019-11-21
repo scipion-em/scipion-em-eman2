@@ -651,7 +651,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         doInvert = False
         doNormalize = False
         boxSize=32
-        protImportSubTomograms = self.newProtocol(EmanProtTomoExtraction,
+        protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
                                               inputTomograms=protImportTomogram.outputTomograms,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
                                               downsampleType=0,
@@ -659,10 +659,9 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
                                               doNormalize=doNormalize,
                                               boxSize=boxSize)
 
-        self.launchProtocol(protImportSubTomograms)
-        self.assertIsNotNone(protImportSubTomograms.outputSetOfSubtomogram,
+        self.launchProtocol(protTomoExtraction)
+        self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
                              "There was a problem with SetOfSubtomogram output")
-
 
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
@@ -670,8 +669,8 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         self.launchProtocol(protImportTomogram)
 
         protTomoRefinement = self.newProtocol(EmanProtTomoRefinement,
-                                              inputSetOfSubTomogram=protImportSubTomograms.outputSetOfSubtomogram,
-                                              inputRef=protImportTomogram.outputTomograms,
+                                              inputSetOfSubTomogram=protTomoExtraction.outputSetOfSubtomogram,
+                                              inputRef=protTomoExtraction,
                                               niter=niter,
                                               mass=mass,
                                               threads=threads,
@@ -681,6 +680,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
                                               sym=sym,
                                               localfilter=localfilter,
                                               maxtilt=maxtilt)
+        protTomoRefinement.inputSetOfSubTomogram.setExtended("outputSetOfSubtomogram.1")
 
         self.launchProtocol(protTomoRefinement)
         self.assertIsNotNone(protTomoRefinement.outputSubTomogram,
