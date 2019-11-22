@@ -587,7 +587,7 @@ class TestEmanTomoInitialModel(TestEmanBase):
 
         self.launchProtocol(protInitialModel)
 
-        self.assertIsNotNone(protInitialModel.outputSubTomograms,
+        self.assertIsNotNone(protInitialModel.averageSubTomogram,
                              "There was a problem with subTomograms output")
         self.assertIsNotNone(protInitialModel.outputParticles,
                              "There was a problem with particles output")
@@ -597,7 +597,7 @@ class TestEmanTomoInitialModel(TestEmanBase):
     def test_initialModelOutput(self):
         protInitialModel = self._runTomoSubtomogramInitialModel()
 
-        subTomograms = protInitialModel.outputSubTomograms
+        subTomograms = protInitialModel.averageSubTomogram
         self.assertEqual(os.path.basename(subTomograms.getFirstItem().getFileName()), "output.hdf")
         self.assertEqual(subTomograms.getFirstItem().getSamplingRate(), 5.0)
 
@@ -684,7 +684,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
 
         self.launchProtocol(protTomoRefinement)
 
-        self.assertIsNotNone(protTomoRefinement.outputSubTomograms,
+        self.assertIsNotNone(protTomoRefinement.averageSubTomogram,
                              "There was a problem with subTomograms output")
         self.assertIsNotNone(protTomoRefinement.outputParticles,
                              "There was a problem with particles output")
@@ -694,7 +694,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
     def test_defaultSubTomogramRefinement(self):
         protTomoSubtomogramRefinement = self._runTomoSubtomogramRefinement()
         outputSetOfSubTomograms = protTomoSubtomogramRefinement.outputParticles
-        outputSubTomograms = protTomoSubtomogramRefinement.outputSubTomograms
+        outputSubTomograms = protTomoSubtomogramRefinement.averageSubTomogram
 
         self.assertEqual(outputSetOfSubTomograms.getDimensions(), (32, 32, 32))
         self.assertEqual(outputSetOfSubTomograms.getSize(), 5)
