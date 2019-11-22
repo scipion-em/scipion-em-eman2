@@ -33,7 +33,7 @@ import eman2
 from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfAverageSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfAverageSubTomograms, SetOfSubTomograms
 
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
@@ -146,7 +146,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
             'numberOfBatches': self.numberOfBatches.get(),
             'mask': self.mask.get(),
             'shrink': self.shrink.get(),
-            'reference': self.reference.get().getFileName(),
+            'reference': self.reference.get().getFileName() if self.reference.get() else None,
             'outputPath': self.getOutputPath(),
          }
         args = '%s/*.hdf' % self._getExtraPath("particles")

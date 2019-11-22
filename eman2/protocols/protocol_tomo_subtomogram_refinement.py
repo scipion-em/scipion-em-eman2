@@ -40,7 +40,7 @@ from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, update
 import eman2
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfAverageSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfAverageSubTomograms, SetOfSubTomograms
 
 
 SAME_AS_PICKING = 0
