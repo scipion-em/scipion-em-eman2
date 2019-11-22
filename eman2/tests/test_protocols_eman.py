@@ -587,21 +587,21 @@ class TestEmanTomoInitialModel(TestEmanBase):
 
         self.launchProtocol(protInitialModel)
 
-        self.assertIsNotNone(protInitialModel.outputSubTomogram,
-                             "There was a problem with subTomogram output")
-        self.assertIsNotNone(protInitialModel.outputSetOfSubTomograms,
-                             "There was a problem with setOfSubtomograms output")
+        self.assertIsNotNone(protInitialModel.outputSubTomograms,
+                             "There was a problem with subTomograms output")
+        self.assertIsNotNone(protInitialModel.outputParticles,
+                             "There was a problem with particles output")
 
         return protInitialModel
 
     def test_initialModelOutput(self):
         protInitialModel = self._runTomoSubtomogramInitialModel()
 
-        subTomogram = protInitialModel.outputSubTomogram
-        self.assertEqual(os.path.basename(subTomogram.getFileName()), "output.hdf")
-        self.assertEqual(subTomogram.getSamplingRate(), 5.0)
+        subTomograms = protInitialModel.outputSubTomograms
+        self.assertEqual(os.path.basename(subTomograms.getFirstItem().getFileName()), "output.hdf")
+        self.assertEqual(subTomograms.getFirstItem().getSamplingRate(), 5.0)
 
-        setOfSubTomograms = protInitialModel.outputSetOfSubTomograms
+        setOfSubTomograms = protInitialModel.outputParticles
         self.assertEqual(setOfSubTomograms.getSize(), 5)
         self.assertEqual(setOfSubTomograms.getCoordinates3D().getObjValue().getSize(), 5)
 
@@ -683,16 +683,18 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         protTomoRefinement.inputSetOfSubTomogram.setExtended("outputSetOfSubtomogram.1")
 
         self.launchProtocol(protTomoRefinement)
-        self.assertIsNotNone(protTomoRefinement.outputSubTomogram,
-                             "There was a problem with subTomogram output")
-        self.assertIsNotNone(protTomoRefinement.outputSetOfSubTomograms,
-                             "There was a problem with SetOfSubTomograms output")
+
+        self.assertIsNotNone(protTomoRefinement.outputSubTomograms,
+                             "There was a problem with subTomograms output")
+        self.assertIsNotNone(protTomoRefinement.outputParticles,
+                             "There was a problem with particles output")
+
         return protTomoRefinement
 
     def test_defaultSubTomogramRefinement(self):
         protTomoSubtomogramRefinement = self._runTomoSubtomogramRefinement()
-        outputSetOfSubTomograms = protTomoSubtomogramRefinement.outputSetOfSubTomograms
-        outputSubTomogram = protTomoSubtomogramRefinement.outputSubTomogram
+        outputSetOfSubTomograms = protTomoSubtomogramRefinement.outputParticles
+        outputSubTomograms = protTomoSubtomogramRefinement.outputSubTomograms
 
         self.assertEqual(outputSetOfSubTomograms.getDimensions(), (32, 32, 32))
         self.assertEqual(outputSetOfSubTomograms.getSize(), 5)
@@ -704,8 +706,8 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
             matrix = subTomogram.getTransform().getMatrix()
             self.assertEqual(matrix.shape, (4, 4))
 
-        self.assertTrue("threed" in outputSubTomogram.getFileName())
-        self.assertEqual(outputSubTomogram.getSamplingRate(), 5)
+        self.assertTrue("threed" in outputSubTomograms.getFirstItem().getFileName())
+        self.assertEqual(outputSubTomograms.getFirstItem().getSamplingRate(), 5)
 
         return protTomoSubtomogramRefinement
 
