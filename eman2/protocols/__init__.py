@@ -42,7 +42,7 @@ try:
     from protocol_tomo_extraction import EmanProtTomoExtraction
     from protocol_tomo_subtomogram_refinement import EmanProtTomoRefinement
     from protocol_tomo_initialmodel import EmanProtTomoInitialModel
-    from protocol_tomo_multi_reference_refinement import EmanProtoTomoMultiReferenceRefinement
+    from protocol_tomo_multi_reference_refinement import EmanProtTomoMultiReferenceRefinement
 except ImportError:
     raise ImportError(
         'To use a Tomography protocol scipion-em-tomo plugin is required.'

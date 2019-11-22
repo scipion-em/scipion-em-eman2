@@ -33,7 +33,7 @@ import eman2
 from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfAverageSubTomograms
 
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
@@ -179,7 +179,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         averageSubTomogram = AverageSubTomogram()
         averageSubTomogram.setFileName(self.getOutputPath('output.hdf'))
         averageSubTomogram.copyInfo(particles)
-        setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfSubTomograms = self._createSet(SetOfAverageSubTomograms, 'subtomograms%s.sqlite', "")
         setOfSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms

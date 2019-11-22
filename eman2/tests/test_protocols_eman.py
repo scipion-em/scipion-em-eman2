@@ -809,7 +809,7 @@ class TestEmanTomoMultiReferenceRefinement(TestEmanBase):
                                               samplingRate=5)
         self.launchProtocol(protImportTomogram)
 
-        protMultiReferenceRefinement = self.newProtocol(EmanProtoTomoMultiReferenceRefinement,
+        protMultiReferenceRefinement = self.newProtocol(EmanProtTomoMultiReferenceRefinement,
                                               inputSetOfSubTomogram=protImportSubTomograms.outputSetOfSubtomogram,
                                               inputRef=protImportTomogram.outputTomogram,
                                               niter=niter,

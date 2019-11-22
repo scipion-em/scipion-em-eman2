@@ -40,7 +40,7 @@ from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, update
 import eman2
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfAverageSubTomograms
 
 
 SAME_AS_PICKING = 0
@@ -189,7 +189,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         averageSubTomogram.setFileName(lastImage)
         averageSubTomogram.copyInfo(inputSetOfSubTomograms)
         averageSubTomogram.setSamplingRate(samplingRate)
-        setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfSubTomograms = self._createSet(SetOfAverageSubTomograms, 'subtomograms%s.sqlite', "")
         setOfSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms

@@ -41,7 +41,7 @@ import eman2
 from tomo.protocols import ProtTomoBase
 
 
-class EmanProtoTomoMultiReferenceRefinement(pwem.EMProtocol, ProtTomoBase):
+class EmanProtTomoMultiReferenceRefinement(pwem.EMProtocol, ProtTomoBase):
     """
     This protocol wraps *e2spt_classify.py* EMAN2 program.
 
@@ -71,8 +71,7 @@ class EmanProtoTomoMultiReferenceRefinement(pwem.EMProtocol, ProtTomoBase):
                       important=True, label='Input SubTomograms',
                       help='Select the set of subtomograms to perform the reconstruction.')
         form.addParam('inputRef', params.PointerParam,
-                      # SetOfSubtomograms for now, actually SetOfAverages
-                      pointerClass='SetOfSubTomograms', allowsNull=True,
+                      pointerClass='SetOfAverageSubTomograms', allowsNull=True,
                       default=None, label='Input Ref Set of Averages',
                       help='3D reference for initial model generation.'
                            'No reference is used by default.')
