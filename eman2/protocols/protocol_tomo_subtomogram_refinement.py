@@ -189,17 +189,19 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         averageSubTomogram.setFileName(lastImage)
         averageSubTomogram.copyInfo(inputSetOfSubTomograms)
         averageSubTomogram.setSamplingRate(samplingRate)
+        setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms
         particleParams = getLastParticlesParams(self.getOutputPath())
-        outputSetOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        outputSetOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "particles")
         outputSetOfSubTomograms.copyInfo(inputSetOfSubTomograms)
         outputSetOfSubTomograms.setCoordinates3D(inputSetOfSubTomograms.getCoordinates3D())
-        outputSetOfSubTomograms.setSamplingRate(samplingRate) # diffi
+        outputSetOfSubTomograms.setSamplingRate(samplingRate)
         updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particleParams)
 
-        self._defineOutputs(averageSubTomogram=averageSubTomogram, outputSetOfSubTomograms=outputSetOfSubTomograms)
-        self._defineSourceRelation(self.inputSetOfSubTomogram, averageSubTomogram)
+        self._defineOutputs(averageSubTomogram=setOfSubTomograms, outputParticles=outputSetOfSubTomograms)
+        self._defineSourceRelation(self.inputSetOfSubTomogram, setOfSubTomograms)
         self._defineSourceRelation(self.inputSetOfSubTomogram, outputSetOfSubTomograms)
 
     def getOutputPath(self, *args):
