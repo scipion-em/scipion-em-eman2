@@ -33,7 +33,7 @@ import eman2
 from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import SubTomogram, SetOfSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfSubTomograms
 
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
@@ -126,13 +126,6 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         self._insertFunctionStep('createInitialModelStep')
         self._insertFunctionStep('createOutputStep')
 
-    # Eman2 output is saved on ScipionUserData/projects/{PROJECT_NAME}
-    # must fetch from there, read and create scipion output in extra file.
-    # def _getOutput(self):
-    #     toBaseDir = self.getWorkingDir() + '/../..'
-    #
-    #     print({'workingDic': self._enterDir(toBaseDir), 'baseDir': toBaseDir })
-
     # --------------------------- STEPS functions -----------------------------
     # Get Scipion references to subtomograms and write hdf files for eman2 to process.
     def convertImagesStep(self):
@@ -183,22 +176,22 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         particles = self.particles.get()
 
         # Output 1: Subtomogram
-        subTomogram = SubTomogram()
-        subTomogram.setFileName(self.getOutputPath('output.hdf'))
-        subTomogram.copyInfo(particles)
-        # Sampling rate from reference of particles?
+        averageSubTomogram = AverageSubTomogram()
+        averageSubTomogram.setFileName(self.getOutputPath('output.hdf'))
+        averageSubTomogram.copyInfo(particles)
+        setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms
         particleParams = getLastParticlesParams(self.getOutputPath())
-        setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
-        setOfSubTomograms.copyInfo(particles)
-        setOfSubTomograms.setCoordinates3D(particles.getCoordinates3D())
-        updateSetOfSubTomograms(particles, setOfSubTomograms, particleParams)
-        # Sampling rate from reference of particles?
+        outputSetOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "particles")
+        outputSetOfSubTomograms.copyInfo(particles)
+        outputSetOfSubTomograms.setCoordinates3D(particles.getCoordinates3D())
+        updateSetOfSubTomograms(particles, outputSetOfSubTomograms, particleParams)
 
-        self._defineOutputs(outputSubTomogram=subTomogram, outputSetOfSubTomograms=setOfSubTomograms)
-        self._defineSourceRelation(self.particles, subTomogram)
+        self._defineOutputs(averageSubTomogram=setOfSubTomograms, outputParticles=outputSetOfSubTomograms)
         self._defineSourceRelation(self.particles, setOfSubTomograms)
+        self._defineSourceRelation(self.particles, outputSetOfSubTomograms)
 
     def getOutputPath(self, *args):
         return self._getExtraPath(self.OUTPUT_DIR, *args)
