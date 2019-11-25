@@ -29,10 +29,10 @@ import os
 from pyworkflow import utils as pwutils
 import pyworkflow.em as pwem
 import pyworkflow.protocol.params as params
+from pyworkflow.utils.path import moveFile, cleanPath, makePath
+
 from tomo.protocols import ProtTomoBase
 from tomo.objects import SetOfSubTomograms, SubTomogram
-
-from pyworkflow.utils.path import moveFile, cleanPath, makePath
 
 import eman2
 from eman2.constants import *
@@ -42,7 +42,7 @@ SAME_AS_PICKING = 0
 OTHER = 1
 
 class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
-    """ Manual picker for Tomo. Uses EMAN2 e2spt_boxer.py.
+    """ Extraction for Tomo. Uses EMAN2 e2spt_boxer_old.py.
     """
     _label = 'tomo extraction'
     OUTPUT_PREFIX = 'outputSetOfSubtomogram'
@@ -165,7 +165,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
             for ind, tomoFile in enumerate(self.tomoFiles):
                 if tomoFile == item.getFileName():
-                    
+
                     coordSet = self.lines[ind]
 
                     self.readSetOfTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile,"hdf")),
@@ -262,9 +262,9 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         if self.doInvert:
             methodsMsgs.append("Inverted contrast on images.")
-        if self.cshrink > 1:
-            methodsMsgs.append("Coordinates multiple by factor %d."
-                               % self.cshrink)
+        if self.downFactor.get() != 1:
+            methodsMsgs.append("Subtomograms downsample by factor %d."
+                               % self.downFactor.get())
         if self.doNormalize:
             methodsMsgs.append("Particles were normalised. Using normalization method %s") % self.getEnumText('normproc')
 
