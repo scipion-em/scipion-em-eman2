@@ -180,6 +180,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         averageSubTomogram.setFileName(self.getOutputPath('output.hdf'))
         setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
         setOfSubTomograms.copyInfo(particles)
+        setOfSubTomograms.setSamplingRate(particles.getSamplingRate() * self.shrink.get())
         setOfSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms
@@ -187,6 +188,7 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         outputSetOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "particles")
         outputSetOfSubTomograms.copyInfo(particles)
         outputSetOfSubTomograms.setCoordinates3D(particles.getCoordinates3D())
+        outputSetOfSubTomograms.setSamplingRate(particles.getSamplingRate() * self.shrink.get())
         updateSetOfSubTomograms(particles, outputSetOfSubTomograms, particleParams)
 
         self._defineOutputs(averageSubTomogram=setOfSubTomograms, outputParticles=outputSetOfSubTomograms)
