@@ -64,9 +64,9 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
                       help='Select the set of subtomograms to build an initial model')
 
         form.addParam('reference', params.PointerParam,
-                      pointerClass='SubTomogram', allowsNull=True,
-                      label="Reference",
-                      help='Select the subtomogram to use as reference')
+                      pointerClass='Volume', allowsNull=True,
+                      label="Reference volume",
+                      help='Specify a 3D volume')
 
         form.addParam('mask', params.PointerParam,
                       label='Mask',
@@ -178,8 +178,8 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         # Output 1: Subtomogram
         averageSubTomogram = AverageSubTomogram()
         averageSubTomogram.setFileName(self.getOutputPath('output.hdf'))
-        averageSubTomogram.copyInfo(particles)
         setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfSubTomograms.copyInfo(particles)
         setOfSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms

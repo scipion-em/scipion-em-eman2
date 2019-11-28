@@ -188,8 +188,8 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         averageSubTomogram = AverageSubTomogram()
         averageSubTomogram.setFileName(lastImage)
         averageSubTomogram.copyInfo(inputSetOfSubTomograms)
-        averageSubTomogram.setSamplingRate(samplingRate)
         setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfSubTomograms.copyInfo(inputSetOfSubTomograms)
         setOfSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms
@@ -197,7 +197,6 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
         outputSetOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "particles")
         outputSetOfSubTomograms.copyInfo(inputSetOfSubTomograms)
         outputSetOfSubTomograms.setCoordinates3D(inputSetOfSubTomograms.getCoordinates3D())
-        outputSetOfSubTomograms.setSamplingRate(samplingRate)
         updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particleParams)
 
         self._defineOutputs(averageSubTomogram=setOfSubTomograms, outputParticles=outputSetOfSubTomograms)
