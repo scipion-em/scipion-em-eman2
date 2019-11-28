@@ -43,8 +43,6 @@ import pyworkflow.em.metadata as md
 
 import eman2
 
-from tomo.objects import Coordinate3D
-
 
 def loadJson(jsonFn):
     """ This function loads the Json dictionary into memory """
@@ -168,6 +166,7 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coordsSet.append(coord)
 
 def readCoordinates3D(box, coord3DSet, inputTomo):
+    from tomo.objects import Coordinate3D
     x, y, z = box[:3]
     coord = Coordinate3D()
     coord.setPosition(x, y, z)
