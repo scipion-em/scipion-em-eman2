@@ -753,4 +753,9 @@ class TestEmanTomoTempMatch(TestEmanBase):
     def test_TempMatch(self):
         protTomoTempMatch = self._runTomoTempMatch()
 
+        outputCoords = protTomoTempMatch.output3DCoordinates
+        self.assertEqual(outputCoords.getSize(), 19)
+        self.assertEqual(outputCoords.getBoxSize(), 128)
+        self.assertEqual(outputCoords.getSamplingRate(), 5)
+
         return protTomoTempMatch
