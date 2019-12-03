@@ -32,9 +32,11 @@ for each image will read: index, filename and a possible transformation.
 As parameters will receive the output filename for the hdf stack
 """
 
-import os, sys
 import json
-import EMAN2 as eman
+import os
+import sys
+
+import eman2 as eman
 
 MODE_WRITE = 'write'
 MODE_READ = 'read'

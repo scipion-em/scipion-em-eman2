@@ -27,9 +27,9 @@
 import os
 import subprocess
 
-import pyworkflow.em
+import pwem
 import pyworkflow.utils as pwutils
-
+from pyworkflow.plugin import Domain
 from .constants import EMAN2_HOME, V2_21, V2_3
 
 
@@ -40,7 +40,7 @@ _references = ['Tang2007']
 SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 
 
-class Plugin(pyworkflow.em.Plugin):
+class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
     _supportedVersions = [V2_21, V2_3]
@@ -134,4 +134,4 @@ class Plugin(pyworkflow.em.Plugin):
                        default=True)
 
 
-pyworkflow.em.Domain.registerPlugin(__name__)
+Domain.registerPlugin(__name__)

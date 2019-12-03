@@ -33,10 +33,10 @@ import json
 import numpy
 import os
 
-import pyworkflow.em as em
+import pwem.constants as emcts
 import pyworkflow.utils as pwutils
-from pyworkflow.em.data import Coordinate, Particle
-from pyworkflow.em.convert import ImageHandler
+from pwem.objects.data import Coordinate, Particle, Transform
+from pwem.convert import ImageHandler
 import pyworkflow.em.metadata as md
 
 import eman2
@@ -160,7 +160,7 @@ def writeSetOfMicrographs(micSet, filename):
     for img in micSet:
         objId = mdata.addObject()
         imgRow = md.Row()
-        imgRow.setValue(md.MDL_ITEM_ID, long(objId))
+        imgRow.setValue(md.MDL_ITEM_ID, objId)
 
         index, fname = img.getLocation()
         fn = ImageHandler.locationToXmipp((index, fname))
@@ -232,7 +232,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
 
             alignType = kwargs.get('alignType')
 
-            if alignType != em.ALIGN_NONE:
+            if alignType != emcts.ALIGN_NONE:
                 shift, angles = alignmentToRow(part.getTransform(), alignType)
                 # json cannot encode arrays so I convert them to lists
                 # json fail if has -0 as value
@@ -275,7 +275,7 @@ def convertImage(inputLoc, outputLoc):
         This does not works for EMAN out of here.
         """
         if isinstance(loc, tuple):
-            if loc[0] != em.NO_INDEX:
+            if loc[0] != emcts.NO_INDEX:
                 return "%06d@%s" % loc
             return loc[1]
         else:
@@ -297,7 +297,7 @@ def iterLstFile(filename):
 
 
 def geometryFromMatrix(matrix, inverseTransform):
-    from pyworkflow.em.convert.transformations import  translation_from_matrix, euler_from_matrix
+    from pwem.convert.transformations import  translation_from_matrix, euler_from_matrix
     if inverseTransform:
         from numpy.linalg import inv
         matrix = inv(matrix)
@@ -312,7 +312,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     """ Create the transformation matrix from a given
     2D shifts in X and Y...and the 3 euler angles.
     """
-    from pyworkflow.em.convert.transformations import  euler_matrix
+    from pwem.convert.transformations import  euler_matrix
     from numpy import deg2rad
     radAngles = -deg2rad(angles)
 
@@ -351,9 +351,9 @@ def rowToAlignment(alignmentList, alignType):
         """
     # use all angles in 2D since we might have mirrors
     # is2D = alignType == em.ALIGN_2D
-    inverseTransform = alignType == em.ALIGN_PROJ
+    inverseTransform = alignType == emcts.ALIGN_PROJ
 
-    alignment = em.Transform()
+    alignment = Transform()
     angles = numpy.zeros(3)
     shifts = numpy.zeros(3)
     shifts[0] = alignmentList[3]

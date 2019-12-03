@@ -24,5 +24,5 @@
 # *
 # **************************************************************************
 
-from convert import *
-from dataimport import *
+from eman2.convert.convert import *
+from eman2.dataimport import *

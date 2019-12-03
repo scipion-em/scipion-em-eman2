@@ -33,7 +33,7 @@ This way should be deprecated when we read more formats.
 
 import os
 import sys
-import EMAN2 as eman
+import eman2 as eman
 
 
 if __name__ == '__main__':

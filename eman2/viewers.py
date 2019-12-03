@@ -24,16 +24,17 @@
 # *
 # **************************************************************************
 
-import os, math
+import os
+import math
 
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.gui.text as text
 from pyworkflow.gui.dialog import askYesNo, showInfo, showError
-from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER,
-                               WEB_DJANGO)
-from pyworkflow.em.data import FSC
-import pyworkflow.em.viewers.showj as showj
-from pyworkflow.em.viewers import (ObjectView, DataView, EmPlotter,
+from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER, WEB_DJANGO)
+
+from pwem.objects.data import FSC
+import pwem.viewers.showj as showj
+from pwem.viewers import (ObjectView, DataView, EmPlotter,
                                    ChimeraView, ChimeraClientView, ClassesView,
                                    DataViewer, FscViewer)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
@@ -42,7 +43,6 @@ from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
                                         EnumParam, FloatParam, IntParam, BooleanParam)
 import pyworkflow.utils as pwutils
 
-import eman2
 from eman2.constants import *
 from eman2.convert import loadJson
 from eman2.protocols import (EmanProtBoxing, EmanProtCTFAuto,
