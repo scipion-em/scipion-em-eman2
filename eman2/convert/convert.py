@@ -37,7 +37,7 @@ import pwem.constants as emcts
 import pyworkflow.utils as pwutils
 from pwem.objects.data import Coordinate, Particle, Transform
 from pwem.convert import ImageHandler
-import pyworkflow.em.metadata as md
+import pwem.metadata as md
 
 import eman2
 

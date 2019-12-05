@@ -29,7 +29,7 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam,
                                         LabelParam, EnumParam, StringParam,
                                         BooleanParam, IntParam, LEVEL_ADVANCED)
 import pyworkflow.utils as pwutils
-from pyworkflow.em.protocol import ProtAnalysis3D
+from pwem.protocols import ProtAnalysis3D
 
 import eman2
 from eman2.constants import *

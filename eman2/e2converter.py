@@ -36,7 +36,7 @@ import json
 import os
 import sys
 
-import eman2 as eman
+import EMAN2 as eman
 
 MODE_WRITE = 'write'
 MODE_READ = 'read'

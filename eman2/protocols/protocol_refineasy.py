@@ -27,20 +27,21 @@
 import os
 import re
 from glob import glob
-import pyworkflow.em as em
+import pwem as em
+from pwem.protocols import ProtRefine3D
 
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam)
-from pyworkflow.utils.path import cleanPattern, makePath, createLink, exists
-from pyworkflow.em.data import Volume
+from pyworkflow.utils.path import cleanPattern, makePath, createLink # os.path.exists
+from pwem.objects.data import Volume
 
 import eman2
 from eman2.convert import rowToAlignment, writeSetOfParticles
 from eman2.constants import *
 
 
-class EmanProtRefine(em.ProtRefine3D):
+class EmanProtRefine(ProtRefine3D):
     """
     This protocol wraps *e2refine_easy.py* EMAN2 program.
 
@@ -501,7 +502,7 @@ Major features of this program:
 
     def _getIterData(self, it):
         data_sqlite = self._getFileName('data_scipion', iter=it)
-        if not exists(data_sqlite):
+        if not os.path.os.path.exists(data_sqlite):
             iterImgSet = em.SetOfParticles(filename=data_sqlite)
             iterImgSet.copyInfo(self._getInputParticles())
             self._fillDataFromIter(iterImgSet, it)
@@ -535,7 +536,7 @@ Major features of this program:
         classesFn = self._getFileName("classes", run=numRun, iter=iterN)
         angles = self._getFileName('angles', iter=iterN)
 
-        if not exists(angles) and exists(self._getFileName('clsEven',
+        if not os.path.exists(angles) and os.path.exists(self._getFileName('clsEven',
                                                            run=numRun, iter=iterN)):
             proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 3d'
                                           % (self._getParticlesStack(), clsFn, classesFn,

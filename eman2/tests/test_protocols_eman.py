@@ -25,9 +25,14 @@
 # **************************************************************************
 
 
-from pyworkflow.tests import *
-import pyworkflow.em as pwem
-from pyworkflow.utils import importFromPlugin
+from pyworkflow.tests import (BaseTest, setupTestProject, DataSet)
+from pwem.protocols import (ProtImportMicrographs, ProtImportParticles, ProtImportVolumes,
+                            ProtImportAverages, ProtImportCoordinatesPairs,
+                            ProtImportMicrographsTiltPairs)
+from pyworkflowtests.protocols import ProtOutputTest
+
+#from pyworkflow.plugin import Domain
+from pwem.objects.data import Pointer
 
 import eman2
 from eman2 import *
@@ -56,12 +61,12 @@ class TestEmanBase(BaseTest):
         # We have two options: passe the SamplingRate or
         # the ScannedPixelSize + microscope magnification
         if not samplingRate is None:
-            cls.protImport = cls.newProtocol(pwem.ProtImportMicrographs,
+            cls.protImport = cls.newProtocol(ProtImportMicrographs,
                                              samplingRateMode=0, filesPath=pattern,
                                              samplingRate=samplingRate, magnification=magnification,
                                              voltage=voltage, sphericalAberration=sphericalAberration)
         else:
-            cls.protImport = cls.newProtocol(pwem.ProtImportMicrographs,
+            cls.protImport = cls.newProtocol(ProtImportMicrographs,
                                              samplingRateMode=1, filesPath=pattern,
                                              scannedPixelSize=scannedPixelSize,
                                              voltage=voltage, magnification=magnification,
@@ -76,7 +81,7 @@ class TestEmanBase(BaseTest):
     @classmethod
     def runImportParticles(cls, pattern, samplingRate, checkStack=False):
         """ Run an Import particles protocol. """
-        cls.protImport = cls.newProtocol(pwem.ProtImportParticles,
+        cls.protImport = cls.newProtocol(ProtImportParticles,
                                          filesPath=pattern, samplingRate=samplingRate,
                                          checkStack=checkStack)
         cls.launchProtocol(cls.protImport)
@@ -88,7 +93,7 @@ class TestEmanBase(BaseTest):
     @classmethod
     def runImportParticlesSqlite(cls, pattern, samplingRate):
         """ Run an Import particles protocol. """
-        cls.protImport = cls.newProtocol(pwem.ProtImportParticles,
+        cls.protImport = cls.newProtocol(ProtImportParticles,
                                          importFrom=4,
                                          sqliteFile=pattern, samplingRate=samplingRate)
         cls.launchProtocol(cls.protImport)
@@ -100,7 +105,7 @@ class TestEmanBase(BaseTest):
     @classmethod
     def runImportVolumes(cls, pattern, samplingRate):
         """ Run an Import particles protocol. """
-        protImport = cls.newProtocol(pwem.ProtImportVolumes,
+        protImport = cls.newProtocol(ProtImportVolumes,
                                      filesPath=pattern, samplingRate=samplingRate)
         cls.launchProtocol(protImport)
         return protImport
@@ -108,7 +113,7 @@ class TestEmanBase(BaseTest):
     @classmethod
     def runImportAverages(cls, pattern, samplingRate):
         """ Run an Import averages protocol. """
-        cls.protImportAvg = cls.newProtocol(pwem.ProtImportAverages,
+        cls.protImportAvg = cls.newProtocol(ProtImportAverages,
                                             filesPath=pattern,
                                             samplingRate=samplingRate,
                                             checkStack=True)
@@ -179,9 +184,9 @@ class TestEmanInitialModelSGD(TestEmanBase):
 class TestEmanReconstruct(TestEmanBase):
     def test_ReconstructEman(self):
         print("Import Set of particles with angles")
-        prot1 = self.newProtocol(pwem.ProtImportParticles,
+        prot1 = self.newProtocol(ProtImportParticles,
                                  objLabel='from scipion (to-reconstruct)',
-                                 importFrom=pwem.ProtImportParticles.IMPORT_FROM_SCIPION,
+                                 importFrom=ProtImportParticles.IMPORT_FROM_SCIPION,
                                  sqliteFile=self.dsRelion.getFile('import/case2/particles.sqlite'),
                                  magnification=10000,
                                  samplingRate=7.08
@@ -275,7 +280,7 @@ class TestEmanTiltValidate(TestEmanBase):
 
     def test_RefineEman(self):
         print("Importing micrograph pairs")
-        protImportMicsPairs = self.newProtocol(pwem.ProtImportMicrographsTiltPairs,
+        protImportMicsPairs = self.newProtocol(ProtImportMicrographsTiltPairs,
                                                patternUntilted=self.micsUFn,
                                                patternTilted=self.micsTFn,
                                                samplingRate=1.88, voltage=200,
@@ -285,7 +290,7 @@ class TestEmanTiltValidate(TestEmanBase):
                              "There was a problem with the import of mic pairs")
 
         print("Importing coordinate pairs")
-        protImportCoords = self.newProtocol(pwem.ProtImportCoordinatesPairs,
+        protImportCoords = self.newProtocol(ProtImportCoordinatesPairs,
                                             importFrom=1,  # from eman
                                             patternUntilted=self.patternU,
                                             patternTilted=self.patternT,
@@ -296,7 +301,7 @@ class TestEmanTiltValidate(TestEmanBase):
                              "There was a problem with the import of coord pairs")
 
         print("Extracting particle pairs")
-        XmippProtExtractParticlesPairs = importFromPlugin('xmipp3.protocols',
+        XmippProtExtractParticlesPairs = Domain.importFromPlugin('xmipp3.protocols',
                                                           'XmippProtExtractParticlesPairs')
         protExtractPairs = self.newProtocol(XmippProtExtractParticlesPairs,
                                             downFactor=2.0,
@@ -390,7 +395,7 @@ class TestEmanAutopick(TestEmanBase):
     def test_AutopickSparxPointer(self):
         if not eman2.Plugin.isVersion('2.21'):
             print("Simulating an automatic protocol to estimate the boxSize")
-            protAutoBoxSize = self.newProtocol(pwem.ProtOutputTest,
+            protAutoBoxSize = self.newProtocol(ProtOutputTest,
                                                iBoxSize=64,  # output is twice
                                                objLabel='auto boxsize simulator')
             self.launchProtocol(protAutoBoxSize)
@@ -403,7 +408,7 @@ class TestEmanAutopick(TestEmanBase):
                                          useVarImg=False,
                                          doInvert=True)
             protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
-            protPick2.boxSize.setPointer(pwem.Pointer(protAutoBoxSize,
+            protPick2.boxSize.setPointer(Pointer(protAutoBoxSize,
                                                       extended="oBoxSize"))
             self.launchProtocol(protPick2)
             self.assertIsNotNone(protPick2.outputCoordinates,

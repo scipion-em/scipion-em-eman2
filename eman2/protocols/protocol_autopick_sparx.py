@@ -30,7 +30,7 @@ import os
 
 from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         BooleanParam, LEVEL_ADVANCED)
-from pyworkflow.em.protocol import ProtParticlePickingAuto
+from pwem.protocols import ProtParticlePickingAuto
 
 import eman2
 from eman2.convert import readSetOfCoordinates

@@ -30,7 +30,7 @@ from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         EnumParam, PointerParam,
                                         StringParam, USE_GPU,
                                         GPU_LIST, BooleanParam)
-from pyworkflow.em.protocol import ProtParticlePickingAuto
+from pwem.protocols import ProtParticlePickingAuto
 from pyworkflow.utils import makePath, createLink
 
 import eman2

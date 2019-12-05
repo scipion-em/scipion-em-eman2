@@ -1,5 +1,5 @@
 
-from test_protocols_eman import (TestEmanBase, TestEmanAutopick,
+from .test_protocols_eman import (TestEmanBase, TestEmanAutopick,
                                  TestEmanCtfAuto, TestEmanInitialModelGroel,
                                  TestEmanInitialModelMda, TestEmanReconstruct,
                                  TestEmanRefine2D, TestEmanRefine2DBispec,

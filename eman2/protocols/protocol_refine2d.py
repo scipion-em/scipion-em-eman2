@@ -29,7 +29,8 @@ import re
 from os.path import exists
 from glob import glob
 
-import pyworkflow.em as em
+import pwem as em
+from pwem.protocols import ProtClassify2D
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam,
                                         BooleanParam, LabelParam)
@@ -42,7 +43,7 @@ from eman2.convert import (rowToAlignment, writeSetOfParticles,
 from eman2.constants import *
 
 
-class EmanProtRefine2D(em.ProtClassify2D):
+class EmanProtRefine2D(ProtClassify2D):
     """
     This protocol wraps *e2refine2d.py* EMAN2 program.
 

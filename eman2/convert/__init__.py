@@ -25,4 +25,4 @@
 # **************************************************************************
 
 from eman2.convert.convert import *
-from eman2.dataimport import *
+from eman2.convert.dataimport import *

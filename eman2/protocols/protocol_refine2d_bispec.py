@@ -29,7 +29,8 @@ import re
 from os.path import exists, basename, join
 from glob import glob
 
-import pyworkflow.em as em
+from pwem.objects import SetOfClasses2D
+from pwem.protocols import ProtClassify2D
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam,
@@ -41,7 +42,7 @@ import eman2
 from eman2.constants import *
 
 
-class EmanProtRefine2DBispec(em.ProtClassify2D):
+class EmanProtRefine2DBispec(ProtClassify2D):
     """
     This protocol wraps *e2refine2d_bispec.py* EMAN2 program.
 
@@ -413,7 +414,7 @@ class EmanProtRefine2DBispec(em.ProtClassify2D):
             cleanPath(data_classes)
 
         if not exists(data_classes):
-            clsSet = em.SetOfClasses2D(filename=data_classes)
+            clsSet = SetOfClasses2D(filename=data_classes)
             clsSet.setImages(self._getInputParticles())
             self._fillClassesFromIter(clsSet, it)
             clsSet.write()

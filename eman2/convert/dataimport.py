@@ -27,10 +27,9 @@
 # **************************************************************************
 
 import pyworkflow.utils as pwutils
-from pyworkflow.em.data import Coordinate, CTFModel
-from pyworkflow.em.data_tiltpairs import Angles
-from pyworkflow.em.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR,
-                                    MDL_PICKING_PARTICLE_SIZE)
+from pwem.objects.data import Coordinate, CTFModel
+from pwem.objects.data_tiltpairs import Angles
+from xmippLib import MetaData, MDL_XCOOR, MDL_YCOOR, MDL_PICKING_PARTICLE_SIZE
 from .convert import loadJson, readCTFModel, readSetOfParticles
 
 
@@ -49,7 +48,7 @@ class EmanImport:
                 fnBase = pwutils.replaceBaseExt(fileName, 'hdf')
                 keyName = 'tiltparams_micrographs/' + fnBase.replace('_info', '')
                 jsonAngDict = loadJson(fileName)
-                if jsonAngDict.has_key(keyName):
+                if keyName in jsonAngDict:
                     angles = jsonAngDict[keyName]
                     tilt, y2, y = angles[:3]  # y2=tilted, y=gamma(untilted)
                     ang = Angles()
@@ -67,9 +66,9 @@ class EmanImport:
                 jsonPosDict = loadJson(fileName)
                 boxes = []
 
-                if jsonPosDict.has_key("boxes"):
+                if "boxes" in jsonPosDict:
                     boxes = jsonPosDict["boxes"]
-                elif jsonPosDict.has_key("boxes_rct"):
+                elif "boxes_rct" in jsonPosDict:
                     boxes = jsonPosDict["boxes_rct"]
                 if boxes:
                     for box in boxes:
@@ -114,11 +113,11 @@ class EmanImport:
             jsonBase2 = pwutils.join(infoDir, 'project.json')
             if pwutils.exists(jsonBase):
                 jsonDict = loadJson(jsonBase)
-                if jsonDict.has_key('box_size'):
+                if 'box_size' in jsonDict:
                     return int(jsonDict["box_size"])
             elif pwutils.exists(jsonBase2):
                 jsonDict = loadJson(jsonBase2)
-                if jsonDict.has_key('global.boxsize'):
+                if 'global.boxsize' in jsonDict:
                     return int(jsonDict["global.boxsize"])
 
         return None

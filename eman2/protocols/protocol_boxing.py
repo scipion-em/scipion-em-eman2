@@ -30,11 +30,10 @@ import os
 
 from pyworkflow.object import String
 from pyworkflow.utils.properties import Message
-from pyworkflow.utils.path import join, getExt
+from pyworkflow.utils.path import getExt
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.em.protocol import ProtParticlePicking
-from pyworkflow.protocol.params import (BooleanParam, IntParam,
-                                        StringParam)
+from pwem.protocols import ProtParticlePicking
+from pyworkflow.protocol.params import BooleanParam, IntParam, StringParam
 
 import eman2
 from eman2.convert import loadJson, readSetOfCoordinates
@@ -150,7 +149,7 @@ class EmanProtBoxing(ProtParticlePicking):
             # Function to check if gaussian algorithm was used to pick
             # and if so ask user if she wants to perform an automatic
             # picking for the remaining micrographs
-            gaussJsonFile = join("e2boxercache", "gauss_box_DB.json")
+            gaussJsonFile = os.path.join("e2boxercache", "gauss_box_DB.json") #join("e2boxercache", "gauss_box_DB.json")
             # Check if gauss json file exists and load it
             if os.path.exists(gaussJsonFile):
                 jsonGaussDict = loadJson(gaussJsonFile)

@@ -43,6 +43,7 @@ from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
                                         EnumParam, FloatParam, IntParam, BooleanParam)
 import pyworkflow.utils as pwutils
 
+import eman2
 from eman2.constants import *
 from eman2.convert import loadJson
 from eman2.protocols import (EmanProtBoxing, EmanProtCTFAuto,

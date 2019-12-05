@@ -30,8 +30,8 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam,
                                         LEVEL_ADVANCED)
 from pyworkflow.utils.path import cleanPattern, makePath
-from pyworkflow.em.data import Volume
-from pyworkflow.em.protocol import ProtReconstruct3D
+from pwem.objects.data import Volume
+from pwem.protocols import ProtReconstruct3D
 
 import eman2
 from eman2.convert import writeSetOfParticles

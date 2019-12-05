@@ -31,8 +31,8 @@ from pyworkflow.utils.path import cleanPattern
 from pyworkflow.protocol.params import (PointerParam, TextParam, IntParam,
                                         BooleanParam, LEVEL_ADVANCED,
                                         StringParam)
-from pyworkflow.em.protocol import ProtInitialVolume
-from pyworkflow.em.data import SetOfClasses2D, Volume
+from pwem.protocols import ProtInitialVolume
+from pwem.objects.data import SetOfClasses2D, Volume
 
 import eman2
 
