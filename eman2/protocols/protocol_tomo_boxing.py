@@ -33,9 +33,11 @@ from pyworkflow import utils as pwutils
 
 import eman2
 from eman2.convert import loadJson, coordinates2json, readSetOfCoordinates3D
+from eman2.Viewers.views_tkinter_tree import EmanDialog
 
 from tomo.protocols import ProtTomoPicking
 from tomo.objects import SetOfCoordinates3D
+from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
 
 
 class EmanProtTomoBoxing(ProtTomoPicking):
@@ -64,40 +66,44 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
-        self.inputTomo = self.inputTomogram.get()
-        self._params = {'inputTomogram': self.inputTomo.getFileName()}
         # Launch Boxing GUI
-        self._insertFunctionStep('launchBoxingGUIStep', self._params, interactive=True)
+
+        self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
 
     def _createOutput(self, outputDir):
-        jsonFnbase = pwutils.join(outputDir, 'info',
-                                  'extra-%s_info.json'
-                                  % pwutils.removeBaseExt(self.inputTomo.getFileName()))
-        jsonBoxDict = loadJson(jsonFnbase)
-
         coord3DSetDict = {}
         coord3DMap = {}
-        setTomograms = self.getParentSet()
-        for key, classItem in jsonBoxDict["class_list"].iteritems():
-            index = int(key)
-            suffix = self._getOutputSuffix(SetOfCoordinates3D)
-            coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
-            coord3DSet.setBoxSize(int(classItem["boxsize"]))
-            coord3DSet.setName(classItem["name"])
-            coord3DSet.setVolumes(setTomograms)
-            coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
+        setTomograms = self.inputTomos.get()
+        suffix = self._getOutputSuffix(SetOfCoordinates3D)
+        coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
+        coord3DSet.setName("tomoCoord")
+        coord3DSet.setVolumes(setTomograms)
+        coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
+        first = True
+        for tomo in self.inputTomos.get().iterItems():
+            jsonFnbase = pwutils.join(outputDir, 'info',
+                                      'extra-%s_info.json'
+                                      % pwutils.removeBaseExt(tomo.getFileName()))
+            jsonBoxDict = loadJson(jsonFnbase)
 
-            name = self.OUTPUT_PREFIX + suffix
-            args = {}
-            args[name] = coord3DSet
-            self._defineOutputs(**args)
-            self._defineSourceRelation(setTomograms, coord3DSet)
+            for key, classItem in jsonBoxDict["class_list"].iteritems():
+                index = int(key)
+                if first:
+                    coord3DSet.setBoxSize(int(classItem["boxsize"]))
+                    first = False
 
-            coord3DSetDict[index] = coord3DSet
-            coord3DMap[index] = name
+                name = self.OUTPUT_PREFIX + suffix
+                args = {}
+                args[name] = coord3DSet
 
-        # Populate Set of 3D Coordinates with 3D Coordinates
-        readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, self.inputTomo)
+                coord3DSetDict[index] = coord3DSet
+                coord3DMap[index] = name
+
+            # Populate Set of 3D Coordinates with 3D Coordinates
+            readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
+
+        self._defineOutputs(**args)
+        self._defineSourceRelation(setTomograms, coord3DSet)
 
         # Update Outputs
         for index, coord3DSet in coord3DSetDict.iteritems():
@@ -115,22 +121,16 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             pwutils.makePath(infoDir)
         return pathInputCoor
 
-    def launchBoxingGUIStep(self, tomo):
-        inputCoor = self.inputCoordinates.get()
-        if inputCoor is not None:
-            pathInputCoor = self._createInputCoordsFile()
-            coordinates2json(pathInputCoor, inputCoor)
-            self._enterWorkingDir()
+    def launchBoxingGUIStep(self):
 
-        program = eman2.Plugin.getProgram("e2spt_boxer.py")
-        arguments = "%(inputTomogram)s"
-        if self.inMemory:
-            arguments += " --inmemory"
-        self._log.info('Launching: ' + program + ' ' + arguments % tomo)
-        self.runJob(program, arguments % tomo)
+        tomoList = [tomo.clone() for tomo in self.inputTomograms.get().iterItems()]
+
+        tomoProvider = TomogramsTreeProvider(tomoList, self._getExtraPath(), "eman")
+
+        self.dlg = EmanDialog(None, self, provider=tomoProvider, inMemory=self.inMemory.get(),)
+
         # Open dialog to request confirmation to create output
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
-            self._leaveDir()  # going back to project dir
             self._createOutput(self.getWorkingDir())
 
     def _validate(self):
@@ -140,16 +140,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             errors.append('Your EMAN2 version does not support the tomo boxer. '
                           'Please update your installation to EMAN 2.3 or newer.')
         return errors
-
-    def _runSteps(self, startIndex):
-        # Redefine run to change to workingDir path
-        # Change to protocol working directory
-        self._enterWorkingDir()
-        ProtTomoPicking._runSteps(self, startIndex)
-
-    def getParentSet(self):
-        parentObj = self.inputTomogram.getObjValue()
-        return getattr(parentObj, 'outputTomograms')
 
     def getMethods(self, output):
         msg = 'User picked %d particles ' % output.getSize()
