@@ -66,22 +66,24 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
-        # Launch Boxing GUI
+        # Copy input coordinates to Extra Path
+        #self._insertFunctionStep('copyInputCoords')
 
+        # Launch Boxing GUI
         self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
 
-    def _createOutput(self, outputDir):
+    def _createOutput(self):
         coord3DSetDict = {}
         coord3DMap = {}
-        setTomograms = self.inputTomos.get()
+        setTomograms = self.inputTomograms.get()
         suffix = self._getOutputSuffix(SetOfCoordinates3D)
-        coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
+        coord3DSet = self._createSetOfCoordinates3D(setTomograms, suffix)
         coord3DSet.setName("tomoCoord")
         coord3DSet.setVolumes(setTomograms)
         coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
         first = True
-        for tomo in self.inputTomos.get().iterItems():
-            jsonFnbase = pwutils.join(outputDir, 'info',
+        for tomo in setTomograms.iterItems():
+            jsonFnbase = pwutils.join(self._getExtraPath(),
                                       'extra-%s_info.json'
                                       % pwutils.removeBaseExt(tomo.getFileName()))
             jsonBoxDict = loadJson(jsonFnbase)
@@ -111,15 +113,13 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             self._updateOutputSet(coord3DMap[index], coord3DSet, state=coord3DSet.STREAM_CLOSED)
 
     # --------------------------- STEPS functions -----------------------------
-    def _createInputCoordsFile(self):
+    def copyInputCoords(self):
+        # TODO
         cwd = os.getcwd()
         infoDir = pwutils.join(cwd, 'info')
-        self._leaveWorkingDir()
         fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
         pathInputCoor = pwutils.join(infoDir, fnInputCoor)
-        if not os.path.exists(pathInputCoor):
-            pwutils.makePath(infoDir)
-        return pathInputCoor
+        coordinates2json(pathInputCoor, self.inputCoordinates.get())
 
     def launchBoxingGUIStep(self):
 
@@ -130,8 +130,8 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         self.dlg = EmanDialog(None, self, provider=tomoProvider, inMemory=self.inMemory.get(),)
 
         # Open dialog to request confirmation to create output
-        if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
-            self._createOutput(self.getWorkingDir())
+        #if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
+        self._createOutput()
 
     def _validate(self):
         errors = []
