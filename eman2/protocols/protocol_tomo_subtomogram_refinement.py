@@ -66,7 +66,7 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def __init__(self, **kwargs):
         pwem.EMProtocol.__init__(self, **kwargs)
-        self.stepsExecutionMode = STEPS_PARALLEL
+        # self.stepsExecutionMode = STEPS_PARALLEL
 
     #--------------- DEFINE param functions ---------------
 

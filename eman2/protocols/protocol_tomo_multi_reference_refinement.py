@@ -146,7 +146,7 @@ class EmanProtTomoMultiReferenceRefinement(pwem.EMProtocol, ProtTomoBase):
         args += ' --threads=%d' % self.threads
         args += ' --sym=%s ' % self.sym
         args += ' --path=%s ' % self.getOutputPath()
-        if self.mask:
+        if self.mask.get():
             args += ' --mask=%s' % self.mask
         if self.niter > 1:
             args += ' --niter=%d' % self.niter
