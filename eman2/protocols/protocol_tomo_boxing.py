@@ -114,7 +114,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     # --------------------------- STEPS functions -----------------------------
     def copyInputCoords(self):
-        # TODO
         cwd = os.getcwd()
         setTomograms = self.inputTomograms.get()
         suffix = self._getOutputSuffix(SetOfCoordinates3D)
