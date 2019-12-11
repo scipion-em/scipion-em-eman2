@@ -538,7 +538,7 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
         return protTomoExtraction
 
 
-class TestEmanTomoInitialModel(TestEmanBase):
+class TestEmanTomoInitialModel(TestEmanTomoBase):
     """This class check if the protocol to extract particles
     in Relion works properly.
     """
@@ -684,7 +684,7 @@ class TestEmanTomoInitialModel(TestEmanBase):
         return protInitialModel
 
 
-class TestEmanTomoSubtomogramRefinement(TestEmanBase):
+class TestEmanTomoSubtomogramRefinement(TestEmanTomoBase):
     """This class check if the protocol Subtomogram refinement works properly.
     """
 
@@ -829,7 +829,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         return protTomoSubtomogramRefinement
 
 
-class TestEmanTomoTempMatch(TestEmanBase):
+class TestEmanTomoTempMatch(TestEmanTomoBase):
     """This class check if the program Template Matching
     from Eman works properly.
     """
