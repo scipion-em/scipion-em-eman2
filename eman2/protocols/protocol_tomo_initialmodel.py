@@ -33,7 +33,7 @@ import eman2
 from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfAverageSubTomograms, SetOfSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
 
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
@@ -64,9 +64,9 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
                       help='Select the set of subtomograms to build an initial model')
 
         form.addParam('reference', params.PointerParam,
-                      pointerClass='SubTomogram', allowsNull=True,
-                      label="Reference",
-                      help='Select the subtomogram to use as reference')
+                      pointerClass='Volume', allowsNull=True,
+                      label="Reference volume",
+                      help='Specify a 3D volume')
 
         form.addParam('mask', params.PointerParam,
                       label='Mask',
@@ -178,19 +178,22 @@ class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):
         # Output 1: Subtomogram
         averageSubTomogram = AverageSubTomogram()
         averageSubTomogram.setFileName(self.getOutputPath('output.hdf'))
-        averageSubTomogram.copyInfo(particles)
-        setOfSubTomograms = self._createSet(SetOfAverageSubTomograms, 'subtomograms%s.sqlite', "")
-        setOfSubTomograms.append(averageSubTomogram)
+        averageSubTomogram.setSamplingRate(particles.getSamplingRate() * self.shrink.get())
+        setOfAverageSubTomograms = self._createSet(SetOfAverageSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfAverageSubTomograms.copyInfo(particles)
+        setOfAverageSubTomograms.setSamplingRate(particles.getSamplingRate() * self.shrink.get())
+        setOfAverageSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms
         particleParams = getLastParticlesParams(self.getOutputPath())
         outputSetOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "particles")
-        outputSetOfSubTomograms.copyInfo(particles)
         outputSetOfSubTomograms.setCoordinates3D(particles.getCoordinates3D())
+        outputSetOfSubTomograms.copyInfo(particles)
+        outputSetOfSubTomograms.setSamplingRate(particles.getSamplingRate() * self.shrink.get())
         updateSetOfSubTomograms(particles, outputSetOfSubTomograms, particleParams)
 
-        self._defineOutputs(averageSubTomogram=setOfSubTomograms, outputParticles=outputSetOfSubTomograms)
-        self._defineSourceRelation(self.particles, setOfSubTomograms)
+        self._defineOutputs(averageSubTomogram=setOfAverageSubTomograms, outputParticles=outputSetOfSubTomograms)
+        self._defineSourceRelation(self.particles, setOfAverageSubTomograms)
         self._defineSourceRelation(self.particles, outputSetOfSubTomograms)
 
     def getOutputPath(self, *args):
