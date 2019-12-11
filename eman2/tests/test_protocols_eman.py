@@ -800,6 +800,8 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         self.assertIsNotNone(protTomoRefinement.outputParticles,
                              "There was a problem with particles output")
 
+        return protTomoRefinement
+
     def test_defaultSubTomogramRefinementWithSubTomo(self):
         protTomoSubtomogramRefinement = self._runTomoSubtomogramRefinementWithSubtomo()
         self._performFinalValidation(protTomoSubtomogramRefinement)
