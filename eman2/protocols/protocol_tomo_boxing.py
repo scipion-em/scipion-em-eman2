@@ -33,7 +33,7 @@ from pyworkflow import utils as pwutils
 
 import eman2
 from eman2.convert import loadJson, coordinates2json, readSetOfCoordinates3D
-from eman2.Viewers.views_tkinter_tree import EmanDialog
+from eman2.viewers.views_tkinter_tree import EmanDialog
 
 from tomo.protocols import ProtTomoPicking
 from tomo.objects import SetOfCoordinates3D
@@ -139,11 +139,13 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
         tomoProvider = TomogramsTreeProvider(tomoList, self._getExtraPath(), "eman")
 
-        self.dlg = EmanDialog(None, self, provider=tomoProvider, inMemory=self.inMemory.get(),)
+        self.dlg = EmanDialog(None, self._getExtraPath(), provider=tomoProvider, inMemory=self.inMemory.get(),)
 
         # Open dialog to request confirmation to create output
-        #if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
-        self._createOutput()
+        import Tkinter as tk
+        frame = tk.Frame()
+        if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
+            self._createOutput()
 
     def _validate(self):
         errors = []

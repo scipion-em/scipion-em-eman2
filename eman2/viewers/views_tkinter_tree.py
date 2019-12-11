@@ -27,6 +27,7 @@
 import os, threading
 
 from pyworkflow import utils as pwutils
+from pyworkflow.utils.process import runJob
 from pyworkflow.gui.dialog import ToolbarListDialog
 from pyworkflow.utils.path import moveFile, cleanPath, copyFile
 
@@ -40,8 +41,8 @@ class EmanDialog(ToolbarListDialog):
     an Eman subprocess from a list of Tomograms.
     """
 
-    def __init__(self, parent, protocol, **kwargs):
-        self.prot = protocol
+    def __init__(self, parent, path, **kwargs):
+        self.path = path
         self.provider = kwargs.get("provider", None)
         self.inMemory = kwargs.get("inMemory", None)
         self.dir = os.getcwd()
@@ -57,8 +58,8 @@ class EmanDialog(ToolbarListDialog):
         else:
             os.chdir(self.dir)
             outFile = 'extra-%s_info.json' % pwutils.removeBaseExt(self.tomo.getFileName())
-            moveFile(self.prot._getExtraPath(os.path.join("info", outFile)), self.prot._getExtraPath(outFile))
-            cleanPath(self.prot._getExtraPath("info"))
+            moveFile(self.path(os.path.join("info", outFile)), self.path(outFile))
+            cleanPath(self.path("info"))
             self.tree.update()
 
 
@@ -69,7 +70,7 @@ class EmanDialog(ToolbarListDialog):
         self.after(1000, self.refresh_gui)
 
     def lanchEmanForTomogram(self, inMemory, tomo):
-        os.chdir(self.prot._getExtraPath())
+        os.chdir(self.path)
         pathCoor = self._moveCoordsToInfo(tomo)
 
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
@@ -77,7 +78,7 @@ class EmanDialog(ToolbarListDialog):
         if inMemory:
             arguments += " --inmemory"
         #self._log.info('Launching: ' + program + ' ' + arguments % tomo)
-        self.prot.runJob(program, arguments)
+        runJob(None, program, arguments, env=eman2.Plugin.getEnviron())
 
     def _moveCoordsToInfo(self, tomo):
         cwd = os.getcwd()
