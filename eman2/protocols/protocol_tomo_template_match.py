@@ -31,12 +31,14 @@ from pyworkflow import utils as pwutils
 from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         StringParam, FloatParam, LEVEL_ADVANCED)
 from pyworkflow.utils.path import moveFile
+from pyworkflow.utils import importFromPlugin
 
 import eman2
 from eman2.convert import loadJson, readSetOfCoordinates3D
+from eman2.constants import TOMO_NEEDED_MSG
 
-from tomo.protocols import ProtTomoPicking
-from tomo.objects import SetOfCoordinates3D
+ProtTomoPicking = importFromPlugin("tomo.protocols", "ProtTomoPicking", errorMsg=TOMO_NEEDED_MSG)
+SetOfCoordinates3D = importFromPlugin("tomo.objects", "SetOfCoordinates3D", errorMsg=TOMO_NEEDED_MSG)
 
 
 class EmanProtTomoTempMatch(ProtTomoPicking):
@@ -114,7 +116,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         self.runJob(program, params, cwd=os.path.abspath(self._getTmpPath()),
                     env=eman2.Plugin.getEnviron())
 
-        #Move output files to Extra Path
+        # Move output files to Extra Path
         moveFile(self._getTmpPath("ccc.hdf"),self._getExtraPath("particles" + ".hdf"))
 
         for tomo in self.inputSet.get():

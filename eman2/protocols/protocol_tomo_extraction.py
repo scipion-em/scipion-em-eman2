@@ -29,13 +29,17 @@ import os
 from pyworkflow import utils as pwutils
 import pyworkflow.em as pwem
 import pyworkflow.protocol.params as params
-from pyworkflow.utils.path import moveFile, cleanPath, makePath
-
-from tomo.protocols import ProtTomoBase
-from tomo.objects import SetOfSubTomograms, SubTomogram
+from pyworkflow.utils.path import moveFile, cleanPath
+from pyworkflow.utils import importFromPlugin
 
 import eman2
 from eman2.constants import *
+
+ProtTomoBase = importFromPlugin("tomo.protocols", "ProtTomoBase", errorMsg=TOMO_NEEDED_MSG)
+SetOfSubTomograms = importFromPlugin("tomo.objects", "SetOfSubTomograms", errorMsg=TOMO_NEEDED_MSG)
+SubTomogram = importFromPlugin("tomo.objects", "SubTomogram", errorMsg=TOMO_NEEDED_MSG)
+
+
 
 # Tomogram type constants for particle extraction
 SAME_AS_PICKING = 0

@@ -30,12 +30,14 @@ from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED
 from pyworkflow import utils as pwutils
+from pyworkflow.utils import importFromPlugin
 
 import eman2
 from eman2.convert import loadJson, coordinates2json, readSetOfCoordinates3D
+from eman2.constants import TOMO_NEEDED_MSG
 
-from tomo.protocols import ProtTomoPicking
-from tomo.objects import SetOfCoordinates3D
+ProtTomoPicking = importFromPlugin("tomo.protocols", "ProtTomoPicking", errorMsg=TOMO_NEEDED_MSG)
+SetOfCoordinates3D = importFromPlugin("tomo.objects", "SetOfCoordinates3D", errorMsg=TOMO_NEEDED_MSG)
 
 
 class EmanProtTomoBoxing(ProtTomoPicking):

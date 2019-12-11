@@ -216,3 +216,8 @@ OBJCMD_INITVOL = 'Show initial random volume'
 # SGD input types
 SGD_INPUT_AVG = 0
 SGD_INPUT_PTCLS = 1
+
+# Tomo
+TOMO_NEEDED_MSG = 'Tomography protocols couldn\'t be imported. To use a Tomography protocol '\
+                  'scipion-em-tomo plugin is required. '\
+                  ' See https://github.com/scipion-em/scipion-em-tomo for further details'

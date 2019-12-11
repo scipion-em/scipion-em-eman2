@@ -41,6 +41,7 @@ from pyworkflow.object import Float
 from pyworkflow.em.convert import ImageHandler
 import pyworkflow.em.metadata as md
 
+from eman2.constants import TOMO_NEEDED_MSG
 import eman2
 
 
@@ -166,7 +167,8 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coordsSet.append(coord)
 
 def readCoordinates3D(box, coord3DSet, inputTomo):
-    from tomo.objects import Coordinate3D
+    from pyworkflow.utils import importFromPlugin
+    Coordinate3D = importFromPlugin("tomo.objects", "Coordinate3D", errorMsg=TOMO_NEEDED_MSG)
     x, y, z = box[:3]
     coord = Coordinate3D()
     coord.setPosition(x, y, z)
