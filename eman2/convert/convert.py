@@ -493,8 +493,7 @@ def getLastParticlesParams(directory):
 
 
 def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particlesParams):
-    """Update a set of subtomgrams from a template, copy info and attributes coverage/score/transform"""
-    outputSetOfSubTomograms.copyInfo(inputSetOfSubTomograms)
+    """Update a set of subtomograms from a template and copy attributes coverage/score/transform"""
 
     def updateSubTomogram(subTomogram, index):
         particleParams = particlesParams.get(index)
@@ -508,7 +507,6 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
         samplingRate = outputSetOfSubTomograms.getSamplingRate()
         shift = numpy.matrix([am[3] * samplingRate, am[7] * samplingRate, am[11] * samplingRate, 1])
         matrix = numpy.concatenate((angles, shift.T), axis=1)
-
         subTomogram.setTransform(Transform(matrix))
 
     outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,

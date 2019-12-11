@@ -25,7 +25,6 @@
 # **************************************************************************
 
 
-
 from protocol_boxing import EmanProtBoxing
 from protocol_ctf import EmanProtCTFAuto
 from protocol_initialmodel import EmanProtInitModel

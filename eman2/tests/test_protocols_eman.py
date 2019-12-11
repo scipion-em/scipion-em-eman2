@@ -570,17 +570,18 @@ class TestEmanTomoInitialModel(TestEmanBase):
         return protTomoExtraction
 
     def _performFinalValidation(self, protInitialModel):
-        subTomograms = protInitialModel.averageSubTomogram
-        self.assertEqual(os.path.basename(subTomograms.getFirstItem().getFileName()), "output.hdf")
-        self.assertEqual(subTomograms.getFirstItem().getSamplingRate(), 5.0)
-        self.assertEqual(subTomograms.getSamplingRate(), 5.0)
+        averageSubTomogram = protInitialModel.averageSubTomogram
+        self.assertEqual(os.path.basename(averageSubTomogram.getFirstItem().getFileName()), "output.hdf")
+        self.assertEqual(averageSubTomogram.getFirstItem().getSamplingRate(), 20.0)
+        self.assertEqual(averageSubTomogram.getSamplingRate(), 20.0)
 
         setOfSubTomograms = protInitialModel.outputParticles
         self.assertEqual(setOfSubTomograms.getSize(), 5)
         self.assertEqual(setOfSubTomograms.getCoordinates3D().getObjValue().getSize(), 5)
+        self.assertEqual(setOfSubTomograms.getSamplingRate(), 20.0)
 
         for subTomogram in setOfSubTomograms:
-            self.assertEqual(subTomogram.getSamplingRate(), 5)
+            self.assertEqual(subTomogram.getSamplingRate(), 20)
             self.assertTrue(hasattr(subTomogram, "coverage"))
             self.assertTrue(hasattr(subTomogram, "score"))
             matrix = subTomogram.getTransform().getMatrix()
@@ -604,7 +605,7 @@ class TestEmanTomoInitialModel(TestEmanBase):
                                             learningRate=1,
                                             numberOfIterations=2,
                                             numberOfBatches=1,
-                                            downFactor=4,
+                                            shrink=4,
                                             applySim=False)
         protInitialModel.reference.setExtended("outputSetOfSubtomogram.1")
 
@@ -641,7 +642,7 @@ class TestEmanTomoInitialModel(TestEmanBase):
                                             learningRate=1,
                                             numberOfIterations=2,
                                             numberOfBatches=1,
-                                            downFactor=4,
+                                            shrink=4,
                                             applySim=False)
 
         self.launchProtocol(protInitialModel)
@@ -720,11 +721,16 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
 
     def _performFinalValidation(self, protTomoSubtomogramRefinement):
         outputSetOfSubTomograms = protTomoSubtomogramRefinement.outputParticles
-        outputSubTomograms = protTomoSubtomogramRefinement.averageSubTomogram
+        averageSubTomogram = protTomoSubtomogramRefinement.averageSubTomogram
+
+        self.assertTrue("threed" in averageSubTomogram.getFirstItem().getFileName())
+        self.assertEqual(averageSubTomogram.getFirstItem().getSamplingRate(), 5.0)
+        self.assertEqual(averageSubTomogram.getSamplingRate(), 5.0)
 
         self.assertEqual(outputSetOfSubTomograms.getDimensions(), (32, 32, 32))
         self.assertEqual(outputSetOfSubTomograms.getSize(), 5)
         self.assertEqual(outputSetOfSubTomograms.getCoordinates3D().getObjValue().getSize(), 5)
+
         for subTomogram in outputSetOfSubTomograms:
             self.assertEqual(subTomogram.getSamplingRate(), 5)
             self.assertTrue(hasattr(subTomogram, "coverage"))
@@ -732,8 +738,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
             matrix = subTomogram.getTransform().getMatrix()
             self.assertEqual(matrix.shape, (4, 4))
 
-        self.assertTrue("threed" in outputSubTomograms.getFirstItem().getFileName())
-        self.assertEqual(outputSubTomograms.getFirstItem().getSamplingRate(), 5)
+
 
     def _runTomoSubtomogramRefinementWithSubtomo(self, niter=2, mass=500.0, threads=1, pkeep=0.8, goldstandard=-1,
                                       goldcontinue=False, sym="c1", localfilter=False, maxtilt =90.0):
@@ -751,7 +756,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
                                               sym=sym,
                                               localfilter=localfilter,
                                               maxtilt=maxtilt)
-        protTomoRefinement.inputSetOfSubTomogram.setExtended("outputSetOfSubtomogram.1")
+        protTomoRefinement.inputRef.setExtended("outputSetOfSubtomogram.1")
 
         self.launchProtocol(protTomoRefinement)
 
