@@ -129,18 +129,6 @@ class EmanImport:
             else:
                 raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
 
-        # if pwutils.exists(fileName):
-        #     md = MetaData()
-        #     md.readPlain(fileName, "xcoor ycoor zcoor")
-        #     for objId in md:
-        #             x = md.getValue(MDL_XCOOR, objId)
-        #             y = md.getValue(MDL_YCOOR, objId)
-        #             z = md.getValue(MDL_ZCOOR, objId)
-        #             from tomo.objects import Coordinate3D
-        #             coord = Coordinate3D()
-        #             coord.setPosition(x, y, z)
-        #             addCoordinate(coord)
-
     def getBoxSize(self, coordFile):
         """ Try to infer the box size from the given coordinate file.
         In the case of .box files, the size is the 3rd column
