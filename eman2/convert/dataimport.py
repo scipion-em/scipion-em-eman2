@@ -115,22 +115,6 @@ class EmanImport:
                         coord.setPosition(x, y, z)
                         addCoordinate(coord)
 
-            elif ext == ".box":
-                md = MetaData()
-                md.readPlain(fileName, "xcoor ycoor particleSize")
-                size = md.getValue(MDL_PICKING_PARTICLE_SIZE, md.firstObject())
-                if size is None:
-                    print(">>> WARNING: Error parsing coordinate file: %s" % fileName)
-                    print("             Skipping this file.")
-                else:
-                    half = size / 2
-                    for objId in md:
-                        x = md.getValue(MDL_XCOOR, objId)
-                        y = md.getValue(MDL_YCOOR, objId)
-                        coord = Coordinate()
-                        coord.setPosition(x + half, y + half)
-                        addCoordinate(coord)
-
             elif ext == ".txt":
                 md = MetaData()
                 md.readPlain(fileName, "xcoor ycoor zcoor")
