@@ -89,11 +89,19 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
     # --------------------------- INSERT steps functions ----------------------
 
     def _insertAllSteps(self):
+        self._insertFunctionStep('preprocess')
         self._insertFunctionStep('tempMatchStep')
         self._insertFunctionStep("createOutputStep")
 
 
     # --------------------------- STEPS functions -----------------------------
+
+    def preprocess(self):
+        xmipp3 = pwutils.importFromPlugin('xmipp3')
+        if self.inputSet.get().getXDim() < 600:
+            for tomo in self.inputSet.get():
+                xmipp3.Plugin.runXmippProgram("xmipp_transform_window", " -i %s --size %d %d %d " %
+                                              (tomo.getFileName(), 1000, 1000, tomo.getDim()[2]))
 
     def tempMatchStep(self):
 
