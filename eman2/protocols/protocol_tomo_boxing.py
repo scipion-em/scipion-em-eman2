@@ -86,6 +86,8 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             jsonFnbase = pwutils.join(self._getExtraPath(),
                                       'extra-%s_info.json'
                                       % pwutils.removeBaseExt(tomo.getFileName()))
+            if not os.path.isfile(jsonFnbase):
+                break
             jsonBoxDict = loadJson(jsonFnbase)
 
             for key, classItem in jsonBoxDict["class_list"].iteritems():

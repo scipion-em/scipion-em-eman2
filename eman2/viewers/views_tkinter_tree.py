@@ -58,8 +58,8 @@ class EmanDialog(ToolbarListDialog):
         else:
             os.chdir(self.dir)
             outFile = 'extra-%s_info.json' % pwutils.removeBaseExt(self.tomo.getFileName())
-            moveFile(self.path(os.path.join("info", outFile)), self.path(outFile))
-            cleanPath(self.path("info"))
+            moveFile((os.path.join(self.path, "info", outFile)), os.path.join(self.path, outFile))
+            cleanPath(os.path.join(self.path, "info"))
             self.tree.update()
 
 
