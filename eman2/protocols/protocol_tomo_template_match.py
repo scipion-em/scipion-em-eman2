@@ -98,7 +98,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
 
     def preprocess(self):
         xmipp3 = pwutils.importFromPlugin('xmipp3')
-        if self.inputSet.get().getXDim() < 600:
+        if self.inputSet.get().getXDim() < 1000:
             for tomo in self.inputSet.get():
                 xmipp3.Plugin.runXmippProgram("xmipp_transform_window", " -i %s --size %d %d %d " %
                                               (tomo.getFileName(), 1000, 1000, tomo.getDim()[2]))
