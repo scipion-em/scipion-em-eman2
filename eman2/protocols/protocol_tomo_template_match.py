@@ -70,7 +70,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                       help='Specify a 3D volume')
         form.addParam('nptcl', IntParam, default=500,
                       label='Number of particles',
-                      help='Maximum number of particles')
+                      help='Maximum number of particles per tomogram')
         form.addParam('dthr', FloatParam, default=-1,
                       label='Distance threshold',
                       help='', expertLevel=LEVEL_ADVANCED)
@@ -186,3 +186,11 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         else:
             summary.append(Message.TEXT_NO_OUTPUT_CO)
         return summary
+
+    def _methods(self):
+        tomos = self.inputSet.get()
+        return [
+            "Subtomogram coordinates obtained with e2spt_tempmatch.py",
+            "A total of %d tomograms of dimensions %s were used"
+               % (tomos.getSize(), tomos.getDimensions()),
+        ]
