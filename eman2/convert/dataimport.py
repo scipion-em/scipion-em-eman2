@@ -33,6 +33,8 @@ from pyworkflow.em.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR, MDL_ZCOOR,
                                     MDL_PICKING_PARTICLE_SIZE)
 from .convert import loadJson, readCTFModel, readSetOfParticles
 
+from tomo.objects import Coordinate3D
+
 
 class EmanImport:
 
@@ -98,16 +100,34 @@ class EmanImport:
 
     def importCoordinates3D(self, fileName, addCoordinate):
         if pwutils.exists(fileName):
-            md = MetaData()
-            md.readPlain(fileName, "xcoor ycoor zcoor")
-            for objId in md:
+            ext = pwutils.getExt(fileName)
+
+            if ext == ".json":
+                jsonPosDict = loadJson(fileName)
+                boxes = []
+
+                if jsonPosDict.has_key("boxes_3d"):
+                    boxes = jsonPosDict["boxes_3d"]
+                if boxes:
+                    for box in boxes:
+                        x, y, z = box[:3]
+                        coord = Coordinate3D()
+                        coord.setPosition(x, y, z)
+                        addCoordinate(coord)
+
+            elif ext == ".txt":
+                md = MetaData()
+                md.readPlain(fileName, "xcoor ycoor zcoor")
+                for objId in md:
                     x = md.getValue(MDL_XCOOR, objId)
                     y = md.getValue(MDL_YCOOR, objId)
                     z = md.getValue(MDL_ZCOOR, objId)
-                    from tomo.objects import Coordinate3D
                     coord = Coordinate3D()
                     coord.setPosition(x, y, z)
                     addCoordinate(coord)
+
+            else:
+                raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
 
     def getBoxSize(self, coordFile):
         """ Try to infer the box size from the given coordinate file.
