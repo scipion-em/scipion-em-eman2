@@ -24,6 +24,7 @@
 # *
 # **************************************************************************
 
+
 from protocol_boxing import EmanProtBoxing
 from protocol_ctf import EmanProtCTFAuto
 from protocol_initialmodel import EmanProtInitModel
@@ -37,14 +38,8 @@ from protocol_autopick_boxer import EmanProtAutopick
 from protocol_autopick_sparx import SparxGaussianProtPicking
 
 try:
-    from protocol_tomo_boxing import EmanProtTomoBoxing
-    from protocol_tomo_template_match import EmanProtTomoTempMatch
-    from protocol_tomo_extraction import EmanProtTomoExtraction
-    from protocol_tomo_subtomogram_refinement import EmanProtTomoRefinement
-    from protocol_tomo_initialmodel import EmanProtTomoInitialModel
-    from protocol_tomo_multi_reference_refinement import EmanProtTomoMultiReferenceRefinement
+    from .tomo_protocols import *
 except ImportError as importError:
     from pyworkflow.utils import pluginNotFound
-    pluginNotFound("eman2", 'Tomography protocols couldn\'t be imported. To use a Tomography protocol '
-                            'scipion-em-tomo plugin is required. '
-                            ' See https://github.com/scipion-em/scipion-em-tomo for further details')
+    from eman2.constants import TOMO_NEEDED_MSG
+    pluginNotFound("eman2", TOMO_NEEDED_MSG)
