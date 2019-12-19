@@ -1,7 +1,3 @@
-
-
-
-
 from .protocol_tomo_boxing import EmanProtTomoBoxing
 from .protocol_tomo_template_match import EmanProtTomoTempMatch
 from .protocol_tomo_extraction import EmanProtTomoExtraction

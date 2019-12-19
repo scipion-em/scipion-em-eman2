@@ -28,16 +28,12 @@
 import pyworkflow.em as pwem
 from pyworkflow.protocol import params
 from pyworkflow.utils.path import makePath
-from pyworkflow.utils import importFromPlugin
 
 import eman2
 from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
-from eman2.constants import TOMO_NEEDED_MSG
 
-ProtTomoBase = importFromPlugin("tomo.protocols", "ProtTomoBase", errorMsg=TOMO_NEEDED_MSG)
-AverageSubTomogram = importFromPlugin("tomo.objects", "AverageSubTomogram", errorMsg=TOMO_NEEDED_MSG)
-SetOfSubTomograms = importFromPlugin("tomo.objects", "SetOfSubTomograms", errorMsg=TOMO_NEEDED_MSG)
-SetOfAverageSubTomograms = importFromPlugin("tomo.objects", "SetOfAverageSubTomograms", errorMsg=TOMO_NEEDED_MSG)
+from tomo.protocols import ProtTomoBase
+from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
 
 
 class EmanProtTomoInitialModel(pwem.EMProtocol, ProtTomoBase):

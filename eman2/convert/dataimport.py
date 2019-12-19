@@ -35,8 +35,6 @@ from pyworkflow.em.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR, MDL_ZCOOR,
 from eman2.constants import TOMO_NEEDED_MSG
 from .convert import loadJson, readCTFModel, readSetOfParticles
 
-from tomo.objects import Coordinate3D
-
 
 class EmanImport:
 

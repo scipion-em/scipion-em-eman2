@@ -41,6 +41,5 @@ try:
     from .tomo_protocols import *
 except ImportError as importError:
     from pyworkflow.utils import pluginNotFound
-    pluginNotFound("eman2", 'Tomography protocols couldn\'t be imported.\n To use a Tomography protocol '
-                            'scipion-em-tomo plugin is required.\n '
-                            ' See https://github.com/scipion-em/scipion-em-tomo for further details')
+    from eman2.constants import TOMO_NEEDED_MSG
+    pluginNotFound("eman2", TOMO_NEEDED_MSG)
