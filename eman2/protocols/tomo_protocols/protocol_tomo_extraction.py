@@ -31,13 +31,11 @@ import pyworkflow.em as pwem
 import pyworkflow.protocol.params as params
 from pyworkflow.utils.path import moveFile, cleanPath
 
-
-import eman2
-from eman2.constants import *
-
 from tomo.protocols import ProtTomoBase
 from tomo.objects import SetOfSubTomograms, SubTomogram
 
+import eman2
+from eman2.constants import *
 
 # Tomogram type constants for particle extraction
 SAME_AS_PICKING = 0
