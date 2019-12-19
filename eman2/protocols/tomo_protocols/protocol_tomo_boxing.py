@@ -31,6 +31,7 @@ from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED
 from pyworkflow import utils as pwutils
 
+
 import eman2
 from eman2.convert import loadJson, coordinates2json, readSetOfCoordinates3D
 

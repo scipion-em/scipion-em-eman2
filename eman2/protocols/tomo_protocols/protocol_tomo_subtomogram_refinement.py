@@ -42,7 +42,6 @@ import eman2
 from tomo.protocols import ProtTomoBase
 from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
 
-
 SAME_AS_PICKING = 0
 
 

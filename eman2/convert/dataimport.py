@@ -31,9 +31,9 @@ from pyworkflow.em.data import Coordinate, CTFModel
 from pyworkflow.em.data_tiltpairs import Angles
 from pyworkflow.em.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR, MDL_ZCOOR,
                                     MDL_PICKING_PARTICLE_SIZE)
-from .convert import loadJson, readCTFModel, readSetOfParticles
 
-from tomo.objects import Coordinate3D
+from eman2.constants import TOMO_NEEDED_MSG
+from .convert import loadJson, readCTFModel, readSetOfParticles
 
 
 class EmanImport:
@@ -99,6 +99,8 @@ class EmanImport:
                 raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
 
     def importCoordinates3D(self, fileName, addCoordinate):
+        from pyworkflow.utils import importFromPlugin
+        Coordinate3D = importFromPlugin("tomo.objects", "Coordinate3D", errorMsg=TOMO_NEEDED_MSG)
         if pwutils.exists(fileName):
             ext = pwutils.getExt(fileName)
 

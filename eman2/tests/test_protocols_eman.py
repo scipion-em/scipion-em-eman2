@@ -31,6 +31,8 @@ from pyworkflow.utils import importFromPlugin
 import eman2
 from eman2 import *
 from eman2.protocols import *
+from eman2.constants import TOMO_NEEDED_MSG
+
 
 class TestEmanBase(BaseTest):
     @classmethod
@@ -409,21 +411,34 @@ class TestEmanAutopick(TestEmanBase):
             print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
 
 
-class TestEmanTomoExtraction(TestEmanBase):
+class TestEmanTomoBase(TestEmanBase):
+    @classmethod
+    def setUpClass(cls):
+        setupTestProject(cls)
+
+    @classmethod
+    def setData(cls, projectData='tomo-em'):
+        DataSet = importFromPlugin("tomo.tests", "DataSet", errorMsg=TOMO_NEEDED_MSG)
+        cls.dataset = DataSet.getDataSet(projectData)
+        cls.tomogram = cls.dataset.getFile('tomo1')
+        cls.coords3D = cls.dataset.getFile('overview_wbp.txt')
+        cls.inputSetOfSubTomogram = cls.dataset.getFile('subtomo')
+
+
+class TestEmanTomoExtraction(TestEmanTomoBase):
     """This class check if the protocol to extract subtomograms
     in Eman works properly.
     """
 
     @classmethod
     def setUpClass(cls):
-        from tomo.tests import DataSet
         setupTestProject(cls)
-        cls.dataset = DataSet.getDataSet('tomo-em')
-        cls.tomogram = cls.dataset.getFile('tomo1')
-        cls.coords3D = cls.dataset.getFile('overview_wbp.txt')
+        TestEmanTomoBase.setData()
 
     def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, boxSize = 32, downFactor = 1):
-        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
+        ProtImportCoordinates3D = importFromPlugin("tomo.protocols", "ProtImportCoordinates3D", errorMsg=TOMO_NEEDED_MSG)
+        ProtImportTomograms = importFromPlugin("tomo.protocols", "ProtImportTomograms",
+                                                   errorMsg=TOMO_NEEDED_MSG)
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
@@ -522,22 +537,22 @@ class TestEmanTomoExtraction(TestEmanBase):
         self.assertTrue(output.getCoordinates3D().getObjValue())
         return protTomoExtraction
 
-class TestEmanTomoInitialModel(TestEmanBase):
+
+class TestEmanTomoInitialModel(TestEmanTomoBase):
     """This class check if the protocol to extract particles
     in Relion works properly.
     """
 
     @classmethod
     def setUpClass(cls):
-        from tomo.tests import DataSet
         setupTestProject(cls)
-        cls.dataset = DataSet.getDataSet('tomo-em')
-        cls.tomogram = cls.dataset.getFile('tomo1')
-        cls.coords3D = cls.dataset.getFile('overview_wbp.txt')
-        cls.inputSetOfSubTomogram = cls.dataset.getFile('subtomo')
+        TestEmanTomoBase.setData()
 
     def _runPreviousProtocols(self):
-        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms
+        ProtImportCoordinates3D = importFromPlugin("tomo.protocols", "ProtImportCoordinates3D",
+                                                   errorMsg=TOMO_NEEDED_MSG)
+        ProtImportTomograms = importFromPlugin("tomo.protocols", "ProtImportTomograms",
+                                                   errorMsg=TOMO_NEEDED_MSG)
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
@@ -669,21 +684,20 @@ class TestEmanTomoInitialModel(TestEmanBase):
         return protInitialModel
 
 
-class TestEmanTomoSubtomogramRefinement(TestEmanBase):
+class TestEmanTomoSubtomogramRefinement(TestEmanTomoBase):
     """This class check if the protocol Subtomogram refinement works properly.
     """
 
     @classmethod
     def setUpClass(cls):
-        from tomo.tests import DataSet
         setupTestProject(cls)
-        cls.dataset = DataSet.getDataSet('tomo-em')
-        cls.tomogram = cls.dataset.getFile('tomo1')
-        cls.inputSetOfSubTomogram = cls.dataset.getFile('subtomo')
-        cls.coords3D = cls.dataset.getFile('overview_wbp.txt')
+        TestEmanTomoBase.setData()
 
     def _runPreviousProtocols(self):
-        from tomo.protocols import ProtImportCoordinates3D, ProtImportTomograms, ProtImportSubTomograms
+        ProtImportCoordinates3D = importFromPlugin("tomo.protocols", "ProtImportCoordinates3D",
+                                                   errorMsg=TOMO_NEEDED_MSG)
+        ProtImportTomograms = importFromPlugin("tomo.protocols", "ProtImportTomograms",
+                                               errorMsg=TOMO_NEEDED_MSG)
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                               filesPath=self.tomogram,
                                               samplingRate=5)
@@ -815,20 +829,19 @@ class TestEmanTomoSubtomogramRefinement(TestEmanBase):
         return protTomoSubtomogramRefinement
 
 
-class TestEmanTomoTempMatch(TestEmanBase):
+class TestEmanTomoTempMatch(TestEmanTomoBase):
     """This class check if the program Template Matching
     from Eman works properly.
     """
 
     @classmethod
     def setUpClass(cls):
-        from tomo.tests import DataSet
         setupTestProject(cls)
-        cls.dataset = DataSet.getDataSet('tomo-em')
-        cls.tomogram = cls.dataset.getFile('tomo1')
+        TestEmanTomoBase.setData()
 
     def _runTomoTempMatch(self):
-        from tomo.protocols import ProtImportTomograms
+        ProtImportTomograms = importFromPlugin("tomo.protocols", "ProtImportTomograms",
+                                               errorMsg=TOMO_NEEDED_MSG)
         protImportTomogram = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
