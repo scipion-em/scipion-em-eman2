@@ -168,7 +168,7 @@ class EmanProtBoxing(ProtParticlePicking):
                     self._params['boxSize'] = gaussParsDict['boxsize']
                     # Run sxprocess.py to store parameters
                     program = eman2.Plugin.getProgram("sxprocess.py")
-                    argsList = ["'%s'=%s:" % (key, val) for (key, val) in gaussParsDict.iteritems()]
+                    argsList = ["'%s'=%s:" % (key, val) for (key, val) in gaussParsDict.items()]
                     args = 'demoparms --makedb ' + "".join(argsList)
                     # Remove last ":" to avoid error
                     args = args[:-1]

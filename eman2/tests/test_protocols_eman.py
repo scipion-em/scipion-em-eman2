@@ -31,13 +31,12 @@ from pwem.protocols import (ProtImportMicrographs, ProtImportParticles, ProtImpo
                             ProtImportMicrographsTiltPairs)
 from pyworkflowtests.protocols import ProtOutputTest
 
-#from pyworkflow.plugin import Domain
+from pyworkflow.plugin import Domain
 from pwem.objects.data import Pointer
 
 import eman2
 from eman2 import *
 from eman2.protocols import *
-
 
 
 class TestEmanBase(BaseTest):
@@ -302,7 +301,7 @@ class TestEmanTiltValidate(TestEmanBase):
 
         print("Extracting particle pairs")
         XmippProtExtractParticlesPairs = Domain.importFromPlugin('xmipp3.protocols',
-                                                          'XmippProtExtractParticlesPairs')
+                                                                 'XmippProtExtractParticlesPairs')
         protExtractPairs = self.newProtocol(XmippProtExtractParticlesPairs,
                                             downFactor=2.0,
                                             boxSize=128,
@@ -409,7 +408,7 @@ class TestEmanAutopick(TestEmanBase):
                                          doInvert=True)
             protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
             protPick2.boxSize.setPointer(Pointer(protAutoBoxSize,
-                                                      extended="oBoxSize"))
+                                                 extended="oBoxSize"))
             self.launchProtocol(protPick2)
             self.assertIsNotNone(protPick2.outputCoordinates,
                                  "There was a problem with e2boxer gauss auto protocol")

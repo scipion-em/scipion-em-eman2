@@ -249,7 +249,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
                     a = 1
             objDict['_index'] = int(objDict['_index'] - a)
             # Write the e2converter.py process from where to read the image
-            print >> proc.stdin, json.dumps(objDict)
+            print(json.dumps(objDict), file=proc.stdin)
             proc.stdin.flush()
             proc.stdout.readline()
         proc.kill()
@@ -297,7 +297,7 @@ def iterLstFile(filename):
 
 
 def geometryFromMatrix(matrix, inverseTransform):
-    from pwem.convert.transformations import  translation_from_matrix, euler_from_matrix
+    from pwem.convert.transformations import translation_from_matrix, euler_from_matrix
     if inverseTransform:
         from numpy.linalg import inv
         matrix = inv(matrix)
@@ -399,7 +399,7 @@ def convertReferences(refSet, outputFn):
         objDict['_index'] = int(objDict['_index'] - a)
 
         # Write the e2converter.py process from where to read the image
-        print >> proc.stdin, json.dumps(objDict)
+        print(json.dumps(objDict), file=proc.stdin)
         proc.stdin.flush()
         proc.stdout.readline()
     proc.kill()

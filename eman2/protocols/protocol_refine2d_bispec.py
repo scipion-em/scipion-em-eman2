@@ -26,7 +26,7 @@
 
 import os
 import re
-from os.path import exists, basename, join
+from os.path import exists, basename
 from glob import glob
 
 from pwem.objects import SetOfClasses2D
@@ -35,7 +35,7 @@ from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam,
                                         LabelParam)
-from pyworkflow.utils import makePath, createLink, cleanPath
+from pyworkflow.utils import createLink, cleanPath
 
 
 import eman2

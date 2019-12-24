@@ -26,6 +26,8 @@
 # *
 # **************************************************************************
 
+import os
+
 import pyworkflow.utils as pwutils
 from pwem.objects.data import Coordinate, CTFModel
 from pwem.objects.data_tiltpairs import Angles
@@ -107,9 +109,9 @@ class EmanImport:
             return md.getValue(MDL_PICKING_PARTICLE_SIZE, md.firstObject())
 
         elif coordFile.endswith('.json'):
-            infoDir = pwutils.dirname(coordFile)
+            infoDir = os.path.dirname(coordFile)
             # Still go one level up of info dir
-            jsonBase = pwutils.join(pwutils.dirname(infoDir), 'e2boxercache', 'base.json')
+            jsonBase = pwutils.join(os.path.dirname(infoDir), 'e2boxercache', 'base.json')
             jsonBase2 = pwutils.join(infoDir, 'project.json')
             if pwutils.exists(jsonBase):
                 jsonDict = loadJson(jsonBase)

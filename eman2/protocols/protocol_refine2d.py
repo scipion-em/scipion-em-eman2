@@ -29,7 +29,7 @@ import re
 from os.path import exists
 from glob import glob
 
-import pwem as em
+import pwem
 from pwem.protocols import ProtClassify2D
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam,
@@ -628,7 +628,7 @@ class EmanProtRefine2D(ProtClassify2D):
             cleanPath(data_classes)
 
         if not exists(data_classes):
-            clsSet = em.SetOfClasses2D(filename=data_classes)
+            clsSet = pwem.objects.SetOfClasses2D(filename=data_classes)
             clsSet.setImages(self._getInputParticles())
             self._fillClassesFromIter(clsSet, it)
             clsSet.write()
@@ -686,7 +686,7 @@ class EmanProtRefine2D(ProtClassify2D):
     def _updateParticle(self, item, row):
         if row[1] == 1:  # enabled
             item.setClassId(row[2] + 1)
-            item.setTransform(rowToAlignment(row[3:], em.ALIGN_2D))
+            item.setTransform(rowToAlignment(row[3:], pwem.constants.ALIGN_2D))
         else:
             setattr(item, "_appendItem", False)
 

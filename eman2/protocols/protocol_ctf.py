@@ -26,7 +26,6 @@
 
 from pyworkflow.protocol.params import (FloatParam, EnumParam,
                                         BooleanParam)
-from pyworkflow.protocol.constants import LEVEL_ADVANCED
 import pyworkflow.utils as pwutils
 from pwem.objects.data import CTFModel, SetOfParticles
 from pwem.protocols import ProtProcessParticles
@@ -147,7 +146,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
         outputSets = self._getOutputSets()
         outputs = {}
 
-        for key, fn in outputSets.iteritems():
+        for key, fn in outputSets.items():
             outputSet = self._createSetOfParticles(suffix='_%s' % key)
             outputSet.copyInfo(inputSet)
             outputSet.setIsPhaseFlipped(True)

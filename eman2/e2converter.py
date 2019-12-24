@@ -101,7 +101,7 @@ def writeParticles():
         imageData.write_image(outputFile, i,
                               eman.EMUtil.ImageType.IMAGE_HDF, False)
         i += 1
-        print("OK") # it is necessary to add newline
+        print("OK")  # it is necessary to add newline
         sys.stdout.flush()
         line = sys.stdin.readline()
 
@@ -153,10 +153,10 @@ def readParticles(inputParts, inputCls, inputClasses, outputTxt, alitype='3d'):
                 shifts = transform.get_trans()
                 shiftX, shiftY = shifts[0], shifts[1]
 
-                print >> f, index, enable, int(classNum), rot, tilt, psi, shiftX, shiftY
+                print(f, index, enable, int(classNum), rot, tilt, psi, shiftX, shiftY)
             else:
                 # disabled image
-                print >> f, index, 0
+                print(f, index, 0)
 
     else:
         # reading 3d refinement results
@@ -219,10 +219,10 @@ def readParticles(inputParts, inputCls, inputClasses, outputTxt, alitype='3d'):
                 shifts = transform.get_trans()
                 shiftX, shiftY = shifts[0], shifts[1]
 
-                print >> f, index, enable, rot, tilt, psi, shiftX, shiftY
+                print(f, index, enable, rot, tilt, psi, shiftX, shiftY)
             else:
                 # disabled image
-                print >> f, index, 0
+                print(f, index, 0)
 
     f.close()
 

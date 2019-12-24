@@ -673,7 +673,7 @@ Examples:
 
         for i, line in enumerate(f):
             if '#' not in line:
-                angles = map(float, line.split())
+                angles = list(map(float, line.split()))
                 if angles[1] != 0:  # skip disabled images
                     rot = float("{0:.2f}".format(angles[2]))
                     tilt = float("{0:.2f}".format(angles[3]))
