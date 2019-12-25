@@ -39,6 +39,7 @@ from eman2.protocols import SparxGaussianProtPicking
 # PICKER
 # =============================================================================
 
+
 class SparxGaussianPickerWizard(EmWizard):
     _targets = [(SparxGaussianProtPicking, ['boxSize',
                                             'lowerThreshold', 'higherThreshold',

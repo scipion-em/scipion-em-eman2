@@ -370,7 +370,7 @@ Major features of this program:
 
         refVolFn = "ref_vol.hdf"
         origVol = os.path.relpath(self.input3DReference.get().getFileName(),
-                               self._getExtraPath()).replace(":mrc", "")
+                                  self._getExtraPath()).replace(":mrc", "")
         args = "%s %s --apix=%0.3f" % (origVol, refVolFn,
                                        self.input3DReference.get().getSamplingRate())
         self.runJob(eman2.Plugin.getProgram('e2proc3d.py'), args,
@@ -538,11 +538,11 @@ Major features of this program:
         angles = self._getFileName('angles', iter=iterN)
 
         if not os.path.exists(angles) and os.path.exists(self._getFileName('clsEven',
-                                                           run=numRun, iter=iterN)):
+                                                                           run=numRun, iter=iterN)):
             proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 3d'
-                                          % (self._getParticlesStack(), clsFn, classesFn,
-                                             self._getBaseName('angles', iter=iterN)),
-                                     direc=self._getExtraPath())
+                                                       % (self._getParticlesStack(), clsFn, classesFn,
+                                                          self._getBaseName('angles', iter=iterN)),
+                                                  direc=self._getExtraPath())
             proc.wait()
 
     def _isVersion23(self):

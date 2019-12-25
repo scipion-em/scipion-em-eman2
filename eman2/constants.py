@@ -34,7 +34,7 @@ EMAN2_HOME = 'EMAN2_HOME'
 V2_21 = '2.21'
 V2_3 = '2.3'
 
-#------------------ Constants values ------------------------------------------
+# ------------------ Constants values -----------------------------------------
 
 # ctf processing type
 HIRES = 0
@@ -113,7 +113,7 @@ AVG_MINMAX = 9
 AVG_SIGMA = 10
 AVG_WEIGHTEDFOURIER = 11
 
-#processors normalize
+# processors normalize
 PROC_NORMALIZE = 0
 PROC_NORMALIZE_BYMASS = 1
 PROC_NORMALIZE_CIRCLEMEAN = 2

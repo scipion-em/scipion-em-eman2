@@ -35,8 +35,8 @@ from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER, WEB_DJANGO)
 from pwem.objects.data import FSC
 import pwem.viewers.showj as showj
 from pwem.viewers import (ObjectView, DataView, EmPlotter,
-                                   ChimeraView, ChimeraClientView, ClassesView,
-                                   DataViewer, FscViewer)
+                          ChimeraView, ChimeraClientView, ClassesView,
+                          DataViewer, FscViewer)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.executor import StepExecutor
 from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
@@ -190,7 +190,7 @@ Examples:
         labels = 'enabled id _size _representative._filename '
         viewParams = {showj.ORDER: labels,
                       showj.VISIBLE: labels,
-                      showj.RENDER:'_representative._filename',
+                      showj.RENDER: '_representative._filename',
                       showj.SORT_BY: '_size desc'
                       }
 
@@ -804,7 +804,7 @@ class TiltValidateViewer(ProtocolViewer):
 
         if pwutils.exists(fileName):
             jsonPosDict = loadJson(fileName)
-            if jsonPosDict.has_key("particletilt_list"):
+            if "particletilt_list" in jsonPosDict:
                 tiltpairs = jsonPosDict["particletilt_list"]
                 maxcolorval = max(tiltpairs, key=lambda x: x[3])[3]
 
@@ -887,7 +887,7 @@ class CtfViewer(ProtocolViewer):
     def _showCtf(self, paramName=None):
         views = []
         obj = "obj = self.protocol." + self.getEnumText('outputType')
-        exec (obj)
+        exec(obj)
         strId = obj.strId()
         fn = obj.getFileName()
         particlesView = ObjectView(self._project, strId, fn)

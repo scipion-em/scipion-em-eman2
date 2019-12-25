@@ -95,7 +95,7 @@ class EmanProtRefine2D(ProtClassify2D):
         #  number and is restricted to only 2 digits.
         self._iterRegex = re.compile('classes_(\d{2})')
 
-    #--------------------------- DEFINE param functions -----------------------
+    # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         form.addSection(label='Input')
         form.addParam('doContinue', BooleanParam, default=False,
@@ -392,7 +392,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
         form.addParallelSection(threads=4, mpi=1)
 
-    #--------------------------- INSERT steps functions -----------------------
+    # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._createIterTemplates(self._getRun())
@@ -407,7 +407,7 @@ class EmanProtRefine2D(ProtClassify2D):
         self._insertFunctionStep('refineStep', args)
         self._insertFunctionStep('createOutputStep')
 
-    #--------------------------- STEPS functions ------------------------------
+    # --------------------------- STEPS functions -----------------------------
     def createLinkSteps(self):
         continueRun = self.continueRun.get()
         prevPartDir = continueRun._getExtraPath("particles")
@@ -468,7 +468,7 @@ class EmanProtRefine2D(ProtClassify2D):
         self._defineOutputs(outputClasses=classes2D)
         self._defineSourceRelation(self.inputParticles, classes2D)
 
-    #--------------------------- INFO functions -------------------------------
+    # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
 
@@ -494,7 +494,7 @@ class EmanProtRefine2D(ProtClassify2D):
         methods += "into %d classes using e2refine2d.py " % self.numberOfClassAvg
         return [methods]
 
-    #--------------------------- UTILS functions ------------------------------
+    # --------------------------- UTILS functions -----------------------------
     def _prepareParams(self):
         args1 = " --input=%s" % self._getParticlesStack()
         if self.inputClassAvg.hasValue():

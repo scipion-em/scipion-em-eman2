@@ -149,7 +149,8 @@ class EmanProtBoxing(ProtParticlePicking):
             # Function to check if gaussian algorithm was used to pick
             # and if so ask user if she wants to perform an automatic
             # picking for the remaining micrographs
-            gaussJsonFile = os.path.join("e2boxercache", "gauss_box_DB.json") #join("e2boxercache", "gauss_box_DB.json")
+            gaussJsonFile = os.path.join("e2boxercache", "gauss_box_DB.json")
+            # join("e2boxercache", "gauss_box_DB.json")
             # Check if gauss json file exists and load it
             if os.path.exists(gaussJsonFile):
                 jsonGaussDict = loadJson(gaussJsonFile)

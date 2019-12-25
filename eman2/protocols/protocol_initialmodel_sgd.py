@@ -196,7 +196,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
         if isinstance(inputSet, SetOfClasses2D):
             volumes.setSamplingRate(inputSet.getImages().getSamplingRate() * shrink)
         elif isinstance(inputSet, SetOfAverages):
-                volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
+            volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
         else:
             volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
 

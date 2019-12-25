@@ -227,7 +227,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
         return errors
 
     def _summary(self):
-        summary = []
+        summary = list()
         summary.append("Max. tilt angle: *%0.2f*" % self.maxtilt.get())
         summary.append("Projection step: *%d deg.*" % self.delta.get())
         summary.append("Symmetry: *%s*" % self.symmetry.get())
@@ -271,8 +271,8 @@ class EmanProtTiltValidate(ProtAnalysis3D):
     def _getSimmxOpts(self, option):
         optionType = "optionType = self.getEnumText('" + option + "Type')"
         optionParams = 'optionParams = self.' + option + 'Params.get()'
-        exec (optionType)
-        exec (optionParams)
+        exec(optionType)
+        exec(optionParams)
 
         if optionType == 'None':
             return ''

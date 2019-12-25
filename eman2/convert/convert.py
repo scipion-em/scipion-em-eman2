@@ -61,9 +61,9 @@ def readCTFModel(ctfModel, filename):
     keyPos = None
     ctfPhaseShift = 0.0
 
-    if jsonDict.has_key('ctf_frame'):
+    if 'ctf_frame' in jsonDict:
         keyPos = jsonDict['ctf_frame'][1]
-    elif jsonDict.has_key('ctf'):
+    elif 'ctf' in jsonDict:
         keyPos = jsonDict['ctf'][0]
     else:
         setWrongDefocus(ctfModel)
@@ -78,7 +78,7 @@ def readCTFModel(ctfModel, filename):
         ctfPhaseShift = calculatePhaseShift(ampcont)
 
         ctfModel.setStandardDefocus(defocusU, defocusV, defocusAngle)
-        if jsonDict.has_key('ctf_im2d'):
+        if 'ctf_im2d' in jsonDict:
             # psdFile = jsonDict['ctf_im2d']['__image__'][0]
             fnBase = pwutils.removeExt(filename) + '_jsonimg'
             psdFile = "1@%s.hdf" % fnBase
@@ -138,7 +138,7 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
     if pwutils.exists(fileName):
         jsonPosDict = loadJson(fileName)
 
-        if jsonPosDict.has_key("boxes"):
+        if "boxes" in jsonPosDict:
             boxes = jsonPosDict["boxes"]
 
             for box in boxes:
@@ -282,7 +282,7 @@ def convertImage(inputLoc, outputLoc):
             return loc
 
     proc = eman2.Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
-                                                        _getFn(outputLoc)))
+                                                                     _getFn(outputLoc)))
     proc.wait()
 
 
@@ -312,7 +312,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     """ Create the transformation matrix from a given
     2D shifts in X and Y...and the 3 euler angles.
     """
-    from pwem.convert.transformations import  euler_matrix
+    from pwem.convert.transformations import euler_matrix
     from numpy import deg2rad
     radAngles = -deg2rad(angles)
 
