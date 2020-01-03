@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -26,6 +26,7 @@
 
 import os
 import math
+from io import open
 
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.gui.text as text
@@ -36,20 +37,20 @@ from pwem.objects.data import FSC
 import pwem.viewers.showj as showj
 from pwem.viewers import (ObjectView, DataView, EmPlotter,
                           ChimeraView, ChimeraClientView, ClassesView,
-                          DataViewer, FscViewer)
+                          DataViewer, FscViewer, EmProtocolViewer)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.executor import StepExecutor
 from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
                                         EnumParam, FloatParam, IntParam, BooleanParam)
 import pyworkflow.utils as pwutils
 
-import eman2
-from eman2.constants import *
-from eman2.convert import loadJson
-from eman2.protocols import (EmanProtBoxing, EmanProtCTFAuto,
-                             EmanProtInitModel, EmanProtRefine2D,
-                             EmanProtRefine2DBispec, EmanProtRefine,
-                             EmanProtTiltValidate, EmanProtInitModelSGD)
+from . import Plugin
+from .constants import *
+from .convert import loadJson
+from .protocols import (EmanProtBoxing, EmanProtCTFAuto,
+                        EmanProtInitModel, EmanProtRefine2D,
+                        EmanProtRefine2DBispec, EmanProtRefine,
+                        EmanProtTiltValidate, EmanProtInitModelSGD)
 
 
 class EmanViewer(DataViewer):
@@ -237,7 +238,7 @@ Examples:
         return self.protocol.getClassName() == 'EmanProtRefine2D'
 
 
-class RefineEasyViewer(ProtocolViewer):
+class RefineEasyViewer(EmProtocolViewer):
     """ Visualization of e2refine_easy results. """
 
     _targets = [EmanProtRefine]
@@ -358,7 +359,7 @@ Examples:
                           env=self._env, viewParams=viewParams)
 
     def _runEulerXplor(self, paramName=None):
-        program = eman2.Plugin.getProgram('e2eulerxplor.py')
+        program = Plugin.getProgram('e2eulerxplor.py')
         hostConfig = self.protocol.getHostConfig()
         # Create the steps executor
         executor = StepExecutor(hostConfig)
@@ -769,7 +770,7 @@ class TiltValidateViewer(ProtocolViewer):
         return xplotter
 
     def _showEmanPlot(self, paramName=None):
-        program = eman2.Plugin.getProgram('e2tiltvalidate.py')
+        program = Plugin.getProgram('e2tiltvalidate.py')
         args = "--path=TiltValidate_01 --radcut=%0.2f --gui --planethres=%0.2f" % (
             self.radcut.get(), self.planethres.get())
         if self.colozaxis:
@@ -895,7 +896,7 @@ class CtfViewer(ProtocolViewer):
         return views
 
     def _showEmanCtf(self, paramName=None):
-        program = eman2.Plugin.getProgram('e2ctf.py')
+        program = Plugin.getProgram('e2ctf.py')
         args = '--allparticles --minptcl=0 --minqual=0'
         args += ' --gui --constbfactor=-1.0 --sf=auto'
 

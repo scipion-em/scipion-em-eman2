@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -29,14 +29,13 @@ from pyworkflow.tests import (BaseTest, setupTestProject, DataSet)
 from pwem.protocols import (ProtImportMicrographs, ProtImportParticles, ProtImportVolumes,
                             ProtImportAverages, ProtImportCoordinatesPairs,
                             ProtImportMicrographsTiltPairs)
+from pwem import Domain
 from pyworkflowtests.protocols import ProtOutputTest
 
-from pyworkflow.plugin import Domain
 from pwem.objects.data import Pointer
 
-import eman2
-from eman2 import *
-from eman2.protocols import *
+from .. import Plugin
+from ..protocols import *
 
 
 class TestEmanBase(BaseTest):
@@ -375,7 +374,7 @@ class TestEmanAutopick(TestEmanBase):
                              "There was a problem with e2boxer auto protocol")
 
     def test_AutopickSparx(self):
-        if not eman2.Plugin.isVersion('2.21'):
+        if not Plugin.isVersion('2.21'):
             print("Run Eman auto picking with gauss/sparx")
             protPick2 = self.newProtocol(SparxGaussianProtPicking,
                                          boxSize=128,
@@ -392,7 +391,7 @@ class TestEmanAutopick(TestEmanBase):
             print("Auto picking with gauss/sparx does not work in EMAN 2.21. Skipping test..")
 
     def test_AutopickSparxPointer(self):
-        if not eman2.Plugin.isVersion('2.21'):
+        if not Plugin.isVersion('2.21'):
             print("Simulating an automatic protocol to estimate the boxSize")
             protAutoBoxSize = self.newProtocol(ProtOutputTest,
                                                iBoxSize=64,  # output is twice

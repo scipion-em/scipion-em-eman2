@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -34,7 +34,7 @@ from pyworkflow.protocol.params import (PointerParam, TextParam, IntParam,
 from pwem.protocols import ProtInitialVolume
 from pwem.objects.data import SetOfClasses2D, Volume
 
-import eman2
+from .. import Plugin, SCRATCHDIR
 
 
 class EmanProtInitModel(ProtInitialVolume):
@@ -157,7 +157,7 @@ class EmanProtInitModel(ProtInitialVolume):
         orig = os.path.relpath(tmpStack,
                                self._getExtraPath())
         args = "%s %s --apix=%0.3f" % (orig, self._params['relImgsFn'], pixSize)
-        self.runJob(eman2.Plugin.getProgram('e2proc2d.py'), args,
+        self.runJob(Plugin.getProgram('e2proc2d.py'), args,
                     cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
@@ -165,9 +165,9 @@ class EmanProtInitModel(ProtInitialVolume):
         """ Run the EMAN program to create the initial model. """
         cleanPattern(self._getExtraPath('initial_models'))
         if self._isHighSym():
-            program = eman2.Plugin.getProgram('e2initialmodel_hisym.py')
+            program = Plugin.getProgram('e2initialmodel_hisym.py')
         else:
-            program = eman2.Plugin.getProgram('e2initialmodel.py')
+            program = Plugin.getProgram('e2initialmodel.py')
 
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -217,7 +217,7 @@ class EmanProtInitModel(ProtInitialVolume):
                         'symmetry': self.symmetry.get(),
                         'threads': self.numberOfThreads.get(),
                         'mpis': self.numberOfMpi.get(),
-                        'scratch': eman2.SCRATCHDIR}
+                        'scratch': SCRATCHDIR}
 
     def _isHighSym(self):
         return self.symmetry.get() in ["oct", "tet", "icos"]
@@ -231,4 +231,4 @@ class EmanProtInitModel(ProtInitialVolume):
         return outputVols
 
     def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')
+        return Plugin.isVersion('2.3')

@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -31,9 +31,9 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam,
 import pyworkflow.utils as pwutils
 from pwem.protocols import ProtAnalysis3D
 
-import eman2
-from eman2.constants import *
-from eman2.convert import writeSetOfParticles
+from .. import Plugin
+from ..constants import *
+from ..convert import writeSetOfParticles
 
 
 class EmanProtTiltValidate(ProtAnalysis3D):
@@ -204,14 +204,14 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                                 alignType=partAlign, suffix=suffix)
 
             setName = suffix.split('_')[1]
-            program = eman2.Plugin.getProgram('e2buildsets.py')
+            program = Plugin.getProgram('e2buildsets.py')
             args = " particles/*%s.hdf --setname=%s --minhisnr=-1" % (
                 suffix, setName)
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
     def runValidateStep(self, args):
-        program = eman2.Plugin.getProgram('e2tiltvalidate.py')
+        program = Plugin.getProgram('e2tiltvalidate.py')
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
     def createOutputStep(self):

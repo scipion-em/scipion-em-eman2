@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -25,15 +25,16 @@
 # **************************************************************************
 
 import os
+from io import open
 
 import pyworkflow as pw
 from pwem.wizards.wizard import EmWizard
 from pwem.viewers import CoordinatesObjectView
 from pyworkflow.utils import makePath, cleanPath, readProperties
 
-import eman2
-from eman2.convert import writeSetOfMicrographs
-from eman2.protocols import SparxGaussianProtPicking
+from . import Plugin
+from .convert import writeSetOfMicrographs
+from .protocols import SparxGaussianProtPicking
 
 # =============================================================================
 # PICKER
@@ -68,7 +69,7 @@ class SparxGaussianPickerWizard(EmWizard):
         pickerProps = os.path.join(coordsDir, 'picker.conf')
         f = open(pickerProps, "w")
         params = ['boxSize', 'lowerThreshold', 'higherThreshold', 'gaussWidth']
-        program = eman2.Plugin.getBoxerCommand(boxerVersion='old')
+        program = Plugin.getBoxerCommand(boxerVersion='old')
 
         extraParams = "invert_contrast=%s:use_variance=%s:%s" % (
             autopickProt.doInvert,
@@ -78,7 +79,7 @@ class SparxGaussianPickerWizard(EmWizard):
         args = {
             "params": ','.join(params),
             "preprocess": "%s %s" % (pw.getScipionScript(),
-                                     eman2.Plugin.getProgram('sxprocess.py')),
+                                     Plugin.getProgram('sxprocess.py')),
             "picker": "%s %s" % (pw.getScipionScript(), program),
             "convert": pw.join('apps', 'pw_convert.py'),
             'coordsDir': coordsDir,

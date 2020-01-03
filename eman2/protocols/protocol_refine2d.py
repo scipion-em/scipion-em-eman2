@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -28,6 +28,7 @@ import os
 import re
 from os.path import exists
 from glob import glob
+from io import open
 
 import pwem
 from pwem.protocols import ProtClassify2D
@@ -37,10 +38,10 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.utils.path import makePath, cleanPath, createLink
 
-import eman2
-from eman2.convert import (rowToAlignment, writeSetOfParticles,
-                           convertReferences)
-from eman2.constants import *
+from .. import Plugin, SCRATCHDIR
+from ..convert import (rowToAlignment, writeSetOfParticles,
+                       convertReferences)
+from ..constants import *
 
 
 class EmanProtRefine2D(ProtClassify2D):
@@ -430,7 +431,7 @@ class EmanProtRefine2D(ProtClassify2D):
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
 
         if not self.skipctf:
-            program = eman2.Plugin.getProgram('e2ctf.py')
+            program = Plugin.getProgram('e2ctf.py')
             acq = partSet.getAcquisition()
             args = " --voltage %d" % acq.getVoltage()
             args += " --cs %f" % acq.getSphericalAberration()
@@ -443,7 +444,7 @@ class EmanProtRefine2D(ProtClassify2D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = eman2.Plugin.getProgram('e2buildsets.py')
+        program = Plugin.getProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -455,7 +456,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
     def refineStep(self, args):
         """ Run the EMAN program to refine 2d. """
-        program = eman2.Plugin.getProgram('e2refine2d.py')
+        program = Plugin.getProgram('e2refine2d.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -550,7 +551,7 @@ class EmanProtRefine2D(ProtClassify2D):
                   'classiter': self.classIter.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': eman2.SCRATCHDIR}
+                  'scratch': SCRATCHDIR}
         args = args % params
 
         if self.extraParams.hasValue():
@@ -657,7 +658,7 @@ class EmanProtRefine2D(ProtClassify2D):
         clsFn = self._getFileName("cls", run=numRun, iter=iterN)
         classesFn = self._getFileName("classes", run=numRun, iter=iterN)
 
-        proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 2d'
+        proc = Plugin.createEmanProcess(args='read %s %s %s %s 2d'
                                                    % (self._getParticlesStack(), clsFn, classesFn,
                                                       self._getBaseName('results', iter=iterN)),
                                               direc=self._getExtraPath())

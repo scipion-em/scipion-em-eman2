@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -30,9 +30,9 @@ import pyworkflow.utils as pwutils
 from pwem.objects.data import CTFModel, SetOfParticles
 from pwem.protocols import ProtProcessParticles
 
-import eman2
-from eman2.constants import *
-from eman2.convert import writeSetOfParticles, iterLstFile, jsonToCtfModel
+from .. import Plugin
+from ..constants import *
+from ..convert import writeSetOfParticles, iterLstFile, jsonToCtfModel
 
 
 class EmanProtCTFAuto(ProtProcessParticles):
@@ -137,7 +137,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
     def runCTFStep(self, args):
         """ Run the EMAN e2ctf_auto.py program. """
-        program = eman2.Plugin.getProgram('e2ctf_auto.py')
+        program = Plugin.getProgram('e2ctf_auto.py')
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfThreads=1)
 
@@ -289,4 +289,4 @@ class EmanProtCTFAuto(ProtProcessParticles):
         return newPixSize
 
     def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')
+        return Plugin.isVersion('2.3')

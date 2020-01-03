@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -33,9 +33,9 @@ from pyworkflow.protocol.params import (IntParam, FloatParam,
 from pwem.protocols import ProtParticlePickingAuto
 from pyworkflow.utils import makePath, createLink
 
-import eman2
-from eman2.convert import readSetOfCoordinates, convertReferences
-from eman2.constants import *
+from .. import Plugin
+from ..convert import readSetOfCoordinates, convertReferences
+from ..constants import *
 
 
 class EmanProtAutopick(ProtParticlePickingAuto):
@@ -160,7 +160,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                 params += " --device=cpu"
 
         params += ' %s' % micFile
-        program = eman2.Plugin.getBoxerCommand()
+        program = Plugin.getBoxerCommand()
 
         self.runJob(program, params, cwd=self.getCoordsDir())
 
@@ -189,4 +189,4 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         readSetOfCoordinates(workingDir, micList, coordSet, newBoxer=True)
 
     def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')
+        return Plugin.isVersion('2.3')

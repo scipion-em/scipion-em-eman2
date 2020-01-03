@@ -10,7 +10,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -32,6 +32,7 @@ import glob
 import json
 import numpy
 import os
+from io import open
 
 import pwem.constants as emcts
 import pyworkflow.utils as pwutils
@@ -39,7 +40,7 @@ from pwem.objects.data import Coordinate, Particle, Transform
 from pwem.convert import ImageHandler
 import pwem.metadata as md
 
-import eman2
+from .. import Plugin
 
 
 def loadJson(jsonFn):
@@ -211,7 +212,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
 
         fileName = ""
         a = 0
-        proc = eman2.Plugin.createEmanProcess(args='write')
+        proc = Plugin.createEmanProcess(args='write')
 
         for i, part in iterParticlesByMic(partSet):
             micName = micId = part.getMicId()
@@ -260,7 +261,7 @@ def getImageDimensions(imageFile):
      not currently supported by the native image library (Xmipp).
      Underneath, it will call a script to do the job.
     """
-    proc = eman2.Plugin.createEmanProcess('e2ih.py', args=imageFile)
+    proc = Plugin.createEmanProcess('e2ih.py', args=imageFile)
     return tuple(map(int, proc.stdout.readline().split()))
 
 
@@ -281,7 +282,7 @@ def convertImage(inputLoc, outputLoc):
         else:
             return loc
 
-    proc = eman2.Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
+    proc = Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
                                                                      _getFn(outputLoc)))
     proc.wait()
 
@@ -292,7 +293,7 @@ def iterLstFile(filename):
         if '#' not in line:
             # Decompose Eman filename
             index, filename = int(line.split()[0]) + 1, line.split()[1]
-            yield (index, filename)
+            yield index, filename
     f.close()
 
 
@@ -382,7 +383,7 @@ def convertReferences(refSet, outputFn):
     """
     fileName = ""
     a = 0
-    proc = eman2.Plugin.createEmanProcess(args='write')
+    proc = Plugin.createEmanProcess(args='write')
 
     for part in refSet:
         objDict = part.getObjDict()

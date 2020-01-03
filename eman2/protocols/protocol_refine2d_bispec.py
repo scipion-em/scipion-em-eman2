@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -28,6 +28,7 @@ import os
 import re
 from os.path import exists, basename
 from glob import glob
+from io import open
 
 from pwem.objects import SetOfClasses2D
 from pwem.protocols import ProtClassify2D
@@ -38,8 +39,8 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
 from pyworkflow.utils import createLink, cleanPath
 
 
-import eman2
-from eman2.constants import *
+from .. import Plugin, SCRATCHDIR
+from ..constants import *
 
 
 class EmanProtRefine2DBispec(ProtClassify2D):
@@ -277,7 +278,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
 
     def refineStep(self, args):
         """ Run the EMAN program to refine 2d. """
-        program = eman2.Plugin.getProgram('e2refine2d_bispec.py')
+        program = Plugin.getProgram('e2refine2d_bispec.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -351,7 +352,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                   'classiter': self.classIter.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': eman2.SCRATCHDIR
+                  'scratch': SCRATCHDIR
                   }
         args = args % params
 
@@ -444,7 +445,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
         clsFn = self._getFileName("cls", run=1, iter=iterN)
         classesFn = self._getFileName("classes", run=1, iter=iterN)
 
-        proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 2d'
+        proc = Plugin.createEmanProcess(args='read %s %s %s %s 2d'
                                                    % (self._getParticlesStack(), clsFn, classesFn,
                                                       self._getBaseName('results', iter=iterN)),
                                               direc=self._getExtraPath())
@@ -486,4 +487,4 @@ class EmanProtRefine2DBispec(ProtClassify2D):
         return self.inputBispec.get()
 
     def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')
+        return Plugin.isVersion('2.3')

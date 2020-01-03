@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -27,18 +27,19 @@
 import os
 import re
 from glob import glob
+from io import open
+
 import pwem
 from pwem.protocols import ProtRefine3D
-
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam)
 from pyworkflow.utils.path import cleanPattern, makePath, createLink
 from pwem.objects.data import Volume
 
-import eman2
-from eman2.convert import rowToAlignment, writeSetOfParticles
-from eman2.constants import *
+from .. import Plugin, SCRATCHDIR
+from ..convert import rowToAlignment, writeSetOfParticles
+from ..constants import *
 
 
 class EmanProtRefine(ProtRefine3D):
@@ -282,7 +283,7 @@ Major features of this program:
         makePath(storePath)
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
         if not self.skipctf:
-            program = eman2.Plugin.getProgram('e2ctf.py')
+            program = Plugin.getProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %d" % acq.getVoltage()
@@ -296,7 +297,7 @@ Major features of this program:
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = eman2.Plugin.getProgram('e2buildsets.py')
+        program = Plugin.getProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -305,7 +306,7 @@ Major features of this program:
         """ Run the EMAN program to refine a volume. """
         if not self.doContinue:
             cleanPattern(self._getExtraPath('refine_01'))
-        program = eman2.Plugin.getProgram('e2refine_easy.py')
+        program = Plugin.getProgram('e2refine_easy.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -373,7 +374,7 @@ Major features of this program:
                                   self._getExtraPath()).replace(":mrc", "")
         args = "%s %s --apix=%0.3f" % (origVol, refVolFn,
                                        self.input3DReference.get().getSamplingRate())
-        self.runJob(eman2.Plugin.getProgram('e2proc3d.py'), args,
+        self.runJob(Plugin.getProgram('e2proc3d.py'), args,
                     cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
@@ -410,7 +411,7 @@ Major features of this program:
                   'm3dKeep': self.m3dKeep.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': eman2.SCRATCHDIR
+                  'scratch': SCRATCHDIR
                   }
         args = args % params
 
@@ -539,11 +540,11 @@ Major features of this program:
 
         if not os.path.exists(angles) and os.path.exists(self._getFileName('clsEven',
                                                                            run=numRun, iter=iterN)):
-            proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 3d'
+            proc = Plugin.createEmanProcess(args='read %s %s %s %s 3d'
                                                        % (self._getParticlesStack(), clsFn, classesFn,
                                                           self._getBaseName('angles', iter=iterN)),
                                                   direc=self._getExtraPath())
             proc.wait()
 
     def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')
+        return Plugin.isVersion('2.3')

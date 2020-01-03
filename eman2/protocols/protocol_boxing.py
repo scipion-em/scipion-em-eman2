@@ -8,7 +8,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -35,8 +35,8 @@ from pyworkflow.gui.dialog import askYesNo
 from pwem.protocols import ProtParticlePicking
 from pyworkflow.protocol.params import BooleanParam, IntParam, StringParam
 
-import eman2
-from eman2.convert import loadJson, readSetOfCoordinates
+from .. import Plugin
+from ..convert import loadJson, readSetOfCoordinates
 
 
 class EmanProtBoxing(ProtParticlePicking):
@@ -110,12 +110,12 @@ class EmanProtBoxing(ProtParticlePicking):
     # --------------------------- STEPS functions -----------------------------
     def launchBoxingGUIStep(self):
         # Print the eman version, useful to report bugs
-        self.runJob(eman2.Plugin.getProgram('e2version.py'), '')
+        self.runJob(Plugin.getProgram('e2version.py'), '')
         useNewBoxer = self._useNewBoxer()
         # Program to execute and it arguments
         boxerVersion = 'old' if not useNewBoxer else 'new'
-        boxer = eman2.Plugin.getBoxerCommand(boxerVersion=boxerVersion)
-        program = eman2.Plugin.getProgram(boxer)
+        boxer = Plugin.getBoxerCommand(boxerVersion=boxerVersion)
+        program = Plugin.getProgram(boxer)
         arguments = ''
 
         if useNewBoxer:
@@ -168,7 +168,7 @@ class EmanProtBoxing(ProtParticlePicking):
                     # picking for the rest of mics
                     self._params['boxSize'] = gaussParsDict['boxsize']
                     # Run sxprocess.py to store parameters
-                    program = eman2.Plugin.getProgram("sxprocess.py")
+                    program = Plugin.getProgram("sxprocess.py")
                     argsList = ["'%s'=%s:" % (key, val) for (key, val) in gaussParsDict.items()]
                     args = 'demoparms --makedb ' + "".join(argsList)
                     # Remove last ":" to avoid error
@@ -179,8 +179,8 @@ class EmanProtBoxing(ProtParticlePicking):
                     # Now run e2boxer.py with stored parameters
                     arguments = "--gauss_autoboxer=demoparms --write_dbbox "
                     arguments += " --boxsize=%(boxSize)s " + "%(inputMics)s"
-                    boxer = eman2.Plugin.getBoxerCommand(boxerVersion='old')
-                    program = eman2.Plugin.getProgram(boxer)
+                    boxer = Plugin.getBoxerCommand(boxerVersion='old')
+                    program = Plugin.getProgram(boxer)
                     self._log.info('Launching: ' + program + ' ' + arguments % self._params)
                     self.runJob(program, arguments % self._params, cwd=self.getCoordsDir())
 
@@ -222,4 +222,4 @@ class EmanProtBoxing(ProtParticlePicking):
         return True if self.useNewBoxer else False
 
     def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')
+        return Plugin.isVersion('2.3')
