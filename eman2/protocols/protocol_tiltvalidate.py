@@ -269,10 +269,8 @@ class EmanProtTiltValidate(ProtAnalysis3D):
         return args
 
     def _getSimmxOpts(self, option):
-        optionType = "optionType = self.getEnumText('" + option + "Type')"
-        optionParams = 'optionParams = self.' + option + 'Params.get()'
-        exec(optionType)
-        exec(optionParams)
+        optionType = self.getEnumText(option + 'Type')
+        optionParams = getattr(self, option + 'Params').get()
 
         if optionType == 'None':
             return ''

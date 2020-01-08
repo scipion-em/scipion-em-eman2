@@ -114,7 +114,7 @@ def readParticles(inputParts, inputCls, inputClasses, outputTxt, alitype='3d'):
     shiftYList = {}
     dAlphaList = {}
     flipList = {}
-    f = open(outputTxt, 'w')
+    f = open(outputTxt, 'wb')
 
     if alitype == '2d':
         # reading 2d refinement results
@@ -154,10 +154,10 @@ def readParticles(inputParts, inputCls, inputClasses, outputTxt, alitype='3d'):
                 shifts = transform.get_trans()
                 shiftX, shiftY = shifts[0], shifts[1]
 
-                print(f, index, enable, int(classNum), rot, tilt, psi, shiftX, shiftY)
+                f.write(('{} '*8 + '\n').format(index, enable, int(classNum), rot, tilt, psi, shiftX, shiftY))
             else:
                 # disabled image
-                print(f, index, 0)
+                f.write(('{} '*2 + '\n').format(index, 0))
 
     else:
         # reading 3d refinement results
@@ -220,10 +220,10 @@ def readParticles(inputParts, inputCls, inputClasses, outputTxt, alitype='3d'):
                 shifts = transform.get_trans()
                 shiftX, shiftY = shifts[0], shifts[1]
 
-                print(f, index, enable, rot, tilt, psi, shiftX, shiftY)
+                f.write(('{} '*7 + '\n').format(index, enable, rot, tilt, psi, shiftX, shiftY))
             else:
                 # disabled image
-                print(f, index, 0)
+                f.write(('{} '*2 + '\n').format(index, 0))
 
     f.close()
 
