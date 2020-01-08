@@ -31,7 +31,7 @@ import os
 import pyworkflow.utils as pwutils
 from pwem.objects.data import Coordinate, CTFModel
 from pwem.objects.data_tiltpairs import Angles
-from xmippLib import MetaData, MDL_XCOOR, MDL_YCOOR, MDL_PICKING_PARTICLE_SIZE
+from pwem.metadata import MetaData, MDL_XCOOR, MDL_YCOOR, MDL_PICKING_PARTICLE_SIZE
 from .convert import loadJson, readCTFModel, readSetOfParticles
 
 

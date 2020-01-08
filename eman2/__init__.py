@@ -108,7 +108,17 @@ class Plugin(pwem.Plugin):
         print("** Running: '%s'" % cmd)
         proc = subprocess.Popen(cmd, shell=True, env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE, cwd=direc)
+                                stdout=subprocess.PIPE,
+                                cwd=direc,
+                                universal_newlines=True)
+
+        # Python 2 to 3 conversion: iterating over lines in subprocess stdout -> If universal_newlines is False the file
+        # objects stdin, stdout and stderr will be opened as binary streams, and no line ending conversion is done.
+        # If universal_newlines is True, these file objects will be opened as text streams in universal newlines mode
+        # using the encoding returned by locale.getpreferredencoding(False). For stdin, line ending characters '\n' in
+        # the input will be converted to the default line separator os.linesep. For stdout and stderr, all line endings
+        # in the output will be converted to '\n'. For more information see the documentation of the io.TextIOWrapper
+        # class when the newline argument to its constructor is None.
 
         return proc
 

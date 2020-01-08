@@ -596,7 +596,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
         for line in f:
             if '#' not in line:
-                yield map(float, line.split())
+                yield list(map(float, line.split()))
 
         f.close()
 
@@ -670,10 +670,8 @@ class EmanProtRefine2D(ProtClassify2D):
                                               self._getExtraPath(classesFn))
 
     def _getOptsString(self, option):
-        optionType = "optionType = self.getEnumText('" + option + "Type')"
-        optionParams = 'optionParams = self.' + option + 'Params.get()'
-        exec(optionType)
-        exec(optionParams)
+        optionType = self.getEnumText(option + 'Type')
+        optionParams = getattr(self, option + 'Params').get()
 
         if optionType == 'None':
             return ''

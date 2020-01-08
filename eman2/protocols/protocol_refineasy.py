@@ -473,7 +473,7 @@ Major features of this program:
 
         for line in f:
             if '#' not in line:
-                yield map(float, line.split())
+                yield list(map(float, line.split()))
 
         f.close()
 

@@ -250,8 +250,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
                     a = 1
             objDict['_index'] = int(objDict['_index'] - a)
             # Write the e2converter.py process from where to read the image
-            print(json.dumps(objDict), file=proc.stdin)
-            proc.stdin.flush()
+            print(json.dumps(objDict), file=proc.stdin, flush=True)
             proc.stdout.readline()
         proc.kill()
 
