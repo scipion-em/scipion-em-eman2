@@ -122,7 +122,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         self.runJob(program, params, cwd=os.path.abspath(self._getTmpPath()),
                     env=eman2.Plugin.getEnviron())
 
-        #Move output files to Extra Path
+        # Move output files to Extra Path
         moveFile(self._getTmpPath("ccc.hdf"),self._getExtraPath("particles" + ".hdf"))
 
         for tomo in self.inputSet.get():
