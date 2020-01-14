@@ -143,6 +143,3 @@ class Plugin(pwem.Plugin):
                        tar='eman2.3.linux64.tgz',
                        commands=eman23_commands,
                        default=True)
-
-
-Domain.registerPlugin(__name__)
