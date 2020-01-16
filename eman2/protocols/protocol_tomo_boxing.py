@@ -67,7 +67,8 @@ class EmanProtTomoBoxing(ProtTomoPicking):
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         # Copy input coordinates to Extra Path
-        self._insertFunctionStep('copyInputCoords')
+        if self.inputCoordinates.get():
+            self._insertFunctionStep('copyInputCoords')
 
         # Launch Boxing GUI
         self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
@@ -87,7 +88,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                                       'extra-%s_info.json'
                                       % pwutils.removeBaseExt(tomo.getFileName()))
             if not os.path.isfile(jsonFnbase):
-                break
+                continue
             jsonBoxDict = loadJson(jsonFnbase)
 
             for key, classItem in jsonBoxDict["class_list"].iteritems():
@@ -99,12 +100,11 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                 name = self.OUTPUT_PREFIX + suffix
                 args = {}
                 args[name] = coord3DSet
-
                 coord3DSetDict[index] = coord3DSet
                 coord3DMap[index] = name
 
-            # Populate Set of 3D Coordinates with 3D Coordinates
-            readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
+                # Populate Set of 3D Coordinates with 3D Coordinates
+                readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
 
         self._defineOutputs(**args)
         self._defineSourceRelation(setTomograms, coord3DSet)
@@ -116,7 +116,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     # --------------------------- STEPS functions -----------------------------
     def copyInputCoords(self):
-        cwd = os.getcwd()
         setTomograms = self.inputTomograms.get()
         suffix = self._getOutputSuffix(SetOfCoordinates3D)
         for tomo in setTomograms.iterItems():
@@ -125,15 +124,15 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             coord3DSet.setVolumes(setTomograms)
             coord3DSet.setBoxSize(self.inputCoordinates.get().getBoxSize())
             coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
-            tomoName = os.path.basename(os.path.splitext(tomo.getFileName())[0])
+            tomoName = os.path.basename(tomo.getFileName())
             for coord in self.inputCoordinates.get().iterCoordinates():
                 if tomoName in coord.getVolName():
                     coord3DSet.append(coord)
-
-            fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
-            pathInputCoor = pwutils.join(self._getExtraPath(), fnInputCoor)
-            coordinates2json(pathInputCoor, coord3DSet)
-            pwutils.cleanPattern("tomoCoord*")
+            if not coord3DSet.isEmpty():
+                fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
+                pathInputCoor = pwutils.join(self._getExtraPath(), fnInputCoor)
+                coordinates2json(pathInputCoor, coord3DSet)
+                pwutils.cleanPattern("tomoCoord*")
 
     def launchBoxingGUIStep(self):
 
@@ -164,12 +163,11 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     def _methods(self):
         methodsMsgs = []
-        if self.inputTomogram is None:
+        if self.inputTomograms is None:
             return ['Input tomogram not available yet.']
 
-        methodsMsgs.append("Input tomogram %s of dims %s."
-                           % (self.getObjectTag('inputTomogram'),
-                              str(self.inputTomogram.get().getDim())))
+        methodsMsgs.append("Input tomograms imported of dims %s." %(
+                              str(self.inputTomograms.get().getDim())))
 
         if self.getOutputsSize() >= 1:
             for key, output in self.iterOutputAttributes():
