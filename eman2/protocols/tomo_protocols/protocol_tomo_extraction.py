@@ -189,7 +189,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
             out = file(self.coordsFileName, "w")
             for coord3DSet in self.inputCoordinates.get().iterCoordinates():
-                if tomo.getFileName() == coord3DSet.getVolName():
+                if tomo.getFileName() == coord3DSet.getPrecedentName():
                     out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
                     coordDict.append(coord3DSet.clone())
 
