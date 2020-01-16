@@ -133,7 +133,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         coord3DSet = self._createSetOfCoordinates3D(self.inputSet.get(), suffix)
         coord3DSet.setBoxSize(self.box)
         coord3DSet.setName("tomoCoord")
-        coord3DSet.setVolumes(self.inputSet.get())
+        coord3DSet.setPrecedents(self.inputSet.get())
         coord3DSet.setSamplingRate(self.inputSet.get().getSamplingRate())
 
         for tomo in self.inputSet.get():
