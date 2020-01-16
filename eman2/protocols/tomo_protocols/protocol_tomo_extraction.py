@@ -130,7 +130,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         """ Return the tomogram associated to the SetOfCoordinates3D or
         Other tomograms. """
         if not self._tomosOther():
-            return self.inputCoordinates.get().getVolumes()
+            return self.inputCoordinates.get().getPrecedents()
         else:
             return self.inputTomograms.get()
 
