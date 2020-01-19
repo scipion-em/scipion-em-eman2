@@ -78,9 +78,10 @@ class SparxGaussianPickerWizard(EmWizard):
 
         args = {
             "params": ','.join(params),
-            "preprocess": "%s %s" % (pw.getScipionScript(),
+            "preprocess": "%s %s" % (os.path.join(pw.Config.SCIPION_HOME, 'scipion'),
                                      Plugin.getProgram('sxprocess.py')),
-            "picker": "%s %s" % (pw.getScipionScript(), program),
+            "picker": "%s %s" % (os.path.join(pw.Config.SCIPION_HOME, 'scipion'),
+                                 program),
             "convert": pw.join('apps', 'pw_convert.py'),
             'coordsDir': coordsDir,
             'micsSqlite': micSet.getFileName(),
