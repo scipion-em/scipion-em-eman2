@@ -44,11 +44,13 @@ import pyworkflow.utils as pwutils
 
 import eman2
 from eman2.constants import *
-from eman2.convert import loadJson
+from eman2.convert import loadJson, setCoords2Jsons
 from eman2.protocols import (EmanProtBoxing, EmanProtCTFAuto,
                              EmanProtInitModel, EmanProtRefine2D,
                              EmanProtRefine2DBispec, EmanProtRefine,
                              EmanProtTiltValidate, EmanProtInitModelSGD)
+
+from tomo.objects import SetOfCoordinates3D
 
 
 class EmanViewer(DataViewer):

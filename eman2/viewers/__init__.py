@@ -1,6 +1,6 @@
 # **************************************************************************
 # *
-# * Authors:     David Herreros
+# * Authors:     David Herreros Calero (dherreros@cnb.csic.es)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -23,3 +23,5 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+
+from .viewers_data import EmanDataViewer
