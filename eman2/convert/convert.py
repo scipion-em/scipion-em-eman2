@@ -515,3 +515,19 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
     outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,
                                       updateItemCallback=updateSubTomogram,
                                       itemDataIterator=itertools.count(0))
+
+
+def setCoords2Jsons(setTomograms, setCoords, path):
+    for tomo in setTomograms.iterItems():
+        coords = []
+        for coor in setCoords.iterCoordinates():
+            if pwutils.removeBaseExt(tomo.getFileName()) == pwutils.removeBaseExt(coor.getVolName()):
+                coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
+
+        coordDict = {"boxes_3d": coords,
+                     "class_list": {"0": {"boxsize": setCoords.getBoxSize(), "name": "particles_00"}}
+                     }
+        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
+        pathInputCoor = pwutils.join(path, fnInputCoor)
+        if coords:
+            writeJson(coordDict, pathInputCoor)

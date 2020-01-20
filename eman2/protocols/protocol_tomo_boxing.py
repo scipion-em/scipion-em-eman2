@@ -32,7 +32,7 @@ from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCE
 from pyworkflow import utils as pwutils
 
 import eman2
-from eman2.convert import loadJson, coordinates2json, readSetOfCoordinates3D
+from eman2.convert import loadJson, setCoords2Jsons, readSetOfCoordinates3D
 from eman2.viewers.views_tkinter_tree import EmanDialog
 
 from tomo.protocols import ProtTomoPicking
@@ -116,23 +116,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     # --------------------------- STEPS functions -----------------------------
     def copyInputCoords(self):
-        setTomograms = self.inputTomograms.get()
-        suffix = self._getOutputSuffix(SetOfCoordinates3D)
-        for tomo in setTomograms.iterItems():
-            coord3DSet = self._createSetOfCoordinates3D(setTomograms, suffix)
-            coord3DSet.setName("tomoCoord")
-            coord3DSet.setVolumes(setTomograms)
-            coord3DSet.setBoxSize(self.inputCoordinates.get().getBoxSize())
-            coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
-            tomoName = os.path.basename(tomo.getFileName())
-            for coord in self.inputCoordinates.get().iterCoordinates():
-                if tomoName in coord.getVolName():
-                    coord3DSet.append(coord)
-            if not coord3DSet.isEmpty():
-                fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
-                pathInputCoor = pwutils.join(self._getExtraPath(), fnInputCoor)
-                coordinates2json(pathInputCoor, coord3DSet)
-                pwutils.cleanPattern("tomoCoord*")
+        setCoords2Jsons(self.inputTomograms.get(), self.inputCoordinates.get(), self._getExtraPath())
 
     def launchBoxingGUIStep(self):
 
