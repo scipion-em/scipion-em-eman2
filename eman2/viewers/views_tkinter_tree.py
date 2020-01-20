@@ -56,7 +56,7 @@ class EmanDialog(ToolbarListDialog):
         if self.proc.isAlive():
             self.after(1000, self.refresh_gui)
         else:
-            os.chdir(self.dir)
+            #os.chdir(self.dir)
             outFile = 'extra-%s_info.json' % pwutils.removeBaseExt(self.tomo.getFileName())
             moveFile((os.path.join(self.path, "info", outFile)), os.path.join(self.path, outFile))
             cleanPath(os.path.join(self.path, "info"))
@@ -70,7 +70,7 @@ class EmanDialog(ToolbarListDialog):
         self.after(1000, self.refresh_gui)
 
     def lanchEmanForTomogram(self, inMemory, tomo):
-        os.chdir(self.path)
+        #os.chdir(self.path)
         pathCoor = self._moveCoordsToInfo(tomo)
 
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
@@ -78,14 +78,14 @@ class EmanDialog(ToolbarListDialog):
         if inMemory:
             arguments += " --inmemory"
         #self._log.info('Launching: ' + program + ' ' + arguments % tomo)
-        runJob(None, program, arguments, env=eman2.Plugin.getEnviron())
+        runJob(None, program, arguments, env=eman2.Plugin.getEnviron(), cwd=self.path)
 
     def _moveCoordsToInfo(self, tomo):
         cwd = os.getcwd()
-        infoDir = pwutils.join(cwd, 'info')
+        infoDir = pwutils.join(os.path.abspath(self.path), 'info')
         fnCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
         pathCoor = os.path.join(infoDir, fnCoor)
-        if os.path.exists(fnCoor):
+        if os.path.exists(os.path.join(self.path, fnCoor)):
             pwutils.makePath(infoDir)
-            copyFile(fnCoor, pathCoor)
+            copyFile(os.path.join(self.path, fnCoor), pathCoor)
         return pathCoor
