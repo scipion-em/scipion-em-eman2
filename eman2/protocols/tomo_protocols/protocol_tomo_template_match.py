@@ -97,7 +97,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
     # --------------------------- STEPS functions -----------------------------
 
     def preprocess(self):
-        xmipp3 = pwutils.importFromPlugin('xmipp3')
+        program = eman2.Plugin.getProgram("e2proc3d.py")
         setDim = self.inputSet.get().getDim()
         if max(setDim) > 1000:
             sizeThreshold = max(self.inputSet.get().getDim())
@@ -105,9 +105,9 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
             sizeThreshold = 1000
         if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
             for tomo in self.inputSet.get():
-                xmipp3.Plugin.runXmippProgram("xmipp_transform_window", " -i %s --size %d %d %d " %
-                                              (tomo.getFileName(), sizeThreshold, sizeThreshold,
-                                               tomo.getDim()[2]))
+                self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), tomo.getFileName(),
+                                                             sizeThreshold, sizeThreshold, tomo.getDim()[2]),
+                            env=eman2.Plugin.getEnviron())
 
     def tempMatchStep(self):
 
@@ -129,7 +129,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                     env=eman2.Plugin.getEnviron())
 
         # Move output files to Extra Path
-        moveFile(self._getTmpPath("ccc.hdf"),self._getExtraPath("particles" + ".hdf"))
+        moveFile(self._getTmpPath("ccc.hdf"), self._getExtraPath("particles" + ".hdf"))
 
         for tomo in self.inputSet.get():
             tomoName = os.path.basename(tomo.getFileName())
