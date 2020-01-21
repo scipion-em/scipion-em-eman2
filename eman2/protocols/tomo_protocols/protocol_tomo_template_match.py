@@ -24,7 +24,7 @@
 # *
 # **************************************************************************
 
-import os
+import os, math
 
 from pyworkflow.utils.properties import Message
 from pyworkflow import utils as pwutils
@@ -103,21 +103,25 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
             sizeThreshold = max(self.inputSet.get().getDim())
         else:
             sizeThreshold = 1000
+            offset = 500 - math.ceil(self.inputSet.get().getXDim()/2)
+            self.correctOffset = lambda coord: coord.setPosition(coord.getX()+offset,
+                                                                 coord.getY()+offset, coord.getZ())
         if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
             for tomo in self.inputSet.get():
-                self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), tomo.getFileName(),
+                tomoName = pwutils.removeBaseExt(tomo.getFileName())
+                self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), self._getTmpPath(tomoName),
                                                              sizeThreshold, sizeThreshold, tomo.getDim()[2]),
                             env=eman2.Plugin.getEnviron())
 
     def tempMatchStep(self):
-
         self.box = self.boxSize.get()
 
         volFile = os.path.abspath(self.ref.get().getFileName())
         params = ""
 
         for tomo in self.inputSet.get():
-            params = params + " %s" % tomo.getFileName()
+            tomoName = pwutils.removeBaseExt(tomo.getFileName())
+            params = params + " %s" % self._getTmpPath(tomoName)
 
         params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s " \
                           "--rmedge --rmgold --boxsz=%d" % (volFile, self.nptcl.get(), self.dthr.get(),
@@ -147,7 +151,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         coord3DSet = self._createSetOfCoordinates3D(self.inputSet.get(), suffix)
         coord3DSet.setBoxSize(self.box)
         coord3DSet.setName("tomoCoord")
-        coord3DSet.setVolumes(self.inputSet.get())
+        coord3DSet.setPrecedents(self.inputSet.get())
         coord3DSet.setSamplingRate(self.inputSet.get().getSamplingRate())
 
         for tomo in self.inputSet.get():
@@ -166,7 +170,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                 args = {}
                 args[name] = coord3DSet
                 # Populate Set of 3D Coordinates with 3D Coordinates
-                readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo)
+                readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, self.correctOffset)
 
         self._defineOutputs(**args)
         self._defineSourceRelation(self.inputSet.get(), coord3DSet)
