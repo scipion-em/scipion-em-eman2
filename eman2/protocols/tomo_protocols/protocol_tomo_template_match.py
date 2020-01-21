@@ -108,7 +108,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                                                                  coord.getY()+offset, coord.getZ())
         if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
             for tomo in self.inputSet.get():
-                tomoName = pwutils.removeBaseExt(tomo.getFileName())
+                tomoName = os.path.basename(tomo.getFileName())
                 self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), self._getTmpPath(tomoName),
                                                              sizeThreshold, sizeThreshold, tomo.getDim()[2]),
                             env=eman2.Plugin.getEnviron())
@@ -120,7 +120,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         params = ""
 
         for tomo in self.inputSet.get():
-            tomoName = pwutils.removeBaseExt(tomo.getFileName())
+            tomoName = os.path.basename(tomo.getFileName())
             params = params + " %s" % self._getTmpPath(tomoName)
 
         params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s " \
