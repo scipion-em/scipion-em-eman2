@@ -26,10 +26,13 @@
 
 import pyworkflow.viewer as pwviewer
 import pyworkflow.em.viewers.views as vi
+from pyworkflow.gui.dialog import askYesNo
+from pyworkflow.utils.properties import Message
 
 import tomo.objects
 
-from eman2.convert import setCoords2Jsons
+from eman2.convert import setCoords2Jsons, jsons2SetCoords
+
 
 class EmanDataViewer(pwviewer.Viewer):
     """ Wrapper to visualize different type of objects
@@ -64,5 +67,11 @@ class EmanDataViewer(pwviewer.Viewer):
             setCoords2Jsons(self.protocol.inputTomograms.get(), self.protocol.output3DCoordinates, path)
 
             setView = EmanDialog(self._tkRoot, path, provider=tomoProvider)
+
+            import Tkinter as tk
+            frame = tk.Frame()
+            if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
+                jsons2SetCoords(self.protocol)
+
 
         return views
