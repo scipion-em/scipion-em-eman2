@@ -108,8 +108,9 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                                                                  coord.getY()+offset, coord.getZ())
         if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
             for tomo in self.inputSet.get():
-                tomoName = os.path.abspath(os.path.basename(tomo.getFileName()))
-                self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), self._getTmpPath(tomoName),
+                tomoFile = os.path.basename(tomo.getFileName())
+                tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
+                self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), tomoFile,
                                                              sizeThreshold, sizeThreshold, tomo.getDim()[2]),
                             env=eman2.Plugin.getEnviron())
 
@@ -120,8 +121,9 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         params = ""
 
         for tomo in self.inputSet.get():
-            tomoName = os.path.abspath(os.path.basename(tomo.getFileName()))
-            params = params + " %s" % self._getTmpPath(tomoName)
+            tomoFile = os.path.basename(tomo.getFileName())
+            tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
+            params = params + " %s" % self._getTmpPath(tomoFile)
 
         params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s " \
                           "--rmedge --rmgold --boxsz=%d" % (volFile, self.nptcl.get(), self.dthr.get(),
@@ -140,7 +142,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
             tomoName = os.path.splitext(tomoName)[0]
             tomoCoord = "extra-" + tomoName + "_info.json"
             moveFile(self._getTmpPath(os.path.join("info", tomoCoord)),
-                     self._getExtraPath("extra-" + tomoName + "_info.json"))
+                     self._getExtraPath(tomoCoord))
 
     # --------------------------- UTILS functions ------------------------------
     def createOutputStep(self):
