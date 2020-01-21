@@ -30,7 +30,7 @@ from pyworkflow.utils.properties import Message
 from pyworkflow import utils as pwutils
 from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         StringParam, FloatParam, LEVEL_ADVANCED)
-from pyworkflow.utils.path import moveFile
+from pyworkflow.utils.path import moveFile, copyFile
 
 import eman2
 from eman2.convert import loadJson, readSetOfCoordinates3D
@@ -101,11 +101,13 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         setDim = self.inputSet.get().getDim()
         if max(setDim) > 1000:
             sizeThreshold = max(self.inputSet.get().getDim())
+            self.correctOffset = None
         else:
             sizeThreshold = 1000
             offset = 500 - math.ceil(self.inputSet.get().getXDim()/2)
-            self.correctOffset = lambda coord: coord.setPosition(coord.getX()+offset,
-                                                                 coord.getY()+offset, coord.getZ())
+            # Revisar cuenta offset
+            self.correctOffset = lambda coord: coord.setPosition(coord.getX()-offset,
+                                                                 coord.getY()-offset, coord.getZ())
         if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
             for tomo in self.inputSet.get():
                 tomoFile = os.path.basename(tomo.getFileName())
@@ -113,6 +115,11 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                 self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), tomoFile,
                                                              sizeThreshold, sizeThreshold, tomo.getDim()[2]),
                             env=eman2.Plugin.getEnviron())
+        else:
+            for tomo in self.inputSet.get():
+                tomoFile = os.path.basename(tomo.getFileName())
+                tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
+                copyFile(tomo.getFileName(), tomoFile)
 
     def tempMatchStep(self):
         self.box = self.boxSize.get()
@@ -140,7 +147,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         for tomo in self.inputSet.get():
             tomoName = os.path.basename(tomo.getFileName())
             tomoName = os.path.splitext(tomoName)[0]
-            tomoCoord = "extra-" + tomoName + "_info.json"
+            tomoCoord = tomoName + "_info.json"
             moveFile(self._getTmpPath(os.path.join("info", tomoCoord)),
                      self._getExtraPath(tomoCoord))
 
@@ -161,7 +168,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
             tomoName = os.path.basename(tomo.getFileName())
             tomoName = os.path.splitext(tomoName)[0]
 
-            jsonFnbase = pwutils.join(self._getExtraPath(), 'extra-%s_info.json' % tomoName)
+            jsonFnbase = pwutils.join(self._getExtraPath(), '%s_info.json' % tomoName)
             jsonBoxDict = loadJson(jsonFnbase)
 
             for key, classItem in jsonBoxDict["class_list"].iteritems():
