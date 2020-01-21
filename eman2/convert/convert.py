@@ -43,7 +43,7 @@ import pyworkflow.em.metadata as md
 
 import eman2
 
-from tomo.objects import Coordinate3D
+from tomo.objects import Coordinate3D, SetOfCoordinates3D
 
 
 def loadJson(jsonFn):
@@ -531,3 +531,44 @@ def setCoords2Jsons(setTomograms, setCoords, path):
         pathInputCoor = pwutils.join(path, fnInputCoor)
         if coords:
             writeJson(coordDict, pathInputCoor)
+
+def jsons2SetCoords(protocol):
+    coord3DSetDict = {}
+    coord3DMap = {}
+    setTomograms = protocol.inputTomograms.get()
+    suffix = protocol._getOutputSuffix(SetOfCoordinates3D)
+    coord3DSet = protocol._createSetOfCoordinates3D(setTomograms, suffix)
+    coord3DSet.setName("tomoCoord")
+    coord3DSet.setVolumes(setTomograms)
+    coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
+    first = True
+    for tomo in setTomograms.iterItems():
+        jsonFnbase = pwutils.join(protocol._getExtraPath(),
+                                  'extra-%s_info.json'
+                                  % pwutils.removeBaseExt(tomo.getFileName()))
+        if not os.path.isfile(jsonFnbase):
+            continue
+        jsonBoxDict = loadJson(jsonFnbase)
+
+        for key, classItem in jsonBoxDict["class_list"].iteritems():
+            index = int(key)
+            if first:
+                coord3DSet.setBoxSize(int(classItem["boxsize"]))
+                first = False
+
+            name = protocol.OUTPUT_PREFIX + suffix
+            args = {}
+            args[name] = coord3DSet
+            coord3DSetDict[index] = coord3DSet
+            coord3DMap[index] = name
+
+            # Populate Set of 3D Coordinates with 3D Coordinates
+            readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
+
+    protocol._defineOutputs(**args)
+    protocol._defineSourceRelation(setTomograms, coord3DSet)
+
+    # Update Outputs
+    for index, coord3DSet in coord3DSetDict.iteritems():
+        coord3DSet.setObjComment(protocol.getSummary(coord3DSet))
+        protocol._updateOutputSet(coord3DMap[index], coord3DSet, state=coord3DSet.STREAM_CLOSED)
