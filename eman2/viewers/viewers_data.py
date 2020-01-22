@@ -58,9 +58,12 @@ class EmanDataViewer(pwviewer.Viewer):
         if issubclass(cls, tomo.objects.SetOfCoordinates3D):
             from eman2.viewers.views_tkinter_tree import EmanDialog
             from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
+            from tomo.objects import SetOfCoordinates3D
 
-            suffix = self.protocol.getOutputsSize()
+            suffix = self.protocol._getOutputSuffix(SetOfCoordinates3D)
+            suffix = int(suffix)-1
             prefix = self.protocol.OUTPUT_PREFIX
+
             if suffix > 1:
                 name = prefix + str(suffix)
             else:
