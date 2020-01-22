@@ -58,20 +58,30 @@ class EmanDataViewer(pwviewer.Viewer):
         if issubclass(cls, tomo.objects.SetOfCoordinates3D):
             from eman2.viewers.views_tkinter_tree import EmanDialog
             from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
-            tomoList = [item.clone() for item in self.protocol.inputTomograms.get().iterItems()]
+
+            suffix = self.protocol.getOutputsSize()
+            prefix = self.protocol.OUTPUT_PREFIX
+            if suffix > 1:
+                name = prefix + str(suffix)
+            else:
+                name = prefix
+
+            outputCoords = getattr(self.protocol, name)
+
+            tomoList = [item.clone() for item in outputCoords.getPrecedents().iterItems()]
 
             path = self.protocol._getTmpPath()
 
-            tomoProvider = TomogramsTreeProvider(tomoList, path, 'eman', )
+            tomoProvider = TomogramsTreeProvider(tomoList, path, 'eman',)
 
-            setCoords2Jsons(self.protocol.inputTomograms.get(), self.protocol.output3DCoordinates, path)
+            setCoords2Jsons(outputCoords.getPrecedents(), outputCoords, path)
 
             setView = EmanDialog(self._tkRoot, path, provider=tomoProvider)
 
             import Tkinter as tk
             frame = tk.Frame()
             if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
-                jsons2SetCoords(self.protocol)
+                jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
 
 
         return views
