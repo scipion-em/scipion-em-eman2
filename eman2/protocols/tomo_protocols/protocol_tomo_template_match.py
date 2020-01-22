@@ -104,8 +104,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
             self.correctOffset = None
         else:
             sizeThreshold = 1000
-            offset = 500 - math.ceil(self.inputSet.get().getXDim()/2)
-            # Revisar cuenta offset
+            offset = math.floor((1000-self.inputSet.get().getXDim())/2)
             self.correctOffset = lambda coord: coord.setPosition(coord.getX()-offset,
                                                                  coord.getY()-offset, coord.getZ())
         if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
