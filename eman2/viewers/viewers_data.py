@@ -75,7 +75,7 @@ class EmanDataViewer(pwviewer.Viewer):
 
             path = self.protocol._getTmpPath()
 
-            tomoProvider = TomogramsTreeProvider(tomoList, path, 'eman',)
+            tomoProvider = TomogramsTreeProvider(tomoList, path, 'json',)
 
             setCoords2Jsons(outputCoords.getPrecedents(), outputCoords, path)
 
@@ -85,6 +85,5 @@ class EmanDataViewer(pwviewer.Viewer):
             frame = tk.Frame()
             if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
                 jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
-
 
         return views

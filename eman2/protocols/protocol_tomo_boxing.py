@@ -82,7 +82,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
         tomoList = [tomo.clone() for tomo in self.inputTomograms.get().iterItems()]
 
-        tomoProvider = TomogramsTreeProvider(tomoList, self._getExtraPath(), "eman")
+        tomoProvider = TomogramsTreeProvider(tomoList, self._getExtraPath(), "json")
 
         self.dlg = EmanDialog(None, self._getExtraPath(), provider=tomoProvider, inMemory=self.inMemory.get(),)
 
