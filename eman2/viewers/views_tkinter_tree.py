@@ -32,7 +32,6 @@ from pyworkflow.gui.dialog import ToolbarListDialog
 from pyworkflow.utils.path import moveFile, cleanPath, copyFile
 
 import eman2
-from eman2.convert import coordinates2json
 
 
 class EmanDialog(ToolbarListDialog):
@@ -56,7 +55,6 @@ class EmanDialog(ToolbarListDialog):
         if self.proc.isAlive():
             self.after(1000, self.refresh_gui)
         else:
-            #os.chdir(self.dir)
             outFile = 'extra-%s_info.json' % pwutils.removeBaseExt(self.tomo.getFileName())
             moveFile((os.path.join(self.path, "info", outFile)), os.path.join(self.path, outFile))
             cleanPath(os.path.join(self.path, "info"))
@@ -70,14 +68,12 @@ class EmanDialog(ToolbarListDialog):
         self.after(1000, self.refresh_gui)
 
     def lanchEmanForTomogram(self, inMemory, tomo):
-        #os.chdir(self.path)
         pathCoor = self._moveCoordsToInfo(tomo)
 
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
         arguments = "%s" % tomo.getFileName()
         if inMemory:
             arguments += " --inmemory"
-        #self._log.info('Launching: ' + program + ' ' + arguments % tomo)
         runJob(None, program, arguments, env=eman2.Plugin.getEnviron(), cwd=self.path)
 
     def _moveCoordsToInfo(self, tomo):

@@ -24,8 +24,6 @@
 # *
 # **************************************************************************
 
-import os
-
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED
