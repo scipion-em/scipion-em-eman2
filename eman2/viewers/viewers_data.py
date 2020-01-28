@@ -24,6 +24,8 @@
 # *
 # **************************************************************************
 
+import os
+
 import pyworkflow.viewer as pwviewer
 import pyworkflow.em.viewers.views as vi
 from pyworkflow.gui.dialog import askYesNo
@@ -61,35 +63,23 @@ class EmanDataViewer(pwviewer.Viewer):
             from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
             from tomo.objects import SetOfCoordinates3D
 
-            suffix = self.protocol._getOutputSuffix(SetOfCoordinates3D)
-            suffix = int(suffix)-1
-            prefix = self.protocol.OUTPUT_PREFIX
+            outputCoords = obj
 
-            if suffix > 1:
-                suffix = str(suffix)
-                name = prefix + suffix
-            else:
-                suffix = ''
-                name = prefix
+            tomoList = [item.clone() for item in outputCoords.getPrecedents().iterItems()]
 
-            check = pwutils.removeBaseExt(obj.getFileName())
-            # FIXME Now it doesn't open one viewer per output but can't choose one explicitly
-            if filter(str.isdigit, check) == suffix:
-                outputCoords = getattr(self.protocol, name)
+            path = self.protocol._getTmpPath()
 
-                tomoList = [item.clone() for item in outputCoords.getPrecedents().iterItems()]
+            tomoProvider = TomogramsTreeProvider(tomoList, path, 'json',)
 
-                path = self.protocol._getTmpPath()
+            setCoords2Jsons(outputCoords.getPrecedents(), outputCoords, path)
 
-                tomoProvider = TomogramsTreeProvider(tomoList, path, 'json',)
+            setView = EmanDialog(self._tkRoot, path, provider=tomoProvider)
 
-                setCoords2Jsons(outputCoords.getPrecedents(), outputCoords, path)
+            import Tkinter as tk
+            frame = tk.Frame()
+            if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
+                jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
 
-                setView = EmanDialog(self._tkRoot, path, provider=tomoProvider)
-
-                import Tkinter as tk
-                frame = tk.Frame()
-                if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
-                    jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
+            pwutils.cleanPattern(os.path.join(path, '*json'))
 
         return views
