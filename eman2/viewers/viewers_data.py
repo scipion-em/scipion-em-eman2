@@ -33,8 +33,12 @@ from pyworkflow.utils.properties import Message
 import pyworkflow.utils as pwutils
 
 import tomo.objects
+from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
+from tomo.protocols.protocol_import_coordinates import ProtImportCoordinates3D
 
 from eman2.convert import setCoords2Jsons, jsons2SetCoords
+from eman2.viewers.views_tkinter_tree import EmanDialog
+
 
 
 class EmanDataViewer(pwviewer.Viewer):
@@ -43,6 +47,7 @@ class EmanDataViewer(pwviewer.Viewer):
     """
     _environments = [pwviewer.DESKTOP_TKINTER]
     _targets = [
+        ProtImportCoordinates3D,
         tomo.objects.SetOfCoordinates3D
     ]
 
@@ -59,10 +64,6 @@ class EmanDataViewer(pwviewer.Viewer):
         cls = type(obj)
 
         if issubclass(cls, tomo.objects.SetOfCoordinates3D):
-            from eman2.viewers.views_tkinter_tree import EmanDialog
-            from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
-            from tomo.objects import SetOfCoordinates3D
-
             outputCoords = obj
 
             tomoList = [item.clone() for item in outputCoords.getPrecedents().iterItems()]
@@ -81,5 +82,11 @@ class EmanDataViewer(pwviewer.Viewer):
                 jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
 
             pwutils.cleanPattern(os.path.join(path, '*json'))
+
+        elif issubclass(cls, ProtImportCoordinates3D):
+            if obj.getOutputsSize() >= 1:
+                for _, out in obj.iterOutputAttributes(tomo.objects.SetOfCoordinates3D):
+                    lastOutput = out
+            self._visualize(lastOutput)
 
         return views
