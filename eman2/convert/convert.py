@@ -568,5 +568,6 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
 
     # Update Outputs
     for index, coord3DSet in coord3DSetDict.iteritems():
+        # FIXME Remove summary in case protocol does not have method (it should be invoked by the same protocol)
         coord3DSet.setObjComment(protocol.getSummary(coord3DSet))
         protocol._updateOutputSet(name, coord3DSet, state=coord3DSet.STREAM_CLOSED)

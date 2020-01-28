@@ -1,6 +1,6 @@
 # **************************************************************************
 # *
-# * Authors:     David Herreros
+# * Authors:     David Herreros (dherreros@cnb.csic.es)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -44,7 +44,6 @@ class EmanDialog(ToolbarListDialog):
         self.path = path
         self.provider = kwargs.get("provider", None)
         self.inMemory = kwargs.get("inMemory", None)
-        self.dir = os.getcwd()
         ToolbarListDialog.__init__(self, parent,
                                    "Tomogram List",
                                     allowsEmptySelection=False,
@@ -77,7 +76,6 @@ class EmanDialog(ToolbarListDialog):
         runJob(None, program, arguments, env=eman2.Plugin.getEnviron(), cwd=self.path)
 
     def _moveCoordsToInfo(self, tomo):
-        cwd = os.getcwd()
         infoDir = pwutils.join(os.path.abspath(self.path), 'info')
         fnCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
         pathCoor = os.path.join(infoDir, fnCoor)

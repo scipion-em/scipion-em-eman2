@@ -28,6 +28,7 @@ import pyworkflow.viewer as pwviewer
 import pyworkflow.em.viewers.views as vi
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.utils.properties import Message
+import pyworkflow.utils as pwutils
 
 import tomo.objects
 
@@ -65,25 +66,30 @@ class EmanDataViewer(pwviewer.Viewer):
             prefix = self.protocol.OUTPUT_PREFIX
 
             if suffix > 1:
-                name = prefix + str(suffix)
+                suffix = str(suffix)
+                name = prefix + suffix
             else:
+                suffix = ''
                 name = prefix
 
-            outputCoords = getattr(self.protocol, name)
+            check = pwutils.removeBaseExt(obj.getFileName())
+            # FIXME Now it doesn't open one viewer per output but can't choose one explicitly
+            if filter(str.isdigit, check) == suffix:
+                outputCoords = getattr(self.protocol, name)
 
-            tomoList = [item.clone() for item in outputCoords.getPrecedents().iterItems()]
+                tomoList = [item.clone() for item in outputCoords.getPrecedents().iterItems()]
 
-            path = self.protocol._getTmpPath()
+                path = self.protocol._getTmpPath()
 
-            tomoProvider = TomogramsTreeProvider(tomoList, path, 'json',)
+                tomoProvider = TomogramsTreeProvider(tomoList, path, 'json',)
 
-            setCoords2Jsons(outputCoords.getPrecedents(), outputCoords, path)
+                setCoords2Jsons(outputCoords.getPrecedents(), outputCoords, path)
 
-            setView = EmanDialog(self._tkRoot, path, provider=tomoProvider)
+                setView = EmanDialog(self._tkRoot, path, provider=tomoProvider)
 
-            import Tkinter as tk
-            frame = tk.Frame()
-            if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
-                jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
+                import Tkinter as tk
+                frame = tk.Frame()
+                if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
+                    jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
 
         return views
