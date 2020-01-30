@@ -37,8 +37,8 @@ from io import open
 import pwem.constants as emcts
 import pyworkflow.utils as pwutils
 from pwem.objects.data import Coordinate, Particle, Transform
-from pwem.convert import ImageHandler
-import pwem.metadata as md
+from pwem.emlib.image import ImageHandler
+import pwem.emlib.metadata as md
 
 from .. import Plugin
 
