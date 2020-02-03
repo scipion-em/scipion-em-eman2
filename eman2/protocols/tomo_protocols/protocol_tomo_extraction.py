@@ -150,7 +150,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             subtomogram.setLocation(index, workDir)
             if self.downFactor.get() != 1:
                 fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % index)
-                pwem.ImageHandler.scaleSplines(subtomogram.getLocation(),fnSubtomo,self.downFactor.get())
+                pwem.ImageHandler.scaleSplines(subtomogram.getLocation(), fnSubtomo, self.downFactor.get())
                 subtomogram.setLocation(fnSubtomo)
             subtomogram.setCoordinate3D(coordSet[index-1])
             subtomogram.setAcquisition(self.getInputTomograms().getAcquisition())
@@ -169,7 +169,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
                     coordSet = self.lines[ind]
 
-                    self.readSetOfTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile,"hdf")),
+                    self.readSetOfTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile, "hdf")),
                                             self.outputSubTomogramsSet, coordSet)
 
         self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
@@ -192,6 +192,9 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
                 if tomo.getFileName() == coord3DSet.getVolName():
                     out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
                     coordDict.append(coord3DSet.clone())
+                elif tomo.getFileName() == self.getInputTomograms().getFirstItem().getFileName():
+                    out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
+                    coordDict.append(coord3DSet.clone())
 
             if coordDict:
                 self.lines.append(coordDict)
@@ -209,6 +212,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         for tomo in self.tomoFiles:
             args = ""
+
             self.cshrink = float(samplingRateCoord / (self.samplingRateTomo * self.downFactor.get()))
 
             args = args + '%s ' % (tomo)
