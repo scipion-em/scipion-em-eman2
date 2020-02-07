@@ -30,7 +30,7 @@ import pyworkflow.em as pwem
 import pyworkflow.protocol.params as params
 from pyworkflow.utils.path import moveFile, cleanPath
 from tomo.protocols import ProtTomoBase
-from tomo.objects import SetOfSubTomograms, SubTomogram
+from tomo.objects import SetOfSubTomograms, SubTomogram, TomoAcquisition
 import eman2
 from eman2.constants import *
 
@@ -126,11 +126,11 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         self.inputSet = self.getInputTomograms()
         for item in self.inputSet:
             coordDict = []
-            tomo = item.clone()
-            self.coordsFileName = self._getExtraPath(pwutils.replaceBaseExt(tomo.getFileName(), 'coords'))
-            out = file(self.coordsFileName, "w")
-            for coord3DSet in self.inputCoordinates.get().iterCoordinates():
-                if tomo.getFileName() == coord3DSet.getVolName():
+            tomo = item.clone()  # clone input tomos
+            self.coordsFileName = self._getExtraPath(pwutils.replaceBaseExt(tomo.getFileName(), 'coords'))  # copy coords
+            out = file(self.coordsFileName, "w")  # open original coords
+            for coord3DSet in self.inputCoordinates.get().iterCoordinates():  # For each coord in original coords (?)
+                if tomo.getFileName() == coord3DSet.getVolName():  # If tomo has same name as the source tomo from coords
                     out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
                     coordDict.append(coord3DSet.clone())
                 elif tomo.getFileName() == self.getInputTomograms().getFirstItem().getFileName():  # TODO: Fix this well
@@ -246,5 +246,9 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
                 pwem.ImageHandler.scaleSplines(subtomogram.getLocation(), fnSubtomo, self.downFactor.get())
                 subtomogram.setLocation(fnSubtomo)
             subtomogram.setCoordinate3D(coordSet[index-1])
-            subtomogram.setAcquisition(self.getInputTomograms().getAcquisition())
+            acquisition = TomoAcquisition()
+            acquisition.setAngleMin(self.getInputTomograms().getFirstItem().getAcquisition().getAngleMin())
+            acquisition.setAngleMax(self.getInputTomograms().getFirstItem().getAcquisition().getAngleMax())
+            acquisition.setStep(self.getInputTomograms().getFirstItem().getAcquisition().getStep())
+            subtomogram.setAcquisition(acquisition)
             tomogramsSet.append(subtomogram)
