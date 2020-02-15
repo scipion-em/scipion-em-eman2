@@ -1,3 +1,7 @@
+1.0.6:
+    - GPLv3
+    - Add missing RCT protocol to conf
+    - First Scipion 3 / python 3 version
 1.0.5:
         - added EMAN2.3 support, deprecated 2.12
         - _bispec was renamed to _invar - these changes affect ctf and refine2D_bispec protocols

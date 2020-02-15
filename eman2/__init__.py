@@ -29,7 +29,6 @@ import subprocess
 
 import pwem
 import pyworkflow.utils as pwutils
-from pyworkflow.plugin import Domain
 
 from .constants import EMAN2_HOME, V2_21, V2_3
 

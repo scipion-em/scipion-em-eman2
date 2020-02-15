@@ -11,7 +11,7 @@ This plugin provide wrappers around several programs of `EMAN2 <https://blake.bc
 Installation
 ------------
 
-You will need to use `2.0 <https://github.com/I2PC/scipion/releases/tag/V2.0.0>`_ version of Scipion to be able to run these protocols. To install the plugin, you have two options:
+You will need to use `3.0 <https://github.com/I2PC/scipion/releases/tag/V3.0.0>`_ version of Scipion to be able to run these protocols. To install the plugin, you have two options:
 
 a) Stable version
 
@@ -46,16 +46,16 @@ To check the installation, simply run one of the following Scipion tests:
 
 .. code-block::
 
-   scipion test eman2.tests.test_protocols_eman.TestEmanTiltValidate
-   scipion test eman2.tests.test_protocols_eman.TestEmanRefineEasy
-   scipion test eman2.tests.test_protocols_eman.TestEmanRefine2DBispec
-   scipion test eman2.tests.test_protocols_eman.TestEmanRefine2D
-   scipion test eman2.tests.test_protocols_eman.TestEmanReconstruct
-   scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelMda
-   scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelGroel
-   scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelSGD
-   scipion test eman2.tests.test_protocols_eman.TestEmanCtfAuto
-   scipion test eman2.tests.test_protocols_eman.TestEmanAutopick
+   scipion tests eman2.tests.test_protocols_eman.TestEmanTiltValidate
+   scipion tests eman2.tests.test_protocols_eman.TestEmanRefineEasy
+   scipion tests eman2.tests.test_protocols_eman.TestEmanRefine2DBispec
+   scipion tests eman2.tests.test_protocols_eman.TestEmanRefine2D
+   scipion tests eman2.tests.test_protocols_eman.TestEmanReconstruct
+   scipion tests eman2.tests.test_protocols_eman.TestEmanInitialModelMda
+   scipion tests eman2.tests.test_protocols_eman.TestEmanInitialModelGroel
+   scipion tests eman2.tests.test_protocols_eman.TestEmanInitialModelSGD
+   scipion tests eman2.tests.test_protocols_eman.TestEmanCtfAuto
+   scipion tests eman2.tests.test_protocols_eman.TestEmanAutopick
 
 A complete list of tests can also be seen by executing ``scipion test --show --grep eman``
 

@@ -637,9 +637,6 @@ Examples:
     def _getGridSize(self, n=None):
         """ Figure out the layout of the plots given the number of
         references. """
-        if n is None:
-            n = len(self._refsList)
-
         if n == 1:
             gridsize = [1, 1]
         elif n == 2:

@@ -46,7 +46,7 @@ class SparxGaussianPickerWizard(EmWizard):
                                             'lowerThreshold', 'higherThreshold',
                                             'gaussWidth'])]
 
-    def show(self, form):
+    def show(self, form, *args):
         autopickProt = form.protocol
         micSet = autopickProt.getInputMicrographs()
         if not micSet:
