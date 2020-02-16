@@ -77,7 +77,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
                                           self.lowerThreshold.get(),
                                           self.higherThreshold.get(),
                                           self.boxSize.get(), self.gaussWidth.get(),
-                                          self.useVarImg, self.doInvert)
+                                          self.useVarImg.get(), self.doInvert.get())
         return [initId]
 
     # --------------------------- STEPS functions -----------------------------
