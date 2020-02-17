@@ -83,9 +83,7 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
 
         form.addParam('downFactor', params.FloatParam, default=1.0,
                       label='Downsampling factor',
-                      help='Select a value lower than 1.0 to reduce the size '
-                           'of subtomograms after extraction. '
-                           'If 1.0 is used, no downsample is applied. '
+                      help='If 1.0 is used, no downsample is applied. '
                            'Non-integer downsample factors are possible. ')
 
         form.addSection(label='Preprocess')
@@ -123,17 +121,14 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
     def writeSetOfCoordinates3D(self):
         self.lines = []
         self.tomoFiles = []
-        self.inputSet = self.getInputTomograms()
-        for item in self.inputSet:
+        inputSet = self.getInputTomograms()
+        for item in inputSet:
             coordDict = []
-            tomo = item.clone()  # clone input tomos
-            self.coordsFileName = self._getExtraPath(pwutils.replaceBaseExt(tomo.getFileName(), 'coords'))  # copy coords
-            out = file(self.coordsFileName, "w")  # open original coords
-            for coord3DSet in self.inputCoordinates.get().iterCoordinates():  # For each coord in original coords (?)
-                if tomo.getFileName() == coord3DSet.getVolName():  # If tomo has same name as the source tomo from coords
-                    out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
-                    coordDict.append(coord3DSet.clone())
-                elif tomo.getFileName() == self.getInputTomograms().getFirstItem().getFileName():  # TODO: Fix this well
+            tomo = item.clone()
+            self.coordsFileName = self._getExtraPath(pwutils.replaceBaseExt(tomo.getFileName(), 'coords'))
+            out = file(self.coordsFileName, "w")
+            for coord3DSet in self.inputCoordinates.get().iterCoordinates():
+                if os.path.basename(tomo.getFileName()) == os.path.basename(coord3DSet.getVolName()):
                     out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
                     coordDict.append(coord3DSet.clone())
             if coordDict:
@@ -143,18 +138,16 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             out.close()
 
     def extractParticles(self):
-        # Compute cshrink parameter to have tomogram and coordinates at same sampling rate
-        # If coordinates do not have sampling rate, protocol assumes tomogram sampling rate
         samplingRateCoord = self.inputCoordinates.get().getSamplingRate()
+        samplingRateTomo = self.getInputTomograms().getFirstItem().getSamplingRate()
         for tomo in self.tomoFiles:
-            args = ""
-            self.cshrink = float(samplingRateCoord / (self.samplingRateTomo * self.downFactor.get()))
-            args = args + '%s ' % (tomo)
-            args = args + "--coords % s --boxsize % d" % (pwutils.replaceBaseExt(tomo, 'coords'), self.boxSize.get())
+            args = '%s ' % tomo
+            args += "--coords % s --boxsize % d" % (pwutils.replaceBaseExt(tomo, 'coords'), self.boxSize.get())
             if self.doInvert:
                 args += ' --invert'
             if self.doNormalize:
                 args += ' --normproc %s' % self.getEnumText('normproc')
+            self.cshrink = float(samplingRateCoord/samplingRateTomo)
             if self.cshrink > 1:
                 args += ' --cshrink %d' % self.cshrink
             program = eman2.Plugin.getProgram('e2spt_boxer_old.py')
@@ -164,18 +157,23 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
             cleanPath(self._getExtraPath("sptboxer_01"))
 
     def createOutputStep(self):
-        suffix = self._getOutputSuffix(SetOfSubTomograms)
-        self.outputSubTomogramsSet = self._createSetOfSubTomograms(suffix)
-        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomograms().getSamplingRate() * self.cshrink)
+        self.outputSubTomogramsSet = self._createSetOfSubTomograms(self._getOutputSuffix(SetOfSubTomograms))
+        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomograms().getSamplingRate() * self.downFactor.get())
         self.outputSubTomogramsSet.setCoordinates3D(self.inputCoordinates)
-        for item in self.inputSet:
+        acquisition = TomoAcquisition()
+        acquisition.setAngleMin(self.getInputTomograms().getFirstItem().getAcquisition().getAngleMin())
+        acquisition.setAngleMax(self.getInputTomograms().getFirstItem().getAcquisition().getAngleMax())
+        acquisition.setStep(self.getInputTomograms().getFirstItem().getAcquisition().getStep())
+        self.outputSubTomogramsSet.setAcquisition(acquisition)
+        for item in self.getInputTomograms().iterItems():
             for ind, tomoFile in enumerate(self.tomoFiles):
-                if tomoFile == item.getFileName():
+                if os.path.basename(tomoFile) == os.path.basename(item.getFileName()):
                     coordSet = self.lines[ind]
-                    self.readSetOfTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile, "hdf")),
+                    outputSet = self.readSetOfSubTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile, "hdf")),
                                             self.outputSubTomogramsSet, coordSet)
-        self._defineOutputs(outputSetOfSubtomogram=self.outputSubTomogramsSet)
-        self._defineSourceRelation(self.inputCoordinates, self.outputSubTomogramsSet)
+
+        self._defineOutputs(outputSetOfSubtomogram=outputSet)
+        self._defineSourceRelation(self.inputCoordinates, outputSet)
 
     # --------------------------- INFO functions --------------------------------
 
@@ -234,21 +232,18 @@ class EmanProtTomoExtraction(pwem.EMProtocol, ProtTomoBase):
         else:
             return self.inputTomograms.get()
 
-    def readSetOfTomograms(self, workDir, tomogramsSet, coordSet):
-        subtomogram = SubTomogram()
+    def readSetOfSubTomograms(self, workDir, outputSubTomogramsSet, coordSet):
         imgh = pwem.ImageHandler()
         x, y, z, n = imgh.getDimensions(workDir)
         for index in range(1, n + 1):
+            subtomogram = SubTomogram()
             subtomogram.cleanObjId()
             subtomogram.setLocation(index, workDir)
-            if self.downFactor.get() != 1:
+            dfactor = self.downFactor.get()
+            if dfactor != 1:
                 fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % index)
-                pwem.ImageHandler.scaleSplines(subtomogram.getLocation(), fnSubtomo, self.downFactor.get())
+                pwem.ImageHandler.scaleSplines(subtomogram.getLocation(), fnSubtomo, dfactor)
                 subtomogram.setLocation(fnSubtomo)
             subtomogram.setCoordinate3D(coordSet[index-1])
-            acquisition = TomoAcquisition()
-            acquisition.setAngleMin(self.getInputTomograms().getFirstItem().getAcquisition().getAngleMin())
-            acquisition.setAngleMax(self.getInputTomograms().getFirstItem().getAcquisition().getAngleMax())
-            acquisition.setStep(self.getInputTomograms().getFirstItem().getAcquisition().getStep())
-            subtomogram.setAcquisition(acquisition)
-            tomogramsSet.append(subtomogram)
+            outputSubTomogramsSet.append(subtomogram)
+        return outputSubTomogramsSet
