@@ -24,6 +24,7 @@
 # *
 # **************************************************************************
 
+
 from .protocol_boxing import EmanProtBoxing
 from .protocol_ctf import EmanProtCTFAuto
 from .protocol_initialmodel import EmanProtInitModel
@@ -35,3 +36,11 @@ from .protocol_refineasy import EmanProtRefine
 from .protocol_tiltvalidate import EmanProtTiltValidate
 from .protocol_autopick_boxer import EmanProtAutopick
 from .protocol_autopick_sparx import SparxGaussianProtPicking
+
+from .tomo_protocols import *
+try:
+    from .tomo_protocols import *
+except ImportError as importError:
+
+    from eman2.constants import TOMO_NEEDED_MSG
+    print("Eman2: " + TOMO_NEEDED_MSG)

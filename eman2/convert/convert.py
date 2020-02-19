@@ -29,6 +29,7 @@
 # **************************************************************************
 
 import glob
+import itertools
 import json
 import numpy
 import os
@@ -37,9 +38,11 @@ from io import open
 import pwem.constants as emcts
 import pyworkflow.utils as pwutils
 from pwem.objects.data import Coordinate, Particle, Transform
+from pyworkflow.object import Float
 from pwem.emlib.image import ImageHandler
 import pwem.emlib.metadata as md
 
+from eman2.constants import TOMO_NEEDED_MSG
 from .. import Plugin
 
 
@@ -134,6 +137,17 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
         readCoordinates(mic, micPosFn, coordSet, invertY)
     coordSet.setBoxSize(size)
 
+def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo):
+    if jsonBoxDict.has_key("boxes_3d"):
+        boxes = jsonBoxDict["boxes_3d"]
+
+        for box in boxes:
+            classKey = box[5]
+            coord3DSet = coord3DSetDict[classKey]
+            coord3DSet.enableAppend()
+
+            readCoordinates3D(box, coord3DSet, inputTomo)
+
 
 def readCoordinates(mic, fileName, coordsSet, invertY=False):
     if pwutils.exists(fileName):
@@ -153,6 +167,17 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coord.setMicrograph(mic)
                 coordsSet.append(coord)
 
+def readCoordinates3D(box, coord3DSet, inputTomo):
+    from pwem import Domain
+    Coordinate3D = Domain.importFromPlugin("tomo.objects", "Coordinate3D", errorMsg=TOMO_NEEDED_MSG)
+    x, y, z = box[:3]
+    coord = Coordinate3D()
+    coord.setPosition(x, y, z)
+    coord.setVolume(inputTomo)
+    coord3DSet.append(coord)
+
+def writeSetOfSubTomograms(micSet, filename):
+    writeSetOfParticles(micSet, filename)
 
 def writeSetOfMicrographs(micSet, filename):
     """ Simplified function borrowed from xmipp. """
@@ -282,7 +307,7 @@ def convertImage(inputLoc, outputLoc):
             return loc
 
     proc = Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
-                                                                     _getFn(outputLoc)))
+                                                            _getFn(outputLoc)))
     proc.wait()
 
 
@@ -416,3 +441,76 @@ def calculatePhaseShift(ampcont):
     ctfPhaseShift = numpy.rad2deg(PhaseShift)
 
     return ctfPhaseShift
+
+
+def coordinates2json(pathInputCoor, inputCoor):
+    coords = []
+    for coor in inputCoor.iterCoordinates():
+        coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
+
+    coordDict = {"boxes_3d": coords,
+                 "class_list": {"0": {"boxsize": inputCoor.getBoxSize(), "name": "particles_00"}}
+                 }
+
+    writeJson(coordDict, pathInputCoor)
+
+
+def getLastParticlesParams(directory):
+    """
+    Return a dictionary containing the params values of the last iteration.
+
+    Key: Particle index (int)
+    Value: Dict[{coverage: float, score: float, alignMatrix: list[float]}]
+    """
+    # JSON files with particles params: path/to/particle_parms_NN.json
+    particleParamsPaths = glob.glob(os.path.join(directory, 'particle_parms_*.json'))
+    if not particleParamsPaths:
+        raise Exception("Particle params files not found")
+
+    lastParticleParamsPath = sorted(particleParamsPaths)[-1]
+    particlesParams = json.load(open(lastParticleParamsPath))
+    output = {}
+
+    for key, values in particlesParams.items():
+        # key: '(path/to/particles/basename.hdf', nParticle)'
+        # values: '{"coverage": 1.0, "score": 2.0, "xform.align3d": {"matrix": [...]}}'
+        import re
+        match = re.search(r'(\d+)\)$', key)
+        if not match:
+            continue
+        particleIndex = int(match.group(1))
+        coverage = values.get("coverage")
+        score = values.get("score")
+        alignMatrix = values.get("xform.align3d", {}).get("matrix")
+
+        if coverage and score and alignMatrix:
+            customParticleParams = dict(
+                coverage=coverage,
+                score=score,
+                alignMatrix=alignMatrix
+            )
+            output[particleIndex] = customParticleParams
+
+    return output
+
+
+def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particlesParams):
+    """Update a set of subtomograms from a template and copy attributes coverage/score/transform"""
+
+    def updateSubTomogram(subTomogram, index):
+        particleParams = particlesParams.get(index)
+        if not particleParams:
+            raise Exception("Could not get params for particle %d" % index)
+        setattr(subTomogram, 'coverage', Float(particleParams["coverage"]))
+        setattr(subTomogram, 'score', Float(particleParams["score"]))
+        # Create 4x4 matrix from 4x3 e2spt_sgd align matrix and append row [0,0,0,1]
+        am = particleParams["alignMatrix"]
+        angles = numpy.matrix([am[0:3], am[4:7], am[8:11], [0, 0, 0]])
+        samplingRate = outputSetOfSubTomograms.getSamplingRate()
+        shift = numpy.matrix([am[3] * samplingRate, am[7] * samplingRate, am[11] * samplingRate, 1])
+        matrix = numpy.concatenate((angles, shift.T), axis=1)
+        subTomogram.setTransform(Transform(matrix))
+
+    outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,
+                                      updateItemCallback=updateSubTomogram,
+                                      itemDataIterator=itertools.count(0))
