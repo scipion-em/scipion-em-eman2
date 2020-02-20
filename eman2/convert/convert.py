@@ -136,7 +136,7 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
         readCoordinates(mic, micPosFn, coordSet, invertY)
     coordSet.setBoxSize(size)
 
-def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo):
+def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, updateItem=None):
     if jsonBoxDict.has_key("boxes_3d"):
         boxes = jsonBoxDict["boxes_3d"]
 
@@ -145,7 +145,12 @@ def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo):
             coord3DSet = coord3DSetDict[classKey]
             coord3DSet.enableAppend()
 
-            readCoordinates3D(box, coord3DSet, inputTomo)
+            newCoord = readCoordinates3D(box, inputTomo)
+
+            # Execute Callback
+            if updateItem: updateItem(newCoord)
+
+            coord3DSet.append(newCoord)
 
 
 def readCoordinates(mic, fileName, coordsSet, invertY=False):
@@ -166,14 +171,14 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coord.setMicrograph(mic)
                 coordsSet.append(coord)
 
-def readCoordinates3D(box, coord3DSet, inputTomo):
+def readCoordinates3D(box, inputTomo):
     from pyworkflow.utils import importFromPlugin
     Coordinate3D = importFromPlugin("tomo.objects", "Coordinate3D", errorMsg=TOMO_NEEDED_MSG)
     x, y, z = box[:3]
     coord = Coordinate3D()
     coord.setPosition(x, y, z)
     coord.setVolume(inputTomo)
-    coord3DSet.append(coord)
+    return coord
 
 def writeSetOfSubTomograms(micSet, filename):
     writeSetOfParticles(micSet, filename)
