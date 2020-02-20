@@ -436,7 +436,7 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
         setupTestProject(cls)
         TestEmanTomoBase.setData()
 
-    def _runTomoExtraction(self, downsampleType = 0, doInvert = False, doNormalize = False, boxSize = 32, downFactor = 1):
+    def _runTomoExtraction(self, tomoSource = 0, doInvert = False, doNormalize = False, boxSize = 32, downFactor = 1):
         ProtImportCoordinates3D = importFromPlugin("tomo.protocols", "ProtImportCoordinates3D", errorMsg=TOMO_NEEDED_MSG)
         ProtImportTomograms = importFromPlugin("tomo.protocols", "ProtImportTomograms",
                                                    errorMsg=TOMO_NEEDED_MSG)
@@ -459,11 +459,11 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
         self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
                              "There was a problem with coordinates 3d output")
 
-        if downsampleType == 1:
+        if tomoSource == 1:
             protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
                                               inputTomograms=protImportTomogram.outputTomograms,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
-                                              downsampleType=downsampleType,
+                                              tomoSource=tomoSource,
                                               doInvert=doInvert,
                                               doNormalize=doNormalize,
                                               boxSize=boxSize,
@@ -472,7 +472,7 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
             protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
                                               inputTomograms=protImportTomogram.outputTomograms,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
-                                              downsampleType=downsampleType,
+                                              tomoSource=tomoSource,
                                               doInvert=doInvert,
                                               doNormalize=doNormalize,
                                               boxSize=boxSize,
@@ -482,7 +482,7 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
                              "There was a problem with SetOfSubtomogram output")
         return protTomoExtraction
 
-    def test_extractParticlesWithoutDownSampleType(self):
+    def test_extractParticlesSameAsPicking(self):
         protTomoExtraction = self._runTomoExtraction()
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
         self.assertTrue(output)
@@ -490,8 +490,8 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
         self.assertTrue(output.getCoordinates3D().getObjValue())
         return protTomoExtraction
 
-    def test_extractParticlesWithDownSample(self):
-        protTomoExtraction = self._runTomoExtraction(downsampleType = 1)
+    def test_extractParticlesOther(self):
+        protTomoExtraction = self._runTomoExtraction(tomoSource = 1)
         output = getattr(protTomoExtraction, 'outputSetOfSubtomogram', None)
         self.assertTrue(output)
         self.assertTrue(output.hasCoordinates3D())
@@ -575,7 +575,7 @@ class TestEmanTomoInitialModel(TestEmanTomoBase):
         protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
                                               inputTomograms=protImportTomogram.outputTomograms,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
-                                              downsampleType=0,
+                                              tomoSource=0,
                                               doInvert=False,
                                               doNormalize=False,
                                               boxSize=32)
@@ -602,7 +602,6 @@ class TestEmanTomoInitialModel(TestEmanTomoBase):
             self.assertTrue(hasattr(subTomogram, "score"))
             matrix = subTomogram.getTransform().getMatrix()
             self.assertEqual(matrix.shape, (4, 4))
-
 
     def _runTomoSubtomogramInitialModelWithSubtomo(self):
 
@@ -723,7 +722,7 @@ class TestEmanTomoSubtomogramRefinement(TestEmanTomoBase):
         protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
                                               inputTomograms=protImportTomogram.outputTomograms,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
-                                              downsampleType=0,
+                                              tomoSource=0,
                                               doInvert=doInvert,
                                               doNormalize=doNormalize,
                                               boxSize=boxSize)
