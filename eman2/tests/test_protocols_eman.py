@@ -423,6 +423,7 @@ class TestEmanTomoBase(TestEmanBase):
         cls.tomogram = cls.dataset.getFile('tomo1')
         cls.coords3D = cls.dataset.getFile('overview_wbp.txt')
         cls.inputSetOfSubTomogram = cls.dataset.getFile('subtomo')
+        cls.smallTomogram = cls.dataset.getFile('coremask_normcorona.mrc')
 
 
 class TestEmanTomoExtraction(TestEmanTomoBase):
@@ -842,13 +843,22 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
     def _runTomoTempMatch(self):
         ProtImportTomograms = importFromPlugin("tomo.protocols", "ProtImportTomograms",
                                                errorMsg=TOMO_NEEDED_MSG)
-        protImportTomogram = self.newProtocol(ProtImportTomograms,
+        protImportTomogramBig = self.newProtocol(ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
 
-        self.launchProtocol(protImportTomogram)
+        protImportTomogramSmall = self.newProtocol(ProtImportTomograms,
+                                                 filesPath=self.smallTomogram,
+                                                 samplingRate=5)
 
-        self.assertIsNotNone(protImportTomogram.outputTomograms,
+        self.launchProtocol(protImportTomogramBig)
+
+        self.launchProtocol(protImportTomogramSmall)
+
+        self.assertIsNotNone(protImportTomogramBig.outputTomograms,
+                             "There was a problem with tomogram output")
+
+        self.assertIsNotNone(protImportTomogramSmall.outputTomograms,
                              "There was a problem with tomogram output")
 
         self.dataset = DataSet.getDataSet('eman')
@@ -858,21 +868,33 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         self.assertIsNotNone(self.protImportVol.outputVolume,
                              "There was a problem with SetOfSubtomogram output")
 
-        protTomoTempMatch = self.newProtocol(EmanProtTomoTempMatch,
-                                             inputSet=protImportTomogram.outputTomograms,
+        protTomoTempMatchBig = self.newProtocol(EmanProtTomoTempMatch,
+                                             inputSet=protImportTomogramBig.outputTomograms,
                                              ref=self.protImportVol.outputVolume,
                                              boxSize=128,
                                              sym="c1")
 
-        self.launchProtocol(protTomoTempMatch)
-        return protTomoTempMatch
+        protTomoTempMatchSmall = self.newProtocol(EmanProtTomoTempMatch,
+                                                inputSet=protImportTomogramSmall.outputTomograms,
+                                                ref=self.protImportVol.outputVolume,
+                                                boxSize=128,
+                                                sym="d1")
+
+        self.launchProtocol(protTomoTempMatchBig)
+        self.launchProtocol(protTomoTempMatchSmall)
+        return protTomoTempMatchBig, protTomoTempMatchSmall
 
     def test_TempMatch(self):
         protTomoTempMatch = self._runTomoTempMatch()
 
-        outputCoords = protTomoTempMatch.output3DCoordinates
-        self.assertEqual(outputCoords.getSize(), 19)
-        self.assertEqual(outputCoords.getBoxSize(), 128)
-        self.assertEqual(outputCoords.getSamplingRate(), 5)
+        outputCoordsBig = protTomoTempMatch[0].output3DCoordinates
+        self.assertEqual(outputCoordsBig.getSize(), 19)
+        self.assertEqual(outputCoordsBig.getBoxSize(), 128)
+        self.assertEqual(outputCoordsBig.getSamplingRate(), 5)
+
+        outputCoordsSmall = protTomoTempMatch[1].output3DCoordinates
+        self.assertEqual(outputCoordsSmall.getSize(), 2)
+        self.assertEqual(outputCoordsSmall.getBoxSize(), 128)
+        self.assertEqual(outputCoordsSmall.getSamplingRate(), 5)
 
         return protTomoTempMatch
