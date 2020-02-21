@@ -41,9 +41,8 @@ from pyworkflow.object import Float
 from pyworkflow.em.convert import ImageHandler
 import pyworkflow.em.metadata as md
 
+from eman2.constants import TOMO_NEEDED_MSG
 import eman2
-
-from tomo.objects import Coordinate3D, SetOfCoordinates3D
 
 
 def loadJson(jsonFn):
@@ -137,7 +136,7 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
         readCoordinates(mic, micPosFn, coordSet, invertY)
     coordSet.setBoxSize(size)
 
-def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo):
+def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, updateItem=None):
     if jsonBoxDict.has_key("boxes_3d"):
         boxes = jsonBoxDict["boxes_3d"]
 
@@ -147,6 +146,9 @@ def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo):
             coord3DSet.enableAppend()
 
             newCoord = readCoordinates3D(box, inputTomo)
+
+            # Execute Callback
+            if updateItem: updateItem(newCoord)
 
             coord3DSet.append(newCoord)
 
@@ -169,6 +171,8 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coordsSet.append(coord)
 
 def readCoordinates3D(box, inputTomo):
+    from pyworkflow.utils import importFromPlugin
+    Coordinate3D = importFromPlugin("tomo.objects", "Coordinate3D", errorMsg=TOMO_NEEDED_MSG)
     x, y, z = box[:3]
     coord = Coordinate3D()
     coord.setPosition(x, y, z)
@@ -495,8 +499,7 @@ def getLastParticlesParams(directory):
 
 
 def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particlesParams):
-    """Update a set of subtomgrams from a template, copy info and attributes coverage/score/transform"""
-    outputSetOfSubTomograms.copyInfo(inputSetOfSubTomograms)
+    """Update a set of subtomograms from a template and copy attributes coverage/score/transform"""
 
     def updateSubTomogram(subTomogram, index):
         particleParams = particlesParams.get(index)
@@ -510,7 +513,6 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
         samplingRate = outputSetOfSubTomograms.getSamplingRate()
         shift = numpy.matrix([am[3] * samplingRate, am[7] * samplingRate, am[11] * samplingRate, 1])
         matrix = numpy.concatenate((angles, shift.T), axis=1)
-
         subTomogram.setTransform(Transform(matrix))
 
     outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,
@@ -534,6 +536,7 @@ def setCoords2Jsons(setTomograms, setCoords, path):
             writeJson(coordDict, pathInputCoor)
 
 def jsons2SetCoords(protocol, setTomograms, outPath):
+    from tomo.objects import SetOfCoordinates3D
     coord3DSetDict = {}
     coord3DMap = {}
     suffix = protocol._getOutputSuffix(SetOfCoordinates3D)

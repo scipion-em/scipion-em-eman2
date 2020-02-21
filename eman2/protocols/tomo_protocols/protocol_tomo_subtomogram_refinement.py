@@ -40,8 +40,7 @@ from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, update
 import eman2
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfSubTomograms
-
+from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
 
 SAME_AS_PICKING = 0
 
@@ -181,27 +180,24 @@ class EmanProtTomoRefinement(pwem.EMProtocol, ProtTomoBase):
 
     def createOutputStep(self):
         lastImage = self.getLastFromOutputPath("threed_\d+.hdf")
-        samplingRate = self.inputRef.get().getSamplingRate()
         inputSetOfSubTomograms = self.inputSetOfSubTomogram.get()
 
         # Output 1: AverageSubTomogram
         averageSubTomogram = AverageSubTomogram()
         averageSubTomogram.setFileName(lastImage)
-        averageSubTomogram.copyInfo(inputSetOfSubTomograms)
-        averageSubTomogram.setSamplingRate(samplingRate)
-        setOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "")
-        setOfSubTomograms.append(averageSubTomogram)
+        setOfAverageSubTomograms = self._createSet(SetOfAverageSubTomograms, 'subtomograms%s.sqlite', "")
+        setOfAverageSubTomograms.copyInfo(inputSetOfSubTomograms)
+        setOfAverageSubTomograms.append(averageSubTomogram)
 
         # Output 2: setOfSubTomograms
         particleParams = getLastParticlesParams(self.getOutputPath())
         outputSetOfSubTomograms = self._createSet(SetOfSubTomograms, 'subtomograms%s.sqlite', "particles")
         outputSetOfSubTomograms.copyInfo(inputSetOfSubTomograms)
         outputSetOfSubTomograms.setCoordinates3D(inputSetOfSubTomograms.getCoordinates3D())
-        outputSetOfSubTomograms.setSamplingRate(samplingRate)
         updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particleParams)
 
-        self._defineOutputs(averageSubTomogram=setOfSubTomograms, outputParticles=outputSetOfSubTomograms)
-        self._defineSourceRelation(self.inputSetOfSubTomogram, setOfSubTomograms)
+        self._defineOutputs(averageSubTomogram=setOfAverageSubTomograms, outputParticles=outputSetOfSubTomograms)
+        self._defineSourceRelation(self.inputSetOfSubTomogram, setOfAverageSubTomograms)
         self._defineSourceRelation(self.inputSetOfSubTomogram, outputSetOfSubTomograms)
 
     def getOutputPath(self, *args):
