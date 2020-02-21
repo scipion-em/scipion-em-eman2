@@ -1,6 +1,6 @@
 # **************************************************************************
 # *
-# * Authors:     David Herreros
+# * Authors:     David Herreros Calero (dherreros@cnb.csic.es)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -24,13 +24,13 @@
 # *
 # **************************************************************************
 
-import os
+import os, math
 
 from pyworkflow.utils.properties import Message
 from pyworkflow import utils as pwutils
 from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         StringParam, FloatParam, LEVEL_ADVANCED)
-from pyworkflow.utils.path import moveFile
+from pyworkflow.utils.path import moveFile, copyFile
 
 import eman2
 from eman2.convert import loadJson, readSetOfCoordinates3D
@@ -89,21 +89,47 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
     # --------------------------- INSERT steps functions ----------------------
 
     def _insertAllSteps(self):
+        self._insertFunctionStep('preprocess')
         self._insertFunctionStep('tempMatchStep')
         self._insertFunctionStep("createOutputStep")
 
 
     # --------------------------- STEPS functions -----------------------------
 
-    def tempMatchStep(self):
+    def preprocess(self):
+        program = eman2.Plugin.getProgram("e2proc3d.py")
+        setDim = self.inputSet.get().getDim()
+        if max(setDim) > 1000:
+            sizeThreshold = max(self.inputSet.get().getDim())
+            self.correctOffset = None
+        else:
+            sizeThreshold = 1000
+            offset = math.floor((1000-self.inputSet.get().getXDim())/2)
+            self.correctOffset = lambda coord: coord.setPosition(coord.getX()-offset,
+                                                                 coord.getY()-offset, coord.getZ())
+        if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
+            for tomo in self.inputSet.get():
+                tomoFile = os.path.basename(tomo.getFileName())
+                tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
+                self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), tomoFile,
+                                                             sizeThreshold, sizeThreshold, tomo.getDim()[2]),
+                            env=eman2.Plugin.getEnviron())
+        else:
+            for tomo in self.inputSet.get():
+                tomoFile = os.path.basename(tomo.getFileName())
+                tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
+                copyFile(tomo.getFileName(), tomoFile)
 
+    def tempMatchStep(self):
         self.box = self.boxSize.get()
 
         volFile = os.path.abspath(self.ref.get().getFileName())
         params = ""
 
         for tomo in self.inputSet.get():
-            params = params + " %s" % tomo.getFileName()
+            tomoFile = os.path.basename(tomo.getFileName())
+            tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
+            params = params + " %s" % self._getTmpPath(tomoFile)
 
         params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s " \
                           "--rmedge --rmgold --boxsz=%d" % (volFile, self.nptcl.get(), self.dthr.get(),
@@ -115,20 +141,20 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                     env=eman2.Plugin.getEnviron())
 
         # Move output files to Extra Path
-        moveFile(self._getTmpPath("ccc.hdf"),self._getExtraPath("particles" + ".hdf"))
+        moveFile(self._getTmpPath("ccc.hdf"), self._getExtraPath("particles" + ".hdf"))
 
         for tomo in self.inputSet.get():
             tomoName = os.path.basename(tomo.getFileName())
             tomoName = os.path.splitext(tomoName)[0]
-            tomoCoord = "extra-" + tomoName + "_info.json"
+            tomoCoord = tomoName + "_info.json"
             moveFile(self._getTmpPath(os.path.join("info", tomoCoord)),
-                     self._getExtraPath("extra-" + tomoName + "_info.json"))
+                     self._getExtraPath(tomoCoord))
 
     # --------------------------- UTILS functions ------------------------------
     def createOutputStep(self):
         # Create a Set of 3D Coordinates per class
-        coord3DSetDict = {}
-        coord3DMap = {}
+        coord3DSetDict = dict()
+        coord3DMap = dict()
         suffix = self._getOutputSuffix(SetOfCoordinates3D)
         coord3DSet = self._createSetOfCoordinates3D(self.inputSet.get(), suffix)
         coord3DSet.setBoxSize(self.box)
@@ -141,24 +167,24 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
             tomoName = os.path.basename(tomo.getFileName())
             tomoName = os.path.splitext(tomoName)[0]
 
-            jsonFnbase = pwutils.join(self._getExtraPath(), 'extra-%s_info.json' % tomoName)
+            jsonFnbase = pwutils.join(self._getExtraPath(), '%s_info.json' % tomoName)
             jsonBoxDict = loadJson(jsonFnbase)
 
-            for key, classItem in jsonBoxDict["class_list"].iteritems():
+            for key, classItem in jsonBoxDict["class_list"].items():
                 index = int(key)
                 coord3DSetDict[index] = coord3DSet
                 name = self.OUTPUT_PREFIX + suffix
                 coord3DMap[index] = name
-                args = {}
+                args = dict()
                 args[name] = coord3DSet
                 # Populate Set of 3D Coordinates with 3D Coordinates
-                readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo)
+                readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, self.correctOffset)
 
         self._defineOutputs(**args)
         self._defineSourceRelation(self.inputSet.get(), coord3DSet)
 
         # Update Outputs
-        for index, coord3DSet in coord3DSetDict.iteritems():
+        for index, coord3DSet in coord3DSetDict.items():
             coord3DSet.setObjComment(self.getSummary(coord3DSet))
             self._updateOutputSet(coord3DMap[index], coord3DSet, state=coord3DSet.STREAM_CLOSED)
 
