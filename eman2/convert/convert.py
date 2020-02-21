@@ -138,7 +138,7 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
     coordSet.setBoxSize(size)
 
 def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, updateItem=None):
-    if jsonBoxDict.has_key("boxes_3d"):
+    if "boxes_3d" in jsonBoxDict.keys():
         boxes = jsonBoxDict["boxes_3d"]
 
         for box in boxes:
