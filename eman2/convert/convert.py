@@ -562,6 +562,7 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
 
         # Populate Set of 3D Coordinates with 3D Coordinates
         readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
+        pwutils.cleanPath(pwutils.join(outPath, 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())))
 
     name = protocol.OUTPUT_PREFIX + suffix
     args = {}
@@ -571,6 +572,4 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
 
     # Update Outputs
     for index, coord3DSet in coord3DSetDict.iteritems():
-        # FIXME Remove summary in case protocol does not have method (it should be invoked by the same protocol)
-        coord3DSet.setObjComment(protocol.getSummary(coord3DSet))
         protocol._updateOutputSet(name, coord3DSet, state=coord3DSet.STREAM_CLOSED)

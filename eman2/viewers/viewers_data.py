@@ -68,7 +68,7 @@ class EmanDataViewer(pwviewer.Viewer):
 
             tomoList = [item.clone() for item in outputCoords.getPrecedents().iterItems()]
 
-            path = self.protocol._getTmpPath()
+            path = os.path.join(self.protocol._getTmpPath(), '..')
 
             tomoProvider = TomogramsTreeProvider(tomoList, path, 'json',)
 

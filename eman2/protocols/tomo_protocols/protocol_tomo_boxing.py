@@ -119,21 +119,3 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             methodsMsgs.append(Message.TEXT_NO_OUTPUT_CO)
 
         return methodsMsgs
-
-    def getSummary(self, coord3DSet):
-        summary = []
-        summary.append("Number of particles picked: %s" % coord3DSet.getSize())
-        summary.append("Particle size: %s" % coord3DSet.getBoxSize())
-        return "\n".join(summary)
-
-    def _summary(self):
-        summary = []
-        if self.isFinished():
-            summary.append("Output 3D Coordinates not ready yet.")
-
-        if self.getOutputsSize() >= 1:
-            for key, output in self.iterOutputAttributes():
-                summary.append("*%s:* \n %s " % (key, output.getObjComment()))
-        else:
-            summary.append(Message.TEXT_NO_OUTPUT_CO)
-        return summary
