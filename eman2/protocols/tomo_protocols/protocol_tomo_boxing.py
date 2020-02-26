@@ -56,15 +56,9 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                       label='Read in Memory', expertLevel=LEVEL_ADVANCED,
                       help='This will read the entire tomogram into memory.'
                            'Much faster, but you must have enough ram.')
-        form.addParam('inputCoordinates', PointerParam, label="Input Coordinates",
-                      allowsNull=True, pointerClass='SetOfCoordinates3D',
-                      help='Select the SetOfCoordinates3D.')
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
-        # Copy input coordinates to Extra Path
-        if self.inputCoordinates.get():
-            self._insertFunctionStep('copyInputCoords')
 
         # Launch Boxing GUI
         self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
@@ -73,9 +67,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         jsons2SetCoords(self, self.inputTomograms.get(), self._getExtraPath())
 
     # --------------------------- STEPS functions -----------------------------
-    def copyInputCoords(self):
-        setCoords2Jsons(self.inputTomograms.get(), self.inputCoordinates.get(), self._getExtraPath())
-
     def launchBoxingGUIStep(self):
 
         tomoList = [tomo.clone() for tomo in self.inputTomograms.get().iterItems()]
