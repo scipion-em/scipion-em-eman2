@@ -152,7 +152,6 @@ def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, updateItem=No
 
             coord3DSet.append(newCoord)
 
-
 def readCoordinates(mic, fileName, coordsSet, invertY=False):
     if pwutils.exists(fileName):
         jsonPosDict = loadJson(fileName)
@@ -519,3 +518,58 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
     outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,
                                       updateItemCallback=updateSubTomogram,
                                       itemDataIterator=itertools.count(0))
+
+
+def setCoords2Jsons(setTomograms, setCoords, path):
+    for tomo in setTomograms.iterItems():
+        coords = []
+        for coor in setCoords.iterCoordinates():
+            if pwutils.removeBaseExt(tomo.getFileName()) == pwutils.removeBaseExt(coor.getVolName()):
+                coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
+
+        coordDict = {"boxes_3d": coords,
+                     "class_list": {"0": {"boxsize": setCoords.getBoxSize(), "name": "particles_00"}}
+                     }
+        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
+        pathInputCoor = pwutils.join(path, fnInputCoor)
+        if coords:
+            writeJson(coordDict, pathInputCoor)
+
+def jsons2SetCoords(protocol, setTomograms, outPath):
+    from tomo.objects import SetOfCoordinates3D
+    coord3DSetDict = {}
+    coord3DMap = {}
+    suffix = protocol._getOutputSuffix(SetOfCoordinates3D)
+    coord3DSet = protocol._createSetOfCoordinates3D(setTomograms, suffix)
+    coord3DSet.setName("tomoCoord")
+    coord3DSet.setPrecedents(setTomograms)
+    coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
+    first = True
+    for tomo in setTomograms.iterItems():
+        jsonFnbase = pwutils.join(outPath,
+                                  'extra-%s_info.json'
+                                  % pwutils.removeBaseExt(tomo.getFileName()))
+        if not os.path.isfile(jsonFnbase):
+            continue
+        jsonBoxDict = loadJson(jsonFnbase)
+
+        if first:
+            coord3DSet.setBoxSize(int(jsonBoxDict["class_list"]["0"]["boxsize"]))
+            first = False
+
+        index = int(jsonBoxDict["class_list"].keys()[0])
+        coord3DSetDict[index] = coord3DSet
+
+        # Populate Set of 3D Coordinates with 3D Coordinates
+        readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
+        pwutils.cleanPath(pwutils.join(outPath, 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())))
+
+    name = protocol.OUTPUT_PREFIX + suffix
+    args = {}
+    args[name] = coord3DSet
+    protocol._defineOutputs(**args)
+    protocol._defineSourceRelation(setTomograms, coord3DSet)
+
+    # Update Outputs
+    for index, coord3DSet in coord3DSetDict.iteritems():
+        protocol._updateOutputSet(name, coord3DSet, state=coord3DSet.STREAM_CLOSED)

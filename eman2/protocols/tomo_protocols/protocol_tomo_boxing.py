@@ -24,19 +24,16 @@
 # *
 # **************************************************************************
 
-import os
-
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED
-from pyworkflow import utils as pwutils
-
+from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED, EnumParam
 
 import eman2
-from eman2.convert import loadJson, coordinates2json, readSetOfCoordinates3D
+from eman2.convert import setCoords2Jsons, jsons2SetCoords
+from eman2.viewers.views_tkinter_tree import EmanDialog
 
 from tomo.protocols import ProtTomoPicking
-from tomo.objects import SetOfCoordinates3D
+from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
 
 
 class EmanProtTomoBoxing(ProtTomoPicking):
@@ -59,80 +56,42 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                       label='Read in Memory', expertLevel=LEVEL_ADVANCED,
                       help='This will read the entire tomogram into memory.'
                            'Much faster, but you must have enough ram.')
-        form.addParam('inputCoordinates', PointerParam, label="Input Coordinates",
+        form.addParam('selection', EnumParam, choices=['Yes', 'No'], default=1,
+                      label='Modify previous coordinates?', display=EnumParam.DISPLAY_HLIST,
+                      help='This option allows to add and/or remove coordinates to a previous SetOfCoordinates')
+        form.addParam('inputCoordinates', PointerParam, label="Input Coordinates", condition='selection == 0',
                       allowsNull=True, pointerClass='SetOfCoordinates3D',
-                      help='Select the SetOfCoordinates3D.')
+                      help='Select the previous SetOfCoordinates you want to modify')
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
-        self.inputTomo = self.inputTomogram.get()
-        self._params = {'inputTomogram': self.inputTomo.getFileName()}
+        # Copy input coordinates to Extra Path
+        if self.inputCoordinates.get():
+            self._insertFunctionStep('copyInputCoords')
+
         # Launch Boxing GUI
-        self._insertFunctionStep('launchBoxingGUIStep', self._params, interactive=True)
+        self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
 
-    def _createOutput(self, outputDir):
-        jsonFnbase = pwutils.join(outputDir, 'info',
-                                  'extra-%s_info.json'
-                                  % pwutils.removeBaseExt(self.inputTomo.getFileName()))
-        jsonBoxDict = loadJson(jsonFnbase)
-
-        coord3DSetDict = {}
-        coord3DMap = {}
-        setTomograms = self.getParentSet()
-        for key, classItem in jsonBoxDict["class_list"].iteritems():
-            index = int(key)
-            suffix = self._getOutputSuffix(SetOfCoordinates3D)
-            coord3DSet = self._createSetOfCoordinates3D(self.inputTomo, suffix)
-            coord3DSet.setBoxSize(int(classItem["boxsize"]))
-            coord3DSet.setName(classItem["name"])
-            coord3DSet.setPrecedents(setTomograms)
-            coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
-
-            name = self.OUTPUT_PREFIX + suffix
-            args = {}
-            args[name] = coord3DSet
-            self._defineOutputs(**args)
-            self._defineSourceRelation(setTomograms, coord3DSet)
-
-            coord3DSetDict[index] = coord3DSet
-            coord3DMap[index] = name
-
-        # Populate Set of 3D Coordinates with 3D Coordinates
-        readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, self.inputTomo)
-
-        # Update Outputs
-        for index, coord3DSet in coord3DSetDict.iteritems():
-            coord3DSet.setObjComment(self.getSummary(coord3DSet))
-            self._updateOutputSet(coord3DMap[index], coord3DSet, state=coord3DSet.STREAM_CLOSED)
+    def _createOutput(self):
+        jsons2SetCoords(self, self.inputTomograms.get(), self._getExtraPath())
 
     # --------------------------- STEPS functions -----------------------------
-    def _createInputCoordsFile(self):
-        cwd = os.getcwd()
-        infoDir = pwutils.join(cwd, 'info')
-        self._leaveWorkingDir()
-        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(self.inputTomo.getFileName())
-        pathInputCoor = pwutils.join(infoDir, fnInputCoor)
-        if not os.path.exists(pathInputCoor):
-            pwutils.makePath(infoDir)
-        return pathInputCoor
+    def copyInputCoords(self):
+        setCoords2Jsons(self.inputTomograms.get(), self.inputCoordinates.get(), self._getExtraPath())
 
-    def launchBoxingGUIStep(self, tomo):
-        inputCoor = self.inputCoordinates.get()
-        if inputCoor is not None:
-            pathInputCoor = self._createInputCoordsFile()
-            coordinates2json(pathInputCoor, inputCoor)
-            self._enterWorkingDir()
+    def launchBoxingGUIStep(self):
 
-        program = eman2.Plugin.getProgram("e2spt_boxer.py")
-        arguments = "%(inputTomogram)s"
-        if self.inMemory:
-            arguments += " --inmemory"
-        self._log.info('Launching: ' + program + ' ' + arguments % tomo)
-        self.runJob(program, arguments % tomo)
+        tomoList = [tomo.clone() for tomo in self.inputTomograms.get().iterItems()]
+
+        tomoProvider = TomogramsTreeProvider(tomoList, self._getExtraPath(), "json")
+
+        self.dlg = EmanDialog(None, self._getExtraPath(), provider=tomoProvider, inMemory=self.inMemory.get(),)
+
         # Open dialog to request confirmation to create output
-        if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
-            self._leaveDir()  # going back to project dir
-            self._createOutput(self.getWorkingDir())
+        import Tkinter as tk
+        frame = tk.Frame()
+        if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
+            self._createOutput()
 
     def _validate(self):
         errors = []
@@ -142,16 +101,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                           'Please update your installation to EMAN 2.3 or newer.')
         return errors
 
-    def _runSteps(self, startIndex):
-        # Redefine run to change to workingDir path
-        # Change to protocol working directory
-        self._enterWorkingDir()
-        ProtTomoPicking._runSteps(self, startIndex)
-
-    def getParentSet(self):
-        parentObj = self.inputTomogram.getObjValue()
-        return getattr(parentObj, 'outputTomograms')
-
     def getMethods(self, output):
         msg = 'User picked %d particles ' % output.getSize()
         msg += 'with a particle size of %s.' % output.getBoxSize()
@@ -159,12 +108,11 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     def _methods(self):
         methodsMsgs = []
-        if self.inputTomogram is None:
+        if self.inputTomograms is None:
             return ['Input tomogram not available yet.']
 
-        methodsMsgs.append("Input tomogram %s of dims %s."
-                           % (self.getObjectTag('inputTomogram'),
-                              str(self.inputTomogram.get().getDim())))
+        methodsMsgs.append("Input tomograms imported of dims %s." %(
+                              str(self.inputTomograms.get().getDim())))
 
         if self.getOutputsSize() >= 1:
             for key, output in self.iterOutputAttributes():
@@ -174,21 +122,3 @@ class EmanProtTomoBoxing(ProtTomoPicking):
             methodsMsgs.append(Message.TEXT_NO_OUTPUT_CO)
 
         return methodsMsgs
-
-    def getSummary(self, coord3DSet):
-        summary = []
-        summary.append("Number of particles picked: %s" % coord3DSet.getSize())
-        summary.append("Particle size: %s" % coord3DSet.getBoxSize())
-        return "\n".join(summary)
-
-    def _summary(self):
-        summary = []
-        if self.isFinished():
-            summary.append("Output 3D Coordinates not ready yet.")
-
-        if self.getOutputsSize() >= 1:
-            for key, output in self.iterOutputAttributes():
-                summary.append("*%s:* \n %s " % (key, output.getObjComment()))
-        else:
-            summary.append(Message.TEXT_NO_OUTPUT_CO)
-        return summary
