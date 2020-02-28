@@ -26,7 +26,7 @@
 
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED
+from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED, EnumParam
 
 import eman2
 from eman2.convert import setCoords2Jsons, jsons2SetCoords
@@ -56,9 +56,18 @@ class EmanProtTomoBoxing(ProtTomoPicking):
                       label='Read in Memory', expertLevel=LEVEL_ADVANCED,
                       help='This will read the entire tomogram into memory.'
                            'Much faster, but you must have enough ram.')
+        form.addParam('selection', EnumParam, choices=['Yes', 'No'], default=1,
+                      label='Modify previous coordinates?', display=EnumParam.DISPLAY_HLIST,
+                      help='This option allows to add and/or remove coordinates to a previous SetOfCoordinates')
+        form.addParam('inputCoordinates', PointerParam, label="Input Coordinates", condition='selection == 0',
+                      allowsNull=True, pointerClass='SetOfCoordinates3D',
+                      help='Select the previous SetOfCoordinates you want to modify')
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
+        # Copy input coordinates to Extra Path
+        if self.inputCoordinates.get():
+            self._insertFunctionStep('copyInputCoords')
 
         # Launch Boxing GUI
         self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
@@ -67,6 +76,9 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         jsons2SetCoords(self, self.inputTomograms.get(), self._getExtraPath())
 
     # --------------------------- STEPS functions -----------------------------
+    def copyInputCoords(self):
+        setCoords2Jsons(self.inputTomograms.get(), self.inputCoordinates.get(), self._getExtraPath())
+
     def launchBoxingGUIStep(self):
 
         tomoList = [tomo.clone() for tomo in self.inputTomograms.get().iterItems()]
