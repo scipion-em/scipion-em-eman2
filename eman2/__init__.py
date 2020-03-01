@@ -105,7 +105,8 @@ class Plugin(pwem.Plugin):
         cmd = cls.getEmanCommand(program, args, python=True)
 
         print("** Running: '%s'" % cmd)
-        proc = subprocess.Popen(cmd, shell=True, env=cls.getEnviron(),
+        cmd = cmd.split()
+        proc = subprocess.Popen(cmd, env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 cwd=direc,
