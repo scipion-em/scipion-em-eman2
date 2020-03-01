@@ -27,7 +27,7 @@
 import os
 from io import open
 
-import pyworkflow as pw
+import pwem
 from pwem.wizards.wizard import EmWizard
 from pwem.viewers import CoordinatesObjectView
 from pyworkflow.utils import makePath, cleanPath, readProperties
@@ -78,11 +78,9 @@ class SparxGaussianPickerWizard(EmWizard):
 
         args = {
             "params": ','.join(params),
-            "preprocess": "%s %s" % (os.path.join(pw.Config.SCIPION_HOME, 'scipion'),
-                                     Plugin.getProgram('sxprocess.py')),
-            "picker": "%s %s" % (os.path.join(pw.Config.SCIPION_HOME, 'scipion'),
-                                 program),
-            "convert": pw.join('apps', 'pw_convert.py'),
+            "preprocess": "scipion %s" % Plugin.getProgram('sxprocess.py'),
+            "picker": "scipion %s" % program,
+            "convert": pwem.join('cmd', 'convert.py'),
             'coordsDir': coordsDir,
             'micsSqlite': micSet.getFileName(),
             "boxSize": autopickProt.boxSize,
