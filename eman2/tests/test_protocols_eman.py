@@ -23,7 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import os
 
 from pyworkflow.tests import (BaseTest, setupTestProject, DataSet)
 from pwem.protocols import (ProtImportMicrographs, ProtImportParticles, ProtImportVolumes,
@@ -31,12 +31,10 @@ from pwem.protocols import (ProtImportMicrographs, ProtImportParticles, ProtImpo
                             ProtImportMicrographsTiltPairs)
 from pwem import Domain
 from pyworkflowtests.protocols import ProtOutputTest
-
-from eman2 import *
-from eman2.protocols import *
-from eman2.constants import TOMO_NEEDED_MSG
 from pwem.objects.data import Pointer
+from pyworkflow.utils import magentaStr
 
+from ..constants import TOMO_NEEDED_MSG
 from .. import Plugin
 from ..protocols import *
 
@@ -74,9 +72,9 @@ class TestEmanBase(BaseTest):
                                              sphericalAberration=sphericalAberration)
 
         cls.proj.launchProtocol(cls.protImport, wait=True)
-        # check that input micrographs have been imported (a better way to do this?)
-        if cls.protImport.outputMicrographs is None:
-            raise Exception('Import of micrograph: %s, failed. outputMicrographs is None.' % pattern)
+        cls.assertIsNotNone(cls.protImport.outputMicrographs,
+                            "SetOfMicrographs has not been produced.")
+
         return cls.protImport
 
     @classmethod
@@ -86,9 +84,9 @@ class TestEmanBase(BaseTest):
                                          filesPath=pattern, samplingRate=samplingRate,
                                          checkStack=checkStack)
         cls.launchProtocol(cls.protImport)
-        # check that input images have been imported (a better way to do this?)
-        if cls.protImport.outputParticles is None:
-            raise Exception('Import of images: %s, failed. outputParticles is None.' % pattern)
+        cls.assertIsNotNone(cls.protImport.outputParticles,
+                            "SetOfParticles has not been produced.")
+
         return cls.protImport
 
     @classmethod
@@ -98,9 +96,9 @@ class TestEmanBase(BaseTest):
                                          importFrom=4,
                                          sqliteFile=pattern, samplingRate=samplingRate)
         cls.launchProtocol(cls.protImport)
-        # check that input images have been imported (a better way to do this?)
-        if cls.protImport.outputParticles is None:
-            raise Exception('Import of images: %s, failed. outputParticles is None.' % pattern)
+        cls.assertIsNotNone(cls.protImport.outputParticles,
+                            "SetOfParticles has not been produced.")
+
         return cls.protImport
 
     @classmethod
@@ -131,10 +129,11 @@ class TestEmanInitialModelMda(TestEmanBase):
         cls.symmetry = 'd6'
         cls.numberOfIterations = 5
         cls.numberOfModels = 2
+        print(magentaStr("\n==> Importing data - class averages:"))
         cls.protImportAvg = cls.runImportAverages(cls.averages, 3.5)
 
     def test_initialmodel(self):
-        print("Run Initial model")
+        print(magentaStr("\n==> Testing eman2 - initial model:"))
         protIniModel = self.newProtocol(EmanProtInitModel,
                                         symmetry=self.symmetry,
                                         numberOfIterations=self.numberOfIterations,
@@ -155,6 +154,7 @@ class TestEmanInitialModelGroel(TestEmanInitialModelMda):
         cls.symmetry = 'd7'
         cls.numberOfIterations = 10
         cls.numberOfModels = 10
+        print(magentaStr("\n==> Importing data - class averages:"))
         cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
 
 
@@ -167,9 +167,11 @@ class TestEmanInitialModelSGD(TestEmanBase):
         cls.symmetry = 'd7'
         cls.numberOfIterations = 20
         cls.numberOfModels = 2
+        print(magentaStr("\n==> Importing data - class averages:"))
         cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
 
     def test_initialmodel(self):
+        print(magentaStr("\n==> Testing eman2 - initial model SGD:"))
         protIniModel = self.newProtocol(EmanProtInitModelSGD,
                                         symmetry=self.symmetry,
                                         numberOfIterations=self.numberOfIterations,
@@ -184,7 +186,7 @@ class TestEmanInitialModelSGD(TestEmanBase):
 
 class TestEmanReconstruct(TestEmanBase):
     def test_ReconstructEman(self):
-        print("Import Set of particles with angles")
+        print(magentaStr("\n==> Importing data - particles:"))
         prot1 = self.newProtocol(ProtImportParticles,
                                  objLabel='from scipion (to-reconstruct)',
                                  importFrom=ProtImportParticles.IMPORT_FROM_SCIPION,
@@ -194,7 +196,7 @@ class TestEmanReconstruct(TestEmanBase):
                                  )
         self.launchProtocol(prot1)
 
-        print("Run Eman Reconstruct")
+        print(magentaStr("\n==> Testing eman2 - recostruct:"))
         protReconstruct = self.newProtocol(EmanProtReconstruct)
         protReconstruct.inputParticles.set(prot1.outputParticles)
         self.launchProtocol(protReconstruct)
@@ -207,11 +209,13 @@ class TestEmanRefineEasy(TestEmanBase):
     def setUpClass(cls):
         setupTestProject(cls)
         TestEmanBase.setData('mda')
+        print(magentaStr("\n==> Importing data - particles:"))
         cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
+        print(magentaStr("\n==> Importing data - volume:"))
         cls.protImportVol = cls.runImportVolumes(cls.vol, 3.5)
 
     def test_RefineEasyEman(self):
-        print("Run Eman Refine Easy")
+        print(magentaStr("\n==> Testing eman2 - refine easy:"))
         protRefine = self.newProtocol(EmanProtRefine,
                                       symmetry="d6",
                                       speed=6,
@@ -228,10 +232,11 @@ class TestEmanRefine2D(TestEmanBase):
     def setUpClass(cls):
         setupTestProject(cls)
         TestEmanBase.setData('mda')
+        print(magentaStr("\n==> Importing data - particles:"))
         cls.protImport = cls.runImportParticles(cls.particlesFn, 3.5)
 
     def test_Refine2DEman(self):
-        print("Run Eman Refine 2D")
+        print(magentaStr("\n==> Testing eman2 - refine 2d:"))
         protRefine = self.newProtocol(EmanProtRefine2D,
                                       numberOfIterations=2, numberOfClassAvg=5,
                                       classIter=2, nbasisfp=3)
@@ -247,10 +252,11 @@ class TestEmanRefine2DBispec(TestEmanBase):
         setupTestProject(cls)
         TestEmanBase.setData('relion_tutorial')
         cls.partsFn = cls.dataset.getFile('import/case2/particles.sqlite')
+        print(magentaStr("\n==> Importing data - particles:"))
         cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_Refine2DBispecEman(self):
-        print("Run Eman Refine 2D bispec")
+        print(magentaStr("\n==> Running eman2 - ctf auto:"))
         protCtf = self.newProtocol(EmanProtCTFAuto,
                                    numberOfThreads=3)
         protCtf.inputParticles.set(self.protImport.outputParticles)
@@ -258,6 +264,7 @@ class TestEmanRefine2DBispec(TestEmanBase):
         self.assertIsNotNone(protCtf.outputParticles_flip_fullRes,
                              "There was a problem with eman ctf auto protocol")
 
+        print(magentaStr("\n==> Testing eman2 - refine 2d bispec:"))
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
                                       inputBispec=protCtf,
                                       numberOfIterations=2, numberOfClassAvg=5,
@@ -280,7 +287,7 @@ class TestEmanTiltValidate(TestEmanBase):
         cls.protImportVol = cls.runImportVolumes(cls.vol, 3.6)
 
     def test_RefineEman(self):
-        print("Importing micrograph pairs")
+        print(magentaStr("\n==> Importing data - micrograph pairs:"))
         protImportMicsPairs = self.newProtocol(ProtImportMicrographsTiltPairs,
                                                patternUntilted=self.micsUFn,
                                                patternTilted=self.micsTFn,
@@ -290,7 +297,7 @@ class TestEmanTiltValidate(TestEmanBase):
         self.assertIsNotNone(protImportMicsPairs.outputMicrographsTiltPair,
                              "There was a problem with the import of mic pairs")
 
-        print("Importing coordinate pairs")
+        print(magentaStr("\n==> Importing data - coordinate pairs:"))
         protImportCoords = self.newProtocol(ProtImportCoordinatesPairs,
                                             importFrom=1,  # from eman
                                             patternUntilted=self.patternU,
@@ -301,7 +308,7 @@ class TestEmanTiltValidate(TestEmanBase):
         self.assertIsNotNone(protImportCoords.outputCoordinatesTiltPair,
                              "There was a problem with the import of coord pairs")
 
-        print("Extracting particle pairs")
+        print(magentaStr("\n==> Running xmipp3 - extract particles:"))
         XmippProtExtractParticlesPairs = Domain.importFromPlugin('xmipp3.protocols',
                                                                  'XmippProtExtractParticlesPairs')
         protExtractPairs = self.newProtocol(XmippProtExtractParticlesPairs,
@@ -314,7 +321,7 @@ class TestEmanTiltValidate(TestEmanBase):
         self.assertIsNotNone(protExtractPairs.outputParticlesTiltPair,
                              "There was a problem with particle pair extraction")
 
-        print("Run Eman Tilt Validate")
+        print(magentaStr("\n==> Testing eman2 - tilt validate:"))
         protValidate = self.newProtocol(EmanProtTiltValidate, symmetry="c4",
                                         maxtilt=60.0, delta=2.0, shrink=2,
                                         quaternion=True,
@@ -337,10 +344,11 @@ class TestEmanCtfAuto(TestEmanBase):
         setupTestProject(cls)
         TestEmanBase.setData('relion_tutorial')
         cls.partsFn = cls.dataset.getFile('import/case2/particles.sqlite')
+        print(magentaStr("\n==> Importing data - particles:"))
         cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
 
     def test_CtfAutoEman(self):
-        print("Run Eman CTF Auto")
+        print(magentaStr("\n==> Testing eman2 - ctf auto:"))
         protCtf = self.newProtocol(EmanProtCTFAuto,
                                    numberOfThreads=3)
         protCtf.inputParticles.set(self.protImport.outputParticles)
@@ -356,16 +364,18 @@ class TestEmanAutopick(TestEmanBase):
         TestEmanBase.setData('igbmc_gempicker')
         cls.micsFn = cls.dataset.getFile('micrographs/*.mrc')
         cls.avgFn = cls.dataset.getFile('templates/templates_white.stk')
+        print(magentaStr("\n==> Importing data - micrographs:"))
         cls.protImportMics = cls.runImportMicrograph(cls.micsFn,
                                                      samplingRate=4.4,
                                                      voltage=120,
                                                      sphericalAberration=2.0,
                                                      scannedPixelSize=None,
                                                      magnification=60000)
+        print(magentaStr("\n==> Importing data - class averages:"))
         cls.protImportAvg = cls.runImportAverages(cls.avgFn, 4.4)
 
     def test_AutopickEman(self):
-        print("Run Eman auto picking")
+        print(magentaStr("\n==> Testing eman2 - e2boxer auto:"))
         protPick = self.newProtocol(EmanProtAutopick,
                                     boxerMode=1,  # by_ref
                                     goodRefs=self.protImportAvg.outputAverages,
@@ -378,7 +388,7 @@ class TestEmanAutopick(TestEmanBase):
 
     def test_AutopickSparx(self):
         if not Plugin.isVersion('2.21'):
-            print("Run Eman auto picking with gauss/sparx")
+            print(magentaStr("\n==> Testing eman2 - e2boxer gauss:"))
             protPick2 = self.newProtocol(SparxGaussianProtPicking,
                                          boxSize=128,
                                          lowerThreshold=0.004,
@@ -395,13 +405,13 @@ class TestEmanAutopick(TestEmanBase):
 
     def test_AutopickSparxPointer(self):
         if not Plugin.isVersion('2.21'):
-            print("Simulating an automatic protocol to estimate the boxSize")
+            print(magentaStr("\n==> Running auto boxsize simulator:"))
             protAutoBoxSize = self.newProtocol(ProtOutputTest,
                                                iBoxSize=64,  # output is twice
                                                objLabel='auto boxsize simulator')
             self.launchProtocol(protAutoBoxSize)
 
-            print("Run Eman auto picking with gauss/sparx")
+            print(magentaStr("\n==> Testing eman2 - e2boxer gauss:"))
             protPick2 = self.newProtocol(SparxGaussianProtPicking,
                                          lowerThreshold=0.004,
                                          higherThreshold=0.1,

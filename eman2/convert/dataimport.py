@@ -109,7 +109,7 @@ class EmanImport:
                 jsonPosDict = loadJson(fileName)
                 boxes = []
 
-                if jsonPosDict.has_key("boxes_3d"):
+                if "boxes_3d" in jsonPosDict:
                     boxes = jsonPosDict["boxes_3d"]
                 if boxes:
                     for box in boxes:

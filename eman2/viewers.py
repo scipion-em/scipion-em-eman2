@@ -346,7 +346,7 @@ Examples:
 
         return views
 
-    def createScipionPartView(self, filename, viewParams={}):
+    def createScipionPartView(self, filename):
         inputParticlesId = self.protocol.inputParticles.get().strId()
         labels = 'enabled id _size _filename _transform._matrix'
         viewParams = {showj.ORDER: labels,
@@ -884,8 +884,8 @@ class CtfViewer(ProtocolViewer):
 
     def _showCtf(self, paramName=None):
         views = []
-        obj = "obj = self.protocol." + self.getEnumText('outputType')
-        exec(obj)
+        outputType = self.getEnumText('outputType')
+        obj = getattr(self.protocol, outputType).get()
         strId = obj.strId()
         fn = obj.getFileName()
         particlesView = ObjectView(self._project, strId, fn)
