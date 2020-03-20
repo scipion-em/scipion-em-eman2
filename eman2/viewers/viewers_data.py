@@ -27,17 +27,17 @@
 import os
 
 import pyworkflow.viewer as pwviewer
-import pyworkflow.em.viewers.views as vi
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.utils.properties import Message
 import pyworkflow.utils as pwutils
 
+import pwem.viewers.views as vi
 import tomo.objects
 from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
 from tomo.protocols.protocol_import_coordinates import ProtImportCoordinates3D
 
-from eman2.convert import setCoords2Jsons, jsons2SetCoords
-from eman2.viewers.views_tkinter_tree import EmanDialog
+from ..convert import setCoords2Jsons, jsons2SetCoords
+from .views_tkinter_tree import EmanDialog
 
 
 
