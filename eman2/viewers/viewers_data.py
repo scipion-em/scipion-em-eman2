@@ -76,7 +76,7 @@ class EmanDataViewer(pwviewer.Viewer):
 
             setView = EmanDialog(self._tkRoot, path, provider=tomoProvider)
 
-            import Tkinter as tk
+            import tkinter as tk
             frame = tk.Frame()
             if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
                 jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
