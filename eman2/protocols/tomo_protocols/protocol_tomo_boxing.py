@@ -88,7 +88,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         self.dlg = EmanDialog(None, self._getExtraPath(), provider=tomoProvider, inMemory=self.inMemory.get(),)
 
         # Open dialog to request confirmation to create output
-        import Tkinter as tk
+        import tkinter as tk
         frame = tk.Frame()
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
             self._createOutput()

@@ -557,7 +557,7 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
             coord3DSet.setBoxSize(int(jsonBoxDict["class_list"]["0"]["boxsize"]))
             first = False
 
-        index = int(jsonBoxDict["class_list"].keys()[0])
+        index = int((list(jsonBoxDict["class_list"].keys()))[0])
         coord3DSetDict[index] = coord3DSet
 
         # Populate Set of 3D Coordinates with 3D Coordinates
@@ -571,5 +571,5 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
     protocol._defineSourceRelation(setTomograms, coord3DSet)
 
     # Update Outputs
-    for index, coord3DSet in coord3DSetDict.iteritems():
+    for index, coord3DSet in coord3DSetDict.items():
         protocol._updateOutputSet(name, coord3DSet, state=coord3DSet.STREAM_CLOSED)
