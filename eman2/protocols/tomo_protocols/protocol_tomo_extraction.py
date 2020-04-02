@@ -161,7 +161,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
 
     def createOutputStep(self):
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(self._getOutputSuffix(SetOfSubTomograms))
-        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomograms().getSamplingRate() * self.downFactor.get())
+        self.outputSubTomogramsSet.setSamplingRate(self.getInputTomograms().getSamplingRate() / self.downFactor.get())
         self.outputSubTomogramsSet.setCoordinates3D(self.inputCoordinates)
         acquisition = TomoAcquisition()
         acquisition.setAngleMin(self.getInputTomograms().getFirstItem().getAcquisition().getAngleMin())
