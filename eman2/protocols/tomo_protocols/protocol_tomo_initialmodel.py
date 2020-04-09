@@ -145,7 +145,7 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
             'numberOfBatches': self.numberOfBatches.get(),
             'mask': self.mask.get(),
             'shrink': self.shrink.get(),
-            'reference': self.reference.get().getFileName(),
+            'reference': self.reference.get().getFileName() if self.reference.get() else None,
             'outputPath': self.getOutputPath(),
          }
         args = '%s/*.hdf' % self._getExtraPath("particles")
