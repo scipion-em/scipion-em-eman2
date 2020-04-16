@@ -282,7 +282,7 @@ def convertImage(inputLoc, outputLoc):
             return loc
 
     proc = Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
-                                                                     _getFn(outputLoc)))
+                                                               _getFn(outputLoc)))
     proc.wait()
 
 

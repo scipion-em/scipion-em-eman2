@@ -4,9 +4,13 @@ EMAN2 plugin
 
 This plugin provide wrappers around several programs of `EMAN2 <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
 
-.. figure:: http://scipion-test.cnb.csic.es:9980/badges/eman2_devel.svg
-   :align: left
-   :alt: build status
++------------------+------------------+
+| stable: |stable| | devel: | |devel| |
++------------------+------------------+
+
+.. |stable| image:: http://scipion-test.cnb.csic.es:9980/badges/eman2_prod.svg
+.. |devel| image:: http://scipion-test.cnb.csic.es:9980/badges/eman2_sdevel.svg
+
 
 Installation
 ------------
@@ -46,16 +50,16 @@ To check the installation, simply run one of the following Scipion tests:
 
 .. code-block::
 
-   scipion tests eman2.tests.test_protocols_eman.TestEmanTiltValidate
-   scipion tests eman2.tests.test_protocols_eman.TestEmanRefineEasy
-   scipion tests eman2.tests.test_protocols_eman.TestEmanRefine2DBispec
-   scipion tests eman2.tests.test_protocols_eman.TestEmanRefine2D
-   scipion tests eman2.tests.test_protocols_eman.TestEmanReconstruct
-   scipion tests eman2.tests.test_protocols_eman.TestEmanInitialModelMda
-   scipion tests eman2.tests.test_protocols_eman.TestEmanInitialModelGroel
-   scipion tests eman2.tests.test_protocols_eman.TestEmanInitialModelSGD
-   scipion tests eman2.tests.test_protocols_eman.TestEmanCtfAuto
-   scipion tests eman2.tests.test_protocols_eman.TestEmanAutopick
+   scipion test eman2.tests.test_protocols_eman.TestEmanTiltValidate
+   scipion test eman2.tests.test_protocols_eman.TestEmanRefineEasy
+   scipion test eman2.tests.test_protocols_eman.TestEmanRefine2DBispec
+   scipion test eman2.tests.test_protocols_eman.TestEmanRefine2D
+   scipion test eman2.tests.test_protocols_eman.TestEmanReconstruct
+   scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelMda
+   scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelGroel
+   scipion test eman2.tests.test_protocols_eman.TestEmanInitialModelSGD
+   scipion test eman2.tests.test_protocols_eman.TestEmanCtfAuto
+   scipion test eman2.tests.test_protocols_eman.TestEmanAutopick
 
 A complete list of tests can also be seen by executing ``scipion test --show --grep eman``
 
