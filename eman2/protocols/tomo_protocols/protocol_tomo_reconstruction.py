@@ -249,8 +249,7 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
     def _getOutputTomogram(self):
         pattern = os.path.join(self._getExtraPath("tomograms"), '*.hdf')
         files = glob.glob(pattern)
-        if not files:
-            raise Exception("Output tomogram not found")
+        assert files, "Output tomogram file not found"
         return os.path.abspath(files[0])
 
     def _getOutputTomograms(self):
