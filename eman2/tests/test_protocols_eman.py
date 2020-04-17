@@ -37,6 +37,7 @@ from pyworkflow.utils import magentaStr
 from ..constants import TOMO_NEEDED_MSG
 from .. import Plugin
 from ..protocols import *
+import tomo.protocols
 
 
 class TestEmanBase(BaseTest):
@@ -913,3 +914,63 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         self.assertEqual(outputCoordsSmall.getSamplingRate(), 5)
 
         return protTomoTempMatch
+
+
+class TestEmanTomoReconstruction(TestEmanTomoBase):
+    @classmethod
+    def setUpClass(cls):
+        setupTestProject(cls)
+        TestEmanTomoBase.setData()
+
+    def _getProtImportTs(self):
+        return self.newProtocol(
+            tomo.protocols.ProtImportTs,
+            filesPath=TestEmanTomoReconstruction.dataset.getPath(),
+            filesPattern='tomo{TS}.hdf',
+            minAngle=-55,
+            maxAngle=60,
+            stepAngle=2,
+            voltage=300,
+            magnification=105000,
+            sphericalAberration=2.7,
+            amplitudeContrast=0.1,
+            samplingRate=1.35,
+            doseInitial=0,
+            dosePerFrame=0.3)
+
+    def _getProtReconstruct(self, protImportTs):
+        return self.newProtocol(
+            EmanProtTomoReconstruction,
+            tiltSeries=protImportTs.outputTiltSeries,
+            tiltStep=2.0,
+            niter='1,1,1,1',
+            bxsz=64)
+
+    def _runPreviousProtocols(self):
+        protImportTs = self._getProtImportTs()
+        self.launchProtocol(protImportTs)
+        self.assertIsNotNone(protImportTs.outputTiltSeries, "Output tilt series not found")
+
+        protReconstruct = self._getProtReconstruct(protImportTs)
+        self.launchProtocol(protReconstruct)
+
+        return protReconstruct
+
+    def _validateOutput(self, protReconstruct):
+        tomograms = list(protReconstruct.tomogram)
+        self.assertEqual(len(tomograms), 1)
+        tomogram = tomograms[0]
+        self.assertEqual(tomogram.getSamplingRate(), 1.35)
+        self.assertEqual(tomogram.getDimensions(), (1024, 1024, 256))
+
+        intermediate_tomograms = list(protReconstruct.tomograms)
+        self.assertEqual(len(intermediate_tomograms), 3)
+        for intermediate_tomogram in intermediate_tomograms:
+            self.assertEqual(intermediate_tomogram.getSamplingRate(), 1.35)
+            self.assertEqual(intermediate_tomogram.getDimensions(), (512, 512, 320))
+
+    def test_protocol(self):
+        protTomoExtraction: EmanProtTomoReconstruction = self._runPreviousProtocols()
+        self._validateOutput(protTomoExtraction)
+        self.assertTrue(protTomoExtraction.summary())
+        self.assertTrue(protTomoExtraction.methods())
