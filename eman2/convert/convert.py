@@ -180,8 +180,70 @@ def readCoordinate3D(box, inputTomo):
     coord.setVolume(inputTomo)
     return coord
 
-def writeSetOfSubTomograms(micSet, filename):
-    writeSetOfParticles(micSet, filename)
+def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
+    """ Convert the imgSet particles to .hdf files as expected by Eman.
+        This function should be called from a current dir where
+        the images in the set are available.
+        """
+    ext = pwutils.getExt(subtomogramSet.getFirstItem().getFileName())[1:]
+    if ext == 'hdf':
+        # create links if input has hdf format
+        for fn in subtomogramSet.getFiles():
+            newFn = pwutils.removeBaseExt(fn).split('__ctf')[0] + '.hdf'
+            newFn = pwutils.join(path, newFn)
+            pwutils.createLink(fn, newFn)
+            print("   %s -> %s" % (fn, newFn))
+    else:
+        from tomo.objects import Coordinate3D
+        firstCoord: Coordinate3D = subtomogramSet.getFirstItem().getCoordinate3D() or None
+        hasVolName = False
+        if firstCoord:
+            hasVolName = firstCoord.getVolName() or False
+
+        fileName = ""
+        a = 0
+        proc = Plugin.createEmanProcess(args='write')
+
+        for i, subtomo in iterSubtomogramsByVol(subtomogramSet):
+            volName = vodId = subtomo.getVolId()
+            if hasVolName:
+                volName = pwutils.removeBaseExt(subtomo.getCoordinate3D().getVolName())
+            objDict = subtomo.getObjDict()
+
+            if not vodId:
+                vodId = 0
+
+            suffix = kwargs.get('suffix', '')
+            if hasVolName and (volName != str(vodId)):
+                objDict['hdfFn'] = pwutils.join(path,
+                                                "%s%s.hdf" % (volName, suffix))
+            else:
+                objDict['hdfFn'] = pwutils.join(path,
+                                                "mic_%06d%s.hdf" % (vodId, suffix))
+
+            alignType = kwargs.get('alignType')
+
+            if alignType != emcts.ALIGN_NONE:
+                shift, angles = alignmentToRow(subtomo.getTransform(), alignType)
+                # json cannot encode arrays so I convert them to lists
+                # json fail if has -0 as value
+                objDict['_shifts'] = shift.tolist()
+                objDict['_angles'] = angles.tolist()
+            objDict['_itemId'] = subtomo.getObjId()
+
+            # the index in EMAN begins with 0
+            if fileName != objDict['_filename']:
+                fileName = objDict['_filename']
+                if objDict['_index'] == 0:
+                    a = 0
+                else:
+                    a = 1
+            objDict['_index'] = int(objDict['_index'] - a)
+            # Write the e2converter.py process from where to read the image
+            print(json.dumps(objDict), file=proc.stdin, flush=True)
+            proc.stdout.readline()
+        proc.kill()
+
 
 def writeSetOfMicrographs(micSet, filename):
     """ Simplified function borrowed from xmipp. """
@@ -402,6 +464,12 @@ def iterParticlesByMic(partSet):
     """ Iterate the particles ordered by micrograph """
     for i, part in enumerate(partSet.iterItems(orderBy=['_micId', 'id'],
                                                direction='ASC')):
+        yield i, part
+
+def iterSubtomogramsByVol(subtomogramSet):
+    """ Iterate subtomograms ordered by micrograph """
+    items = list(subtomogramSet.iterItems(orderBy=['id'], direction='ASC'))
+    for i, part in enumerate(items):
         yield i, part
 
 

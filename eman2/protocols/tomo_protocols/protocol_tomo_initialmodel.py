@@ -29,10 +29,10 @@ from pyworkflow.protocol import params
 from pyworkflow.utils.path import makePath
 
 import eman2
-from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
+from eman2.convert import writeSetOfParticles, writeSetOfSubTomograms, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
+from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms, SubTomogram, Coordinate3D
 
 
 class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
@@ -132,8 +132,9 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
         partAlign = partSet.getAlignment()
         storePath = self._getExtraPath("particles")
         makePath(storePath)
-        writeSetOfParticles(partSet, storePath, alignType=partAlign)
-
+        #st: SubTomogram = list(partSet)[0]
+        #x: Coordinate3D = st.getCoordinate3D()
+        writeSetOfSubTomograms(partSet, storePath, alignType=partAlign)
     def createInitialModelStep(self):
         command_params = {
             'symmetry': self.symmetry.get(),
@@ -209,7 +210,7 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
     def _summary(self):
         particles = self.particles.get()
 
-        return filter(bool, [
+        return list(filter(bool, [
             "Particles: %d" % particles.getSize(),
             self.reference and "Reference file used: %s" % self.reference.get().getFileName(),
-        ])
+        ]))
