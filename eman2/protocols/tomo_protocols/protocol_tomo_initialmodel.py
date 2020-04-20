@@ -145,7 +145,7 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
             'numberOfBatches': self.numberOfBatches.get(),
             'mask': self.mask.get(),
             'shrink': self.shrink.get(),
-            'reference': self.reference.get().getFileName(),
+            'reference': self.reference.get().getFileName() if self.reference.get() else None,
             'outputPath': self.getOutputPath(),
          }
         args = '%s/*.hdf' % self._getExtraPath("particles")
@@ -208,8 +208,10 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
 
     def _summary(self):
         particles = self.particles.get()
-
-        return filter(bool, [
+        reference = self.reference.get()
+        lines = [
             "Particles: %d" % particles.getSize(),
-            self.reference and "Reference file used: %s" % self.reference.get().getFileName(),
-        ])
+            "Reference file used: %s" % reference.getFileName() if reference else None,
+        ]
+
+        return list(filter(bool, lines))
