@@ -173,7 +173,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                 if os.path.basename(tomoFile) == os.path.basename(item.getFileName()):
                     coordSet = self.lines[ind]
                     outputSet = self.readSetOfSubTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile, "hdf")),
-                                            self.outputSubTomogramsSet, coordSet)
+                                            self.outputSubTomogramsSet, coordSet, item.getObjId())
 
         self._defineOutputs(outputSetOfSubtomogram=outputSet)
         self._defineSourceRelation(self.inputCoordinates, outputSet)
@@ -235,7 +235,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
         else:
             return self.inputTomograms.get()
 
-    def readSetOfSubTomograms(self, workDir, outputSubTomogramsSet, coordSet):
+    def readSetOfSubTomograms(self, workDir, outputSubTomogramsSet, coordSet, volId):
         imgh = ImageHandler()
         x, y, z, n = imgh.getDimensions(workDir)
         for index in range(1, n + 1):
@@ -246,6 +246,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             if dfactor != 1:
                 fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % index)
                 ImageHandler.scaleSplines(subtomogram.getLocation(), fnSubtomo, dfactor)
+                subtomogram.setVolId(volId)
                 subtomogram.setLocation(fnSubtomo)
             subtomogram.setCoordinate3D(coordSet[index-1])
             outputSubTomogramsSet.append(subtomogram)

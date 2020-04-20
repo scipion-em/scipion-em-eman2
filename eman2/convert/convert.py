@@ -219,7 +219,7 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
                                                 "%s%s.hdf" % (volName, suffix))
             else:
                 objDict['hdfFn'] = pwutils.join(path,
-                                                "mic_%06d%s.hdf" % (vodId, suffix))
+                                                "subtomo_%06d%s.hdf" % (vodId, suffix))
 
             alignType = kwargs.get('alignType')
 
@@ -467,8 +467,8 @@ def iterParticlesByMic(partSet):
         yield i, part
 
 def iterSubtomogramsByVol(subtomogramSet):
-    """ Iterate subtomograms ordered by micrograph """
-    items = list(subtomogramSet.iterItems(orderBy=['id'], direction='ASC'))
+    """ Iterate subtomograms ordered by tomogram """
+    items = list(subtomogramSet.iterItems(orderBy=['_volId', 'id'], direction='ASC'))
     for i, part in enumerate(items):
         yield i, part
 
