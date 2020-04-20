@@ -32,7 +32,7 @@ import eman2
 from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms, SubTomogram, Coordinate3D
+from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
 
 
 class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
