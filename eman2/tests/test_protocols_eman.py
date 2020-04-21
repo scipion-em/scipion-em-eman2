@@ -970,7 +970,7 @@ class TestEmanTomoReconstruction(TestEmanTomoBase):
             self.assertEqual(intermediate_tomogram.getDimensions(), (512, 512, 320))
 
     def test_protocol(self):
-        protTomoExtraction: EmanProtTomoReconstruction = self._runPreviousProtocols()
+        protTomoExtraction = self._runPreviousProtocols()
         self._validateOutput(protTomoExtraction)
         self.assertTrue(protTomoExtraction.summary())
         self.assertTrue(protTomoExtraction.methods())
