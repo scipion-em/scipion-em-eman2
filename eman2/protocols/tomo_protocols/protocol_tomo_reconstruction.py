@@ -33,7 +33,7 @@ from pwem.protocols import EMProtocol
 from pyworkflow.protocol import params
 
 from tomo.protocols import ProtTomoBase
-from tomo.objects import Tomogram, SetOfTomograms, TiltSeries
+from tomo.objects import Tomogram, SetOfTomograms
 
 
 class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
@@ -190,7 +190,7 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
 
         args = " ".join(self._getInputPaths())
 
-        args += (' --tltstep=%(tiltStep)f --zeroid=%(zeroid)d --npk=%(npk)d'
+        args += (' --notmp --tltstep=%(tiltStep)f --zeroid=%(zeroid)d --npk=%(npk)d'
                  ' --bxsz=%(bxsz)d --tltkeep=%(tltkeep)f --outsize=%(outsize)s'
                  ' --niter=%(niter)s --clipz=%(clipz)d'
                  ' --pk_mindist=%(pk_mindist)f --pkkeep=%(pkkeep)f --threads=%(threads)d'
@@ -217,44 +217,29 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
     def createOutputStep(self):
         tilt_series = self.tiltSeries.get()
 
-        # Output 1: Main tomogram
-        tomogram_path = self._getOutputTomogram()
-        self._log.info('Main tomogram: ' + tomogram_path)
-
-        main_tomogram = Tomogram()
-        main_tomogram.setFileName(tomogram_path)
-        main_tomograms = self._createSet(SetOfTomograms, 'tomograms%s.sqlite', "")
-        main_tomograms.copyInfo(tilt_series)
-        main_tomograms.append(main_tomogram)
-
-        # Output 2: Intermediate tomograms
+        # Output 1: Main tomograms
         tomograms_paths = self._getOutputTomograms()
-        tomograms = self._createSet(SetOfTomograms, 'tomograms%s.sqlite', "tiltseries")
+        tomograms = self._createSet(SetOfTomograms, 'tomograms%s.sqlite', "")
 
         for tomogram_path in tomograms_paths:
-            self._log.info('Intermediate tomogram: ' + tomogram_path)
+            self._log.info('Main tomogram: ' + tomogram_path)
             tomogram = Tomogram()
             tomogram.setFileName(tomogram_path)
-            tomograms.copyInfo(tilt_series)
+            tomogram.copyInfo(tilt_series)
             tomograms.append(tomogram)
 
-        self._defineOutputs(tomogram=main_tomograms, tomograms=tomograms)
-        self._defineSourceRelation(self.tiltSeries, main_tomograms)
+        self._defineOutputs(tomograms=tomograms)
         self._defineSourceRelation(self.tiltSeries, tomograms)
 
     def _getInputPaths(self):
         tilt_series = self.tiltSeries.get()
         return [path for item in tilt_series for path in item.getFiles()]
 
-    def _getOutputTomogram(self):
+    def _getOutputTomograms(self):
         pattern = os.path.join(self._getExtraPath("tomograms"), '*.hdf')
         files = glob.glob(pattern)
         assert files, "Output tomogram file not found"
-        return os.path.abspath(files[0])
-
-    def _getOutputTomograms(self):
-        pattern = os.path.join(self._getExtraPath(), 'tomorecon_00', 'tomo_[0-9]*.hdf')
-        return [os.path.abspath(path) for path in sorted(glob.glob(pattern))]
+        return [os.path.abspath(path) for path in sorted(files)]
 
     def _methods(self):
         return [
