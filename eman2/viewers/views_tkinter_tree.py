@@ -24,12 +24,14 @@
 # *
 # **************************************************************************
 
-import os, threading
+import glob
+import os
+import threading
 
 from pyworkflow import utils as pwutils
-from pyworkflow.utils.process import runJob
 from pyworkflow.gui.dialog import ToolbarListDialog
 from pyworkflow.utils.path import moveFile, cleanPath, copyFile
+from pyworkflow.utils.process import runJob
 
 import eman2
 
@@ -54,8 +56,11 @@ class EmanDialog(ToolbarListDialog):
         if self.proc.isAlive():
             self.after(1000, self.refresh_gui)
         else:
-            outFile = 'extra-%s_info.json' % pwutils.removeBaseExt(self.tomo.getFileName())
-            moveFile((os.path.join(self.path, "info", outFile)), os.path.join(self.path, outFile))
+            outFile = '*%s_info.json' % pwutils.removeBaseExt(self.tomo.getFileName().split("__")[0])
+            pattern = os.path.join(self.path, "info", outFile)
+            files = glob.glob(pattern)
+
+            moveFile((files[0]), os.path.join(self.path, os.path.basename(files[0])))
             cleanPath(os.path.join(self.path, "info"))
             self.tree.update()
 
@@ -67,7 +72,7 @@ class EmanDialog(ToolbarListDialog):
         self.after(1000, self.refresh_gui)
 
     def lanchEmanForTomogram(self, inMemory, tomo):
-        pathCoor = self._moveCoordsToInfo(tomo)
+        self._moveCoordsToInfo(tomo)
 
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
         arguments = "%s" % tomo.getFileName()
@@ -76,10 +81,12 @@ class EmanDialog(ToolbarListDialog):
         runJob(None, program, arguments, env=eman2.Plugin.getEnviron(), cwd=self.path)
 
     def _moveCoordsToInfo(self, tomo):
-        infoDir = pwutils.join(os.path.abspath(self.path), 'info')
-        fnCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
-        pathCoor = os.path.join(infoDir, fnCoor)
-        if os.path.exists(os.path.join(self.path, fnCoor)):
+        fnCoor = '*%s_info.json' % pwutils.removeBaseExt(tomo.getFileName().split("__")[0])
+        pattern = os.path.join(self.path, fnCoor)
+        files = glob.glob(pattern)
+
+        if files:
+            infoDir = pwutils.join(os.path.abspath(self.path), 'info')
+            pathCoor = os.path.join(infoDir, os.path.basename(files[0]))
             pwutils.makePath(infoDir)
-            copyFile(os.path.join(self.path, fnCoor), pathCoor)
-        return pathCoor
+            copyFile(files[0], pathCoor)

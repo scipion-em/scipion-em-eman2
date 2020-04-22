@@ -530,7 +530,11 @@ def setCoords2Jsons(setTomograms, setCoords, path):
         coordDict = {"boxes_3d": coords,
                      "class_list": {"0": {"boxsize": setCoords.getBoxSize(), "name": "particles_00"}}
                      }
-        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
+        tomoBasename = pwutils.removeBaseExt(tomo.getFileName())
+        if "__" in tomoBasename:
+            fnInputCoor = '%s_info.json' % tomoBasename.split("__")[0]
+        else:
+            fnInputCoor = 'extra-%s_info.json' % tomoBasename
         pathInputCoor = pwutils.join(path, fnInputCoor)
         if coords:
             writeJson(coordDict, pathInputCoor)
@@ -538,7 +542,6 @@ def setCoords2Jsons(setTomograms, setCoords, path):
 def jsons2SetCoords(protocol, setTomograms, outPath):
     from tomo.objects import SetOfCoordinates3D
     coord3DSetDict = {}
-    coord3DMap = {}
     suffix = protocol._getOutputSuffix(SetOfCoordinates3D)
     coord3DSet = protocol._createSetOfCoordinates3D(setTomograms, suffix)
     coord3DSet.setName("tomoCoord")
@@ -546,11 +549,14 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
     coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
     first = True
     for tomo in setTomograms.iterItems():
-        jsonFnbase = pwutils.join(outPath,
-                                  'extra-%s_info.json'
-                                  % pwutils.removeBaseExt(tomo.getFileName()))
-        if not os.path.isfile(jsonFnbase):
+        outFile = '*%s_info.json' % pwutils.removeBaseExt(tomo.getFileName().split("__")[0])
+        pattern = os.path.join(outPath, outFile)
+        files = glob.glob(pattern)
+
+        if not files or not os.path.isfile(files[0]):
             continue
+
+        jsonFnbase = files[0]
         jsonBoxDict = loadJson(jsonFnbase)
 
         if first:
@@ -562,7 +568,7 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
 
         # Populate Set of 3D Coordinates with 3D Coordinates
         readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
-        pwutils.cleanPath(pwutils.join(outPath, 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())))
+        pwutils.cleanPath(jsonFnbase)
 
     name = protocol.OUTPUT_PREFIX + suffix
     args = {}
