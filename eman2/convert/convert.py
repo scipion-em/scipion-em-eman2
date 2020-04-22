@@ -205,21 +205,21 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
         proc = Plugin.createEmanProcess(args='write')
 
         for i, subtomo in iterSubtomogramsByVol(subtomogramSet):
-            volName = vodId = subtomo.getVolId()
+            volName = volId = subtomo.getVolId()
             if hasVolName:
                 volName = pwutils.removeBaseExt(subtomo.getCoordinate3D().getVolName())
             objDict = subtomo.getObjDict()
 
-            if not vodId:
-                vodId = 0
+            if not volId:
+                volId = 0
 
             suffix = kwargs.get('suffix', '')
-            if hasVolName and (volName != str(vodId)):
+            if hasVolName and (volName != str(volId)):
                 objDict['hdfFn'] = pwutils.join(path,
                                                 "%s%s.hdf" % (volName, suffix))
             else:
                 objDict['hdfFn'] = pwutils.join(path,
-                                                "subtomo_%06d%s.hdf" % (vodId, suffix))
+                                                "subtomo_%06d%s.hdf" % (volId, suffix))
 
             alignType = kwargs.get('alignType')
 
