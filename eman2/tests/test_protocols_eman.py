@@ -621,6 +621,12 @@ class TestEmanTomoInitialModel(TestEmanTomoBase):
             matrix = subTomogram.getTransform().getMatrix()
             self.assertEqual(matrix.shape, (4, 4))
 
+        summary = protInitialModel.summary()
+        self.assertIsNotNone(summary)
+        self.assertEqual(len(summary), 2)
+        self.assertEqual(summary[0], "Particles: 5")
+        self.assertTrue(summary[1].startswith("Reference file used:"))
+
     def _runTomoSubtomogramInitialModelWithSubtomo(self):
 
         protTomoExtraction = self._runPreviousProtocols()

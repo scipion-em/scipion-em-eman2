@@ -29,7 +29,7 @@ from pyworkflow.protocol import params
 from pyworkflow.utils.path import makePath
 
 import eman2
-from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
+from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
 from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
@@ -132,7 +132,7 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
         partAlign = partSet.getAlignment()
         storePath = self._getExtraPath("particles")
         makePath(storePath)
-        writeSetOfParticles(partSet, storePath, alignType=partAlign)
+        writeSetOfSubTomograms(partSet, storePath, alignType=partAlign)
 
     def createInitialModelStep(self):
         command_params = {
@@ -145,7 +145,7 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
             'numberOfBatches': self.numberOfBatches.get(),
             'mask': self.mask.get(),
             'shrink': self.shrink.get(),
-            'reference': self.reference.get().getFileName(),
+            'reference': self.reference.get().getFileName() if self.reference.get() else None,
             'outputPath': self.getOutputPath(),
          }
         args = '%s/*.hdf' % self._getExtraPath("particles")
@@ -208,8 +208,10 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
 
     def _summary(self):
         particles = self.particles.get()
-
-        return filter(bool, [
+        reference = self.reference.get()
+        lines = [
             "Particles: %d" % particles.getSize(),
-            self.reference and "Reference file used: %s" % self.reference.get().getFileName(),
-        ])
+            "Reference file used: %s" % reference.getFileName() if reference else None,
+        ]
+
+        return list(filter(bool, lines))
