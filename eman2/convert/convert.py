@@ -195,7 +195,7 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
             print("   %s -> %s" % (fn, newFn))
     else:
         from tomo.objects import Coordinate3D
-        firstCoord: Coordinate3D = subtomogramSet.getFirstItem().getCoordinate3D() or None
+        firstCoord = subtomogramSet.getFirstItem().getCoordinate3D() or None
         hasVolName = False
         if firstCoord:
             hasVolName = firstCoord.getVolName() or False
