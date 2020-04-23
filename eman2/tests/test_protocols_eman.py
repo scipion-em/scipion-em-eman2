@@ -963,17 +963,12 @@ class TestEmanTomoReconstruction(TestEmanTomoBase):
         return protReconstruct
 
     def _validateOutput(self, protReconstruct):
-        tomograms = list(protReconstruct.tomogram)
+        tomograms = list(protReconstruct.tomograms)
+        # 1 tomogram per input file
         self.assertEqual(len(tomograms), 1)
-        tomogram = tomograms[0]
-        self.assertEqual(tomogram.getSamplingRate(), 1.35)
-        self.assertEqual(tomogram.getDimensions(), (1024, 1024, 256))
-
-        intermediate_tomograms = list(protReconstruct.tomograms)
-        self.assertEqual(len(intermediate_tomograms), 3)
-        for intermediate_tomogram in intermediate_tomograms:
-            self.assertEqual(intermediate_tomogram.getSamplingRate(), 1.35)
-            self.assertEqual(intermediate_tomogram.getDimensions(), (512, 512, 320))
+        for tomogram in tomograms:
+            self.assertEqual(tomogram.getSamplingRate(), 1.35)
+            self.assertEqual(tomogram.getDimensions(), (1024, 1024, 256))
 
     def test_protocol(self):
         protTomoExtraction = self._runPreviousProtocols()
