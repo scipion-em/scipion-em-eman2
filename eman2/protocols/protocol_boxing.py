@@ -79,14 +79,13 @@ class EmanProtBoxing(ProtParticlePicking):
                       label='Particle size (px)',
                       help="Longest axis of particle in pixels (diameter, "
                            "not radius).")
-        if self._isVersion23():
-            form.addParam('device', StringParam, default='cpu',
-                          condition='useNewBoxer',
-                          label='Device',
-                          help='For Convnet training only.\n'
-                               'Pick a device to use. Choose from cpu, '
-                               'gpu, or gpuX (X=0,1,...) when multiple '
-                               'gpus are available. Default is cpu.')
+        form.addParam('device', StringParam, default='cpu',
+                      condition='useNewBoxer',
+                      label='Device',
+                      help='For Convnet training only.\n'
+                           'Pick a device to use. Choose from cpu, '
+                           'gpu, or gpuX (X=0,1,...) when multiple '
+                           'gpus are available. Default is cpu.')
 
         form.addParam('invertY', BooleanParam, default=False,
                       label='Invert Y coordinates',
@@ -127,8 +126,7 @@ class EmanProtBoxing(ProtParticlePicking):
                 'ptclSize': self.particleSize.get(),
                 'thr': self.numberOfThreads.get()
             })
-            if self._isVersion23():
-                arguments += " --device=%s" % self.device.get()
+            arguments += " --device=%s" % self.device.get()
 
         arguments += " %(inputMics)s"
 
@@ -220,6 +218,3 @@ class EmanProtBoxing(ProtParticlePicking):
 
     def _useNewBoxer(self):
         return True if self.useNewBoxer else False
-
-    def _isVersion23(self):
-        return Plugin.isVersion('2.3')

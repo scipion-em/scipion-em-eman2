@@ -30,7 +30,7 @@ import subprocess
 import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, V2_21, V2_3
+from .constants import EMAN2_HOME, V2_3, V2_31
 
 
 _logo = "eman2_logo.png"
@@ -43,11 +43,11 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_21, V2_3]
+    _supportedVersions = [V2_3, V2_31]
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2_HOME, 'eman-2.3')
+        cls._defineEmVar(EMAN2_HOME, 'eman-2.31')
 
     @classmethod
     def getEnviron(cls):
@@ -72,7 +72,7 @@ class Plugin(pwem.Plugin):
         return environ
 
     @classmethod
-    def isVersion(cls, version='2.3'):
+    def isVersion(cls, version='2.31'):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
@@ -126,20 +126,19 @@ class Plugin(pwem.Plugin):
     def defineBinaries(cls, env):
         SW_EM = env.getEmFolder()
 
-        eman22_commands = [
-            ('./eman2.21.linux64.centos7.sh -b -p "%s/eman-2.21"' %
-             SW_EM, '%s/eman-2.21/bin/python' % SW_EM)]
-
         shell = os.environ.get("SHELL", "bash")
         eman23_commands = [
             (shell + ' ./eman2.3.linux64.sh -b -p "%s/eman-2.3"' %
              SW_EM, '%s/eman-2.3/bin/python' % SW_EM)]
-
-        env.addPackage('eman', version='2.21',
-                       tar='eman2.21.linux64.centos7.tgz',
-                       commands=eman22_commands)
+        eman231_commands = [
+            (shell + ' ./eman2.31_sphire1.3.linux64.sh -b -p "%s/eman-2.31"' %
+             SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
 
         env.addPackage('eman', version='2.3',
                        tar='eman2.3.linux64.tgz',
-                       commands=eman23_commands,
+                       commands=eman23_commands)
+
+        env.addPackage('eman', version='2.31',
+                       tar='eman2.31.linux64.tgz',
+                       commands=eman231_commands,
                        default=True)

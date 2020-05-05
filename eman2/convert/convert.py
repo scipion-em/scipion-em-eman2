@@ -32,7 +32,6 @@ import glob
 import json
 import numpy
 import os
-from io import open
 
 import pwem.constants as emcts
 import pyworkflow.utils as pwutils
@@ -45,9 +44,9 @@ from .. import Plugin
 
 def loadJson(jsonFn):
     """ This function loads the Json dictionary into memory """
-    jsonFile = open(jsonFn)
-    jsonDict = json.load(jsonFile)
-    jsonFile.close()
+    with open(jsonFn) as jsonFile:
+        jsonDict = json.load(jsonFile)
+
     return jsonDict
 
 
@@ -287,13 +286,12 @@ def convertImage(inputLoc, outputLoc):
 
 
 def iterLstFile(filename):
-    f = open(filename)
-    for line in f:
-        if '#' not in line:
-            # Decompose Eman filename
-            index, filename = int(line.split()[0]) + 1, line.split()[1]
-            yield index, filename
-    f.close()
+    with open(filename) as f:
+        for line in f:
+            if '#' not in line:
+                # Decompose Eman filename
+                index, filename = int(line.split()[0]) + 1, line.split()[1]
+                yield index, filename
 
 
 def geometryFromMatrix(matrix, inverseTransform):

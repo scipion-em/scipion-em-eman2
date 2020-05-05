@@ -26,7 +26,6 @@
 
 import os
 import math
-from io import open
 
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.gui.text as text
@@ -172,7 +171,7 @@ Examples:
                 'showAliRef': lambda paramName: self._showMisc(key='alirefs')
                 }
 
-    def _showClasses(self, paramName=None):
+    def _showClasses(self):
         views = []
         if (self.iterToShow == LAST_ITER and
                 getattr(self.protocol, 'outputClasses', None) is not None):
@@ -336,7 +335,7 @@ Examples:
     # showImagesAngularAssignment
     # =========================================================================
 
-    def _showImagesAngularAssignment(self, paramName=None):
+    def _showImagesAngularAssignment(self):
         views = []
 
         for it in self._iterations:
@@ -358,7 +357,7 @@ Examples:
                           other=inputParticlesId,
                           env=self._env, viewParams=viewParams)
 
-    def _runEulerXplor(self, paramName=None):
+    def _runEulerXplor(self):
         program = Plugin.getProgram('e2eulerxplor.py')
         hostConfig = self.protocol.getHostConfig()
         # Create the steps executor
@@ -372,7 +371,7 @@ Examples:
     # =========================================================================
     # ShowVolumes
     # =========================================================================
-    def _showVolumes(self, paramName=None):
+    def _showVolumes(self):
         if self.displayVol == VOLUME_CHIMERA:
             return self._showVolumesChimera()
         elif self.displayVol == VOLUME_SLICES:
@@ -384,16 +383,15 @@ Examples:
 
         if len(volumes) > 1:
             cmdFile = self.protocol._getExtraPath('chimera_volumes.cmd')
-            f = open(cmdFile, 'w+')
-            for vol in volumes:
-                # We assume that the chimera script will be generated
-                # at the same folder than eman volumes
-                if os.path.exists(vol):
-                    localVol = os.path.relpath(vol,
-                                               self.protocol._getExtraPath())
-                    f.write("open %s\n" % localVol)
-            f.write('tile\n')
-            f.close()
+            with open(cmdFile, 'w+') as f:
+                for vol in volumes:
+                    # We assume that the chimera script will be generated
+                    # at the same folder than eman volumes
+                    if os.path.exists(vol):
+                        localVol = os.path.relpath(vol,
+                                                   self.protocol._getExtraPath())
+                        f.write("open %s\n" % localVol)
+                f.write('tile\n')
             view = ChimeraView(cmdFile)
         else:
             view = ChimeraClientView(volumes[0])
@@ -417,7 +415,7 @@ Examples:
     # =========================================================================
     # showAngularDistribution
     # =========================================================================
-    def _showAngularDistribution(self, paramName=None):
+    def _showAngularDistribution(self):
         views = []
 
         if self.displayAngDist == ANGDIST_CHIMERA:
@@ -511,7 +509,7 @@ Examples:
     def _getFigure(self):
         return None if self.figure == 0 else 'active'
 
-    def _showFSC(self, paramName=None):
+    def _showFSC(self):
         threshold = self.resolutionThresholdFSC.get()
         fscPlot = self.resolutionPlotsFSC.get()
 
@@ -554,14 +552,13 @@ Examples:
         return [fscViewer]
 
     def _plotFSC(self, fscFn, label):
-        resolution_inv = self._getColunmFromFilePar(fscFn, 0)
-        frc = self._getColunmFromFilePar(fscFn, 1)
+        res_inv, frc = self._getFscValues(fscFn)
         fsc = FSC(objLabel=label)
-        fsc.setData(resolution_inv, frc)
+        fsc.setData(res_inv, frc)
 
         return fsc
 
-    def _showHtmlReport(self, paramName=None):
+    def _showHtmlReport(self):
         reportPath = self.protocol._getFileName('reportHtml',
                                                 run=self.protocol._getRun())
         if pwutils.exists(reportPath):
@@ -646,39 +643,35 @@ Examples:
 
         return gridsize
 
-    def _getColunmFromFilePar(self, fscFn, col):
-        f1 = open(fscFn)
-        value = []
-        for l in f1:
-            valList = l.split()
-            val = float(valList[col])
-            value.append(val)
-        f1.close()
-        return value
+    def _getFscValues(self, fscFn):
+        resolution_inv, frc = [], []
+        with open(fscFn) as f1:
+            for l in f1:
+                resolution_inv.append(float(l.split()[0]))
+                frc.append(float(l.split()[1]))
+
+        return resolution_inv, frc
 
     def _getNumberOfParticles(self, it, prefix='full'):
-        f = open(self.protocol._getFileName('angles', iter=it))
-        nLines = int(f.readlines()[-1].split()[0]) + 1
+        with open(self.protocol._getFileName('angles', iter=it)) as f:
+            nLines = int(f.readlines()[-1].split()[0]) + 1
 
         if prefix == 'full':
             return nLines
         else:
-            return nLines / 2
+            return nLines // 2
 
     def _iterAngles(self, it, half="full"):
-        f = open(self.protocol._getFileName('angles', iter=it))
         rest = 0 if half == 'even' else 1
-
-        for i, line in enumerate(f):
-            if '#' not in line:
-                angles = list(map(float, line.split()))
-                if angles[1] != 0:  # skip disabled images
-                    rot = float("{0:.2f}".format(angles[2]))
-                    tilt = float("{0:.2f}".format(angles[3]))
-                    if half == 'full' or i % 2 == rest:
-                        yield rot, tilt
-
-        f.close()
+        with open(self.protocol._getFileName('angles', iter=it)) as f:
+            for i, line in enumerate(f):
+                if '#' not in line:
+                    angles = [float(x) for x in line.split()]
+                    if angles[1] != 0:  # skip disabled images
+                        rot = float("{0:.2f}".format(angles[2]))
+                        tilt = float("{0:.2f}".format(angles[3]))
+                        if half == 'full' or i % 2 == rest:
+                            yield rot, tilt
 
     def _getLabel(self, label, it):
         if label == FSC_UNMASK:
@@ -731,7 +724,7 @@ class TiltValidateViewer(ProtocolViewer):
         return {'displayPlot': self._showPlot,
                 'displayEmanPlot': self._showEmanPlot}
 
-    def _showPlot(self, paramName=None):
+    def _showPlot(self):
         views = []
         color = self.colozaxis
         rmax = self.radcut.get()
@@ -766,7 +759,7 @@ class TiltValidateViewer(ProtocolViewer):
 
         return xplotter
 
-    def _showEmanPlot(self, paramName=None):
+    def _showEmanPlot(self):
         program = Plugin.getProgram('e2tiltvalidate.py')
         args = "--path=TiltValidate_01 --radcut=%0.2f --gui --planethres=%0.2f" % (
             self.radcut.get(), self.planethres.get())
@@ -812,7 +805,7 @@ class TiltValidateViewer(ProtocolViewer):
                     datap.append(tp[0])
                     r.append(tp[1])
                     theta.append(math.radians(tp[2]))
-                    # Color the Z axis out of planeness
+                    # Color the Z axis out of plane
                     zaxis.append(self._computeRGBcolor(tp[3], 0, maxcolorval))
 
                 return datap, r, theta, zaxis
@@ -882,7 +875,7 @@ class CtfViewer(ProtocolViewer):
         return {'displayCtf': self._showCtf,
                 'displayEmanCtf': self._showEmanCtf}
 
-    def _showCtf(self, paramName=None):
+    def _showCtf(self):
         views = []
         outputType = self.getEnumText('outputType')
         obj = getattr(self.protocol, outputType).get()
@@ -892,7 +885,7 @@ class CtfViewer(ProtocolViewer):
         views.append(particlesView)
         return views
 
-    def _showEmanCtf(self, paramName=None):
+    def _showEmanCtf(self):
         program = Plugin.getProgram('e2ctf.py')
         args = '--allparticles --minptcl=0 --minqual=0'
         args += ' --gui --constbfactor=-1.0 --sf=auto'
