@@ -171,7 +171,7 @@ Examples:
                 'showAliRef': lambda paramName: self._showMisc(key='alirefs')
                 }
 
-    def _showClasses(self):
+    def _showClasses(self, paramName=None):
         views = []
         if (self.iterToShow == LAST_ITER and
                 getattr(self.protocol, 'outputClasses', None) is not None):
@@ -335,7 +335,7 @@ Examples:
     # showImagesAngularAssignment
     # =========================================================================
 
-    def _showImagesAngularAssignment(self):
+    def _showImagesAngularAssignment(self, paramName=None):
         views = []
 
         for it in self._iterations:
@@ -357,7 +357,7 @@ Examples:
                           other=inputParticlesId,
                           env=self._env, viewParams=viewParams)
 
-    def _runEulerXplor(self):
+    def _runEulerXplor(self, paramName=None):
         program = Plugin.getProgram('e2eulerxplor.py')
         hostConfig = self.protocol.getHostConfig()
         # Create the steps executor
@@ -371,7 +371,7 @@ Examples:
     # =========================================================================
     # ShowVolumes
     # =========================================================================
-    def _showVolumes(self):
+    def _showVolumes(self, paramName=None):
         if self.displayVol == VOLUME_CHIMERA:
             return self._showVolumesChimera()
         elif self.displayVol == VOLUME_SLICES:
@@ -415,7 +415,7 @@ Examples:
     # =========================================================================
     # showAngularDistribution
     # =========================================================================
-    def _showAngularDistribution(self):
+    def _showAngularDistribution(self, paramName=None):
         views = []
 
         if self.displayAngDist == ANGDIST_CHIMERA:
@@ -509,7 +509,7 @@ Examples:
     def _getFigure(self):
         return None if self.figure == 0 else 'active'
 
-    def _showFSC(self):
+    def _showFSC(self, paramName=None):
         threshold = self.resolutionThresholdFSC.get()
         fscPlot = self.resolutionPlotsFSC.get()
 
@@ -724,7 +724,7 @@ class TiltValidateViewer(ProtocolViewer):
         return {'displayPlot': self._showPlot,
                 'displayEmanPlot': self._showEmanPlot}
 
-    def _showPlot(self):
+    def _showPlot(self, paramName=None):
         views = []
         color = self.colozaxis
         rmax = self.radcut.get()
@@ -759,7 +759,7 @@ class TiltValidateViewer(ProtocolViewer):
 
         return xplotter
 
-    def _showEmanPlot(self):
+    def _showEmanPlot(self, paramName=None):
         program = Plugin.getProgram('e2tiltvalidate.py')
         args = "--path=TiltValidate_01 --radcut=%0.2f --gui --planethres=%0.2f" % (
             self.radcut.get(), self.planethres.get())
@@ -875,7 +875,7 @@ class CtfViewer(ProtocolViewer):
         return {'displayCtf': self._showCtf,
                 'displayEmanCtf': self._showEmanCtf}
 
-    def _showCtf(self):
+    def _showCtf(self, paramName=None):
         views = []
         outputType = self.getEnumText('outputType')
         obj = getattr(self.protocol, outputType).get()
@@ -885,7 +885,7 @@ class CtfViewer(ProtocolViewer):
         views.append(particlesView)
         return views
 
-    def _showEmanCtf(self):
+    def _showEmanCtf(self, paramName=None):
         program = Plugin.getProgram('e2ctf.py')
         args = '--allparticles --minptcl=0 --minqual=0'
         args += ' --gui --constbfactor=-1.0 --sf=auto'
