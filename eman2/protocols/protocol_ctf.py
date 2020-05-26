@@ -266,7 +266,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
             outputs.update({'20': 'partSetFlipLp20',
                             '12': 'partSetFlipLp12'})
 
-            outputs['bispec'] = 'partSetFlipInvar'
+        outputs['bispec'] = 'partSetFlipInvar'
 
         return outputs
 

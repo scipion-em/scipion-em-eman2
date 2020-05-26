@@ -558,7 +558,7 @@ Examples:
 
         return fsc
 
-    def _showHtmlReport(self):
+    def _showHtmlReport(self, paramName=None):
         reportPath = self.protocol._getFileName('reportHtml',
                                                 run=self.protocol._getRun())
         if pwutils.exists(reportPath):
@@ -825,19 +825,17 @@ class TiltValidateViewer(ProtocolViewer):
             B = 0.0
             R = 0.33 * (1 + math.cos(radval) / math.cos(math.pi / 3 - radval))
             G = 1.0 - R
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
         if 2 * math.pi / 3 < radval < 4 * math.pi / 3:
             hue = radval - 2 * math.pi / 3
             R = 0.0
             G = 0.33 * (1 + math.cos(hue) / math.cos(math.pi / 3 - hue))
             B = 1.0 - G
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
         if radval > 4 * math.pi / 3:
             hue = radval - 4 * math.pi / 3
             G = 0
             B = 0.33 * (1 + math.cos(hue) / math.cos(math.pi / 3 - hue))
             R = 1.0 - B
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
+        return "#%02x%02x%02x" % (255 * int(R), 255 * int(G), 255 * int(B))
 
     def _getGridSize(self, n=None):
         """ Figure out the layout of the plots given the number of references."""
@@ -878,7 +876,7 @@ class CtfViewer(ProtocolViewer):
     def _showCtf(self, paramName=None):
         views = []
         outputType = self.getEnumText('outputType')
-        obj = getattr(self.protocol, outputType).get()
+        obj = getattr(self.protocol, outputType)
         strId = obj.strId()
         fn = obj.getFileName()
         particlesView = ObjectView(self._project, strId, fn)
