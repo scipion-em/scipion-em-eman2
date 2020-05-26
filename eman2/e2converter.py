@@ -47,10 +47,10 @@ def writeParticles():
     fnHdf = ""
     while line:
         objDict = json.loads(line)
-        if '_index' in objDict.keys():
+        if '_index' in objDict:
             index = int(objDict['_index'])
 
-        if '_filename' in objDict.keys():
+        if '_filename' in objDict:
             filename = str(objDict['_filename'])
         else:
             raise Exception('ERROR (e2converter): Cannot process a particle '
@@ -58,7 +58,7 @@ def writeParticles():
         imageData = eman.EMData()
         imageData.read_image(filename, index)
 
-        if '_ctfModel._defocusU' in objDict.keys():
+        if '_ctfModel._defocusU' in objDict:
             ctf = eman.EMAN2Ctf()
             defU = objDict['_ctfModel._defocusU']
             defV = objDict['_ctfModel._defocusV']
@@ -76,7 +76,7 @@ def writeParticles():
         imageData.set_attr('apix_y', objDict['_samplingRate'])
 
         transformation = None
-        if '_angles' in objDict.keys():
+        if '_angles' in objDict:
             # TODO: convert to vector not matrix
             angles = objDict['_angles']
             shifts = objDict['_shifts']
