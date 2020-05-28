@@ -89,14 +89,13 @@ class EmanProtInitModel(ProtInitialVolume):
                       label='Use random orientations?',
                       help='Instead of seeding with a random volume, '
                            'seeds by randomizing input orientations')
-        if self._isVersion23():
-            form.addParam('autoMaskExp', IntParam, default=-1,
-                          expertLevel=LEVEL_ADVANCED,
-                          label='Automask expand (px)',
-                          help='Number of voxels of post-threshold expansion '
-                               'in the mask, for use when peripheral '
-                               'features are truncated '
-                               '(default=shrunk boxsize/20)')
+        form.addParam('autoMaskExp', IntParam, default=-1,
+                      expertLevel=LEVEL_ADVANCED,
+                      label='Automask expand (px)',
+                      help='Number of voxels of post-threshold expansion '
+                           'in the mask, for use when peripheral '
+                           'features are truncated '
+                           '(default=shrunk boxsize/20)')
         form.addParam('extraParams', StringParam, default='',
                       expertLevel=LEVEL_ADVANCED,
                       label='Additional arguments:',
@@ -125,7 +124,7 @@ class EmanProtInitModel(ProtInitialVolume):
             args += ' --tries=%(numberOfModels)d --iter=%(numberOfIterations)d'
             if self.randOrient:
                 args += ' --randorient'
-            if self._isVersion23() and self.autoMaskExp.get() != -1:
+            if self.autoMaskExp.get() != -1:
                 args += '--automaskexpand %d'
             if self.numberOfMpi > 1:
                 args += ' --parallel=mpi:%(mpis)d:%(scratch)s'
@@ -229,6 +228,3 @@ class EmanProtInitModel(ProtInitialVolume):
             outputVols = glob(self._getExtraPath('initial_models/model_??_??.hdf'))
             outputVols.sort()
         return outputVols
-
-    def _isVersion23(self):
-        return Plugin.isVersion('2.3')

@@ -27,7 +27,6 @@
 import os
 import re
 from glob import glob
-from io import open
 
 import pwem
 from pwem.protocols import ProtRefine3D
@@ -179,13 +178,12 @@ Major features of this program:
                       help='Default=boxsize/20. Specify number of voxels to '
                            'expand mask before soft edge. Use this if low '
                            'density peripheral features are cut off by the mask.')
-        if self._isVersion23():
-            form.addParam('noRandPhase', BooleanParam, default=False,
-                          label='Supress phase randomization',
-                          help='Suppress independent phase randomization '
-                               'of input map. Only appropriate if input '
-                               'map has been preprocessed in some suitable '
-                               'fashion.')
+        form.addParam('noRandPhase', BooleanParam, default=False,
+                      label='Supress phase randomization',
+                      help='Suppress independent phase randomization '
+                           'of input map. Only appropriate if input '
+                           'map has been preprocessed in some suitable '
+                           'fashion.')
 
         form.addSection(label='Advanced')
         form.addParam('speed', EnumParam,
@@ -436,12 +434,9 @@ Major features of this program:
             args += " --tophat=%s" % self.getEnumText('tophat')
 
         if self.useBispec:
-            if self._isVersion23():
-                args += " --invar"
-            else:
-                args += " --bispec"
+            args += " --bispec"
 
-        if self._isVersion23() and self.noRandPhase:
+        if self.noRandPhase:
             args += " --norandomaphase"
 
         if self.extraParams.hasValue():
@@ -469,13 +464,10 @@ Major features of this program:
             return self._getFileName("partSet")
 
     def _iterTextFile(self, iterN):
-        f = open(self._getFileName('angles', iter=iterN))
-
-        for line in f:
-            if '#' not in line:
-                yield list(map(float, line.split()))
-
-        f.close()
+        with open(self._getFileName('angles', iter=iterN)) as f:
+            for line in f:
+                if '#' not in line:
+                    yield [float(x) for x in line.split()]
 
     def _createItemMatrix(self, item, rowList):
         if rowList[1] == 1:
@@ -545,6 +537,3 @@ Major features of this program:
                                                           self._getBaseName('angles', iter=iterN)),
                                                   direc=self._getExtraPath())
             proc.wait()
-
-    def _isVersion23(self):
-        return Plugin.isVersion('2.3')
