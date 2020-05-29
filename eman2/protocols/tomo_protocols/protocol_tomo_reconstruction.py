@@ -220,6 +220,7 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         # Output 1: Main tomograms
         tomograms_paths = self._getOutputTomograms()
         tomograms = self._createSet(SetOfTomograms, 'tomograms%s.sqlite', "")
+        tomograms.copyInfo(tilt_series)
 
         for tomogram_path in tomograms_paths:
             self._log.info('Main tomogram: ' + tomogram_path)
