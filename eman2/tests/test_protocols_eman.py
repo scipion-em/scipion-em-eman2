@@ -481,7 +481,6 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
                                               downFactor=downFactor)
         else:
             protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
-                                              inputTomograms=protImportTomogram.outputTomograms,
                                               inputCoordinates=protImportCoordinates3d.outputCoordinates,
                                               tomoSource=tomoSource,
                                               doInvert=doInvert,

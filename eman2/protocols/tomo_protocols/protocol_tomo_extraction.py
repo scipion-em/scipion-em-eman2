@@ -150,7 +150,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                 args += ' --invert'
             if self.doNormalize:
                 args += ' --normproc %s' % self.getEnumText('normproc')
-            self.cshrink = float(samplingRateCoord/samplingRateTomo)
+            self.cshrink = float(samplingRateCoord / samplingRateTomo)
             if self.cshrink > 1:
                 args += ' --cshrink %d' % self.cshrink
             program = eman2.Plugin.getProgram('e2spt_boxer_old.py')
@@ -173,7 +173,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                 if os.path.basename(tomoFile) == os.path.basename(item.getFileName()):
                     coordSet = self.lines[ind]
                     outputSet = self.readSetOfSubTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile, "hdf")),
-                                            self.outputSubTomogramsSet, coordSet, item.getObjId())
+                                                           self.outputSubTomogramsSet, coordSet, item.getObjId())
 
         self._defineOutputs(outputSetOfSubtomogram=outputSet)
         self._defineSourceRelation(self.inputCoordinates, outputSet)
@@ -206,8 +206,8 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             methodsMsgs.append("Subtomograms downsample by factor %d."
                                % self.downFactor.get())
         if self.doNormalize:
-            methodsMsgs.append("Particles were normalised. Using normalization method %s") % \
-            self.getEnumText('normproc')
+            methodsMsgs.append("Particles were normalised. Using normalization method %s"
+                               % self.getEnumText('normproc'))
         return methodsMsgs
 
     def _summary(self):
@@ -248,6 +248,6 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                 ImageHandler.scaleSplines(subtomogram.getLocation(), fnSubtomo, dfactor)
                 subtomogram.setVolId(volId)
                 subtomogram.setLocation(fnSubtomo)
-            subtomogram.setCoordinate3D(coordSet[index-1])
+            subtomogram.setCoordinate3D(coordSet[index - 1])
             outputSubTomogramsSet.append(subtomogram)
         return outputSubTomogramsSet
