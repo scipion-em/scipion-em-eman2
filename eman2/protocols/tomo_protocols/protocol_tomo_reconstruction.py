@@ -31,6 +31,7 @@ import eman2
 
 from pwem.protocols import EMProtocol
 from pyworkflow.protocol import params
+import pyworkflow.utils.path as path
 
 from tomo.protocols import ProtTomoBase
 from tomo.objects import Tomogram, SetOfTomograms
@@ -166,10 +167,28 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
 
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
+        self._insertFunctionStep('convertInputStep')
         self._insertFunctionStep('createCommandStep')
         self._insertFunctionStep('createOutputStep')
 
     # --------------------------- STEPS functions -----------------------------
+    def convertInputStep(self):
+        for ts in self.tiltSeries.get():
+            ts = self.tiltSeries.get()[ts.getObjId()]
+            tsId = ts.getTsId()
+            extraPrefix = self._getExtraPath(tsId)
+            tmpPrefix = self._getTmpPath(tsId)
+            path.makePath(tmpPrefix)
+            path.makePath(extraPrefix)
+            outputTsFileName = os.path.join(tmpPrefix, "%s.st" % tsId)
+
+            """Apply the transformation form the input tilt-series"""
+            ts.applyTransform(outputTsFileName)
+
+            """Generate angle file"""
+            # angleFilePath = os.path.join(tmpPrefix, "%s.rawtlt" % tsId)
+            # ts.generateTltFile(angleFilePath)
+
     def createCommandStep(self):
         command_params = {
             'tiltStep': self.tiltStep.get(),
@@ -234,7 +253,8 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
 
     def _getInputPaths(self):
         tilt_series = self.tiltSeries.get()
-        return [path for item in tilt_series for path in item.getFiles()]
+        # return [path for item in tilt_series for path in item.getFiles()]
+        return [os.path.abspath(self._getTmpPath(os.path.join(item.getTsId(), "%s.st" % item.getTsId()))) for item in tilt_series]
 
     def _getOutputTomograms(self):
         pattern = os.path.join(self._getExtraPath("tomograms"), '*.hdf')
