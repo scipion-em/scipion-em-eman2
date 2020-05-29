@@ -23,16 +23,12 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-"""
-This file contains constants related to EMAN2 protocols
-"""
-
 
 EMAN2_HOME = 'EMAN2_HOME'
 
 # Supported versions
-V2_21 = '2.21'
 V2_3 = '2.3'
+V2_31 = '2.31'
 
 # ------------------ Constants values -----------------------------------------
 

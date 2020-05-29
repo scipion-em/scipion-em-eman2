@@ -179,8 +179,5 @@ class EmanImport:
         self.protocol._defineOutputs(outputParticles=partSet)
 
     def validateParticles(self):
-        """ Should be overwritten in subclasses to
-        return summary message for NORMAL EXECUTION.
-        """
         errors = []
         return errors

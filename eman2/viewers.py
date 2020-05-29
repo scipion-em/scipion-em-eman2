@@ -26,7 +26,6 @@
 
 import os
 import math
-from io import open
 
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.gui.text as text
@@ -387,16 +386,15 @@ Examples:
 
         if len(volumes) > 1:
             cmdFile = self.protocol._getExtraPath('chimera_volumes.cmd')
-            f = open(cmdFile, 'w+')
-            for vol in volumes:
-                # We assume that the chimera script will be generated
-                # at the same folder than eman volumes
-                if os.path.exists(vol):
-                    localVol = os.path.relpath(vol,
-                                               self.protocol._getExtraPath())
-                    f.write("open %s\n" % localVol)
-            f.write('tile\n')
-            f.close()
+            with open(cmdFile, 'w+') as f:
+                for vol in volumes:
+                    # We assume that the chimera script will be generated
+                    # at the same folder than eman volumes
+                    if os.path.exists(vol):
+                        localVol = os.path.relpath(vol,
+                                                   self.protocol._getExtraPath())
+                        f.write("open %s\n" % localVol)
+                f.write('tile\n')
             view = ChimeraView(cmdFile)
         else:
             view = ChimeraClientView(volumes[0])
@@ -557,10 +555,9 @@ Examples:
         return [fscViewer]
 
     def _plotFSC(self, fscFn, label):
-        resolution_inv = self._getColunmFromFilePar(fscFn, 0)
-        frc = self._getColunmFromFilePar(fscFn, 1)
+        res_inv, frc = self._getFscValues(fscFn)
         fsc = FSC(objLabel=label)
-        fsc.setData(resolution_inv, frc)
+        fsc.setData(res_inv, frc)
 
         return fsc
 
@@ -649,39 +646,35 @@ Examples:
 
         return gridsize
 
-    def _getColunmFromFilePar(self, fscFn, col):
-        f1 = open(fscFn)
-        value = []
-        for l in f1:
-            valList = l.split()
-            val = float(valList[col])
-            value.append(val)
-        f1.close()
-        return value
+    def _getFscValues(self, fscFn):
+        resolution_inv, frc = [], []
+        with open(fscFn) as f1:
+            for l in f1:
+                resolution_inv.append(float(l.split()[0]))
+                frc.append(float(l.split()[1]))
+
+        return resolution_inv, frc
 
     def _getNumberOfParticles(self, it, prefix='full'):
-        f = open(self.protocol._getFileName('angles', iter=it))
-        nLines = int(f.readlines()[-1].split()[0]) + 1
+        with open(self.protocol._getFileName('angles', iter=it)) as f:
+            nLines = int(f.readlines()[-1].split()[0]) + 1
 
         if prefix == 'full':
             return nLines
         else:
-            return nLines / 2
+            return nLines // 2
 
     def _iterAngles(self, it, half="full"):
-        f = open(self.protocol._getFileName('angles', iter=it))
         rest = 0 if half == 'even' else 1
-
-        for i, line in enumerate(f):
-            if '#' not in line:
-                angles = list(map(float, line.split()))
-                if angles[1] != 0:  # skip disabled images
-                    rot = float("{0:.2f}".format(angles[2]))
-                    tilt = float("{0:.2f}".format(angles[3]))
-                    if half == 'full' or i % 2 == rest:
-                        yield rot, tilt
-
-        f.close()
+        with open(self.protocol._getFileName('angles', iter=it)) as f:
+            for i, line in enumerate(f):
+                if '#' not in line:
+                    angles = [float(x) for x in line.split()]
+                    if angles[1] != 0:  # skip disabled images
+                        rot = float("{0:.2f}".format(angles[2]))
+                        tilt = float("{0:.2f}".format(angles[3]))
+                        if half == 'full' or i % 2 == rest:
+                            yield rot, tilt
 
     def _getLabel(self, label, it):
         if label == FSC_UNMASK:
@@ -815,7 +808,7 @@ class TiltValidateViewer(ProtocolViewer):
                     datap.append(tp[0])
                     r.append(tp[1])
                     theta.append(math.radians(tp[2]))
-                    # Color the Z axis out of planeness
+                    # Color the Z axis out of plane
                     zaxis.append(self._computeRGBcolor(tp[3], 0, maxcolorval))
 
                 return datap, r, theta, zaxis
@@ -835,19 +828,17 @@ class TiltValidateViewer(ProtocolViewer):
             B = 0.0
             R = 0.33 * (1 + math.cos(radval) / math.cos(math.pi / 3 - radval))
             G = 1.0 - R
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
         if 2 * math.pi / 3 < radval < 4 * math.pi / 3:
             hue = radval - 2 * math.pi / 3
             R = 0.0
             G = 0.33 * (1 + math.cos(hue) / math.cos(math.pi / 3 - hue))
             B = 1.0 - G
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
         if radval > 4 * math.pi / 3:
             hue = radval - 4 * math.pi / 3
             G = 0
             B = 0.33 * (1 + math.cos(hue) / math.cos(math.pi / 3 - hue))
             R = 1.0 - B
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
+        return "#%02x%02x%02x" % (255 * int(R), 255 * int(G), 255 * int(B))
 
     def _getGridSize(self, n=None):
         """ Figure out the layout of the plots given the number of references."""
@@ -888,7 +879,7 @@ class CtfViewer(ProtocolViewer):
     def _showCtf(self, paramName=None):
         views = []
         outputType = self.getEnumText('outputType')
-        obj = getattr(self.protocol, outputType).get()
+        obj = getattr(self.protocol, outputType)
         strId = obj.strId()
         fn = obj.getFileName()
         particlesView = ObjectView(self._project, strId, fn)
