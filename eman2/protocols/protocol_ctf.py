@@ -230,8 +230,8 @@ class EmanProtCTFAuto(ProtProcessParticles):
             args += " --highdensity"
         if self.invert:
             args += " --invert"
-            args += " --invartype %s" % self.getEnumText('invarType')
 
+        args += " --invartype %s" % self.getEnumText('invarType')
         args += " --constbfactor %0.2f --defocusmin %0.2f --defocusmax %0.2f" % (
             self.constBfact.get(),
             self.minDefocus.get(),
