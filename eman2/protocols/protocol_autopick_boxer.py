@@ -187,6 +187,3 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     def readCoordsFromMics(self, workingDir, micList, coordSet):
         coordSet.setBoxSize(self.boxSize.get())
         readSetOfCoordinates(workingDir, micList, coordSet, newBoxer=True)
-
-    def _isVersion23(self):
-        return Plugin.isVersion('2.3')

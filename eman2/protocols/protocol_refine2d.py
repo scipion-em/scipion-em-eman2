@@ -28,7 +28,6 @@ import os
 import re
 from os.path import exists
 from glob import glob
-from io import open
 
 import pwem
 from pwem.protocols import ProtClassify2D
@@ -592,13 +591,10 @@ class EmanProtRefine2D(ProtClassify2D):
             return self._getFileName("partSet")
 
     def _iterTextFile(self, iterN):
-        f = open(self._getFileName('results', iter=iterN))
-
-        for line in f:
-            if '#' not in line:
-                yield list(map(float, line.split()))
-
-        f.close()
+        with open(self._getFileName('results', iter=iterN)) as f:
+            for line in f:
+                if '#' not in line:
+                    yield [float(x) for x in line.split()]
 
     def _getIterNumber(self, index):
         """ Return the list of iteration files, give the iterTemplate. """

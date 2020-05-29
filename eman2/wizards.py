@@ -25,7 +25,6 @@
 # **************************************************************************
 
 import os
-from io import open
 
 import pwem
 from pwem.wizards.wizard import EmWizard
@@ -67,7 +66,6 @@ class SparxGaussianPickerWizard(EmWizard):
         writeSetOfMicrographs(micSet, micMdFn)
 
         pickerProps = os.path.join(coordsDir, 'picker.conf')
-        f = open(pickerProps, "w")
         params = ['boxSize', 'lowerThreshold', 'higherThreshold', 'gaussWidth']
         program = Plugin.getBoxerCommand(boxerVersion='old')
 
@@ -90,26 +88,26 @@ class SparxGaussianPickerWizard(EmWizard):
             "extraParams": extraParams
         }
 
-        f.write("""
-        parameters = %(params)s
-        boxSize.value = %(boxSize)s
-        boxSize.label = Box Size
-        boxSize.help = Box size in pixels
-        lowerThreshold.value =  %(lowerThreshold)s
-        lowerThreshold.label = Lower Threshold
-        lowerThreshold.help = Lower Threshold
-        higherThreshold.help = Higher Threshold
-        higherThreshold.value =  %(higherThreshold)s
-        higherThreshold.label = Higher Threshold
-        gaussWidth.help = Width of the Gaussian kernel used
-        gaussWidth.value =  %(gaussWidth)s
-        gaussWidth.label = Gauss Width
-        runDir = %(coordsDir)s
-        preprocessCommand = %(preprocess)s demoparms --makedb=thr_low=%%(lowerThreshold):thr_hi=%%(higherThreshold):boxsize=%%(boxSize):gauss_width=%%(gaussWidth):%(extraParams)s
-        autopickCommand = %(picker)s --gauss_autoboxer=demoparms --write_dbbox --boxsize=%%(boxSize) --norm=normalize.ramp.normvar %%(micrograph) 
-        convertCommand = %(convert)s --coordinates --from eman2 --to xmipp --input  %(micsSqlite)s --output %(coordsDir)s
-        """ % args)
-        f.close()
+        with open(pickerProps, "w") as f:
+            f.write("""
+            parameters = %(params)s
+            boxSize.value = %(boxSize)s
+            boxSize.label = Box Size
+            boxSize.help = Box size in pixels
+            lowerThreshold.value =  %(lowerThreshold)s
+            lowerThreshold.label = Lower Threshold
+            lowerThreshold.help = Lower Threshold
+            higherThreshold.help = Higher Threshold
+            higherThreshold.value =  %(higherThreshold)s
+            higherThreshold.label = Higher Threshold
+            gaussWidth.help = Width of the Gaussian kernel used
+            gaussWidth.value =  %(gaussWidth)s
+            gaussWidth.label = Gauss Width
+            runDir = %(coordsDir)s
+            preprocessCommand = %(preprocess)s demoparms --makedb=thr_low=%%(lowerThreshold):thr_hi=%%(higherThreshold):boxsize=%%(boxSize):gauss_width=%%(gaussWidth):%(extraParams)s
+            autopickCommand = %(picker)s --gauss_autoboxer=demoparms --write_dbbox --boxsize=%%(boxSize) --norm=normalize.ramp.normvar %%(micrograph) 
+            convertCommand = %(convert)s --coordinates --from eman2 --to xmipp --input  %(micsSqlite)s --output %(coordsDir)s
+            """ % args)
         process = CoordinatesObjectView(project, micMdFn, coordsDir, autopickProt,
                                         mode=CoordinatesObjectView.MODE_AUTOMATIC,
                                         pickerProps=pickerProps).show()

@@ -28,7 +28,6 @@ import os
 import re
 from os.path import exists, basename
 from glob import glob
-from io import open
 
 from pwem.objects import SetOfClasses2D
 from pwem.protocols import ProtClassify2D
@@ -117,11 +116,10 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                       label='Number of MSA vectors to use',
                       help='Number of MSa basis vectors to use when '
                            'classifying particles.')
-        if self._isVersion23():
-            form.addParam('alignSort', BooleanParam, default=True,
-                          label='Align and sort?',
-                          help='This will align and sort the final class-averages '
-                               'based on mutual similarity.')
+        form.addParam('alignSort', BooleanParam, default=True,
+                      label='Align and sort?',
+                      help='This will align and sort the final class-averages '
+                           'based on mutual similarity.')
 
         line = form.addLine('Centering: ',
                             help="If the default centering algorithm "
@@ -330,7 +328,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
         args += " --classkeep=%(classKeep)f --classiter=%(classiter)d "
         args += " --classaverager=%s" % self.getEnumText('classAveragerType')
 
-        if self._isVersion23() and self.alignSort:
+        if self.alignSort:
             args += " --alignsort"
 
         if self.classKeepSig:
@@ -375,13 +373,10 @@ class EmanProtRefine2DBispec(ProtClassify2D):
             return "sets/" + basename(self._getFileName("partSetFlipLp12"))
 
     def _iterTextFile(self, iterN):
-        f = open(self._getFileName('results', iter=iterN))
-
-        for line in f:
-            if '#' not in line:
-                yield list(map(float, line.split()))
-
-        f.close()
+        with open(self._getFileName('results', iter=iterN)) as f:
+            for line in f:
+                if '#' not in line:
+                    yield [float(x) for x in line.split()]
 
     def _getRun(self):
         return 1
@@ -483,6 +478,3 @@ class EmanProtRefine2DBispec(ProtClassify2D):
 
     def _inputProt(self):
         return self.inputBispec.get()
-
-    def _isVersion23(self):
-        return Plugin.isVersion('2.3')

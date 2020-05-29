@@ -1,3 +1,6 @@
+1.0.8:
+    - add EMAN 2.31 support, remove 2.21
+    - fix a few bugs in viewers
 1.0.6:
     - GPLv3
     - Add missing RCT protocol to conf
