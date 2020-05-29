@@ -76,10 +76,6 @@ class Plugin(pwem.Plugin):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
-    def isTomoAvailableVersion(cls):
-        return cls.isVersion('2.3')
-
-    @classmethod
     def getProgram(cls, program, python=False):
         """ Return the program binary that will be used. """
         program = os.path.join(cls.getHome('bin'), program)

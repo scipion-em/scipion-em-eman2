@@ -47,10 +47,6 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
     _label = 'tomo initial model'
     OUTPUT_DIR = 'sptsgd_00'
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isTomoAvailableVersion()
-
     def __init__(self, **kwargs):
         EMProtocol.__init__(self, **kwargs)
 

@@ -221,11 +221,6 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         return folder
 
     #--------------- INFO functions -------------------------
-
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isTomoAvailableVersion()
-
     def _summary(self):
         summary = []
         summary.append("Set Of SubTomograms source: %s" % (self.inputSetOfSubTomogram.get().getFileName()))

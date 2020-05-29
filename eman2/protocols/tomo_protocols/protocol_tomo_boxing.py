@@ -44,10 +44,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
     def __init__(self, **kwargs):
         ProtTomoPicking.__init__(self, **kwargs)
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isTomoAvailableVersion()
-
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         ProtTomoPicking._defineParams(self, form)
@@ -92,14 +88,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         frame = tk.Frame()
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
             self._createOutput()
-
-    def _validate(self):
-        errors = []
-
-        if not eman2.Plugin.isTomoAvailableVersion():
-            errors.append('Your EMAN2 version does not support the tomo boxer. '
-                          'Please update your installation to EMAN 2.3 or newer.')
-        return errors
 
     def getMethods(self, output):
         msg = 'User picked %d particles ' % output.getSize()

@@ -46,10 +46,6 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
     _label = 'tomo extraction'
     OUTPUT_PREFIX = 'outputSetOfSubtomogram'
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isTomoAvailableVersion()
-
     def __init__(self, **kwargs):
         EMProtocol.__init__(self, **kwargs)
 
@@ -179,14 +175,6 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
         self._defineSourceRelation(self.inputCoordinates, outputSet)
 
     # --------------------------- INFO functions --------------------------------
-
-    def _validate(self):
-        errors = []
-        if not eman2.Plugin.isTomoAvailableVersion():
-            errors.append('Your EMAN2 version does not support the tomo boxer. '
-                          'Please update your installation to EMAN 2.3 or newer.')
-        return errors
-
     def _methods(self):
         methodsMsgs = []
         if self.getOutputsSize() >= 1:

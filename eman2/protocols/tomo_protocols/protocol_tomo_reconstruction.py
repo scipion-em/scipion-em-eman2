@@ -48,10 +48,6 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
     """
     _label = 'tomo reconstruction'
 
-    @classmethod
-    def isDisabled(cls):
-        return not eman2.Plugin.isTomoAvailableVersion()
-
     def __init__(self, **kwargs):
         EMProtocol.__init__(self, **kwargs)
 
