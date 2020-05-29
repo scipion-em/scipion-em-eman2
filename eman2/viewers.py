@@ -43,7 +43,6 @@ from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
                                         EnumParam, FloatParam, IntParam, BooleanParam)
 import pyworkflow.utils as pwutils
 
-
 from . import Plugin
 from .constants import *
 from .convert import loadJson
@@ -51,8 +50,6 @@ from .protocols import (EmanProtBoxing, EmanProtCTFAuto,
                         EmanProtInitModel, EmanProtRefine2D,
                         EmanProtRefine2DBispec, EmanProtRefine,
                         EmanProtTiltValidate, EmanProtInitModelSGD)
-
-from tomo.objects import SetOfCoordinates3D
 
 
 class EmanViewer(DataViewer):
