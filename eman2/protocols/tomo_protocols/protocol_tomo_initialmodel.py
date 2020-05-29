@@ -29,7 +29,7 @@ from pyworkflow.protocol import params
 from pyworkflow.utils.path import makePath
 
 import eman2
-from eman2.convert import writeSetOfParticles, getLastParticlesParams, updateSetOfSubTomograms
+from eman2.convert import writeSetOfSubTomograms, getLastParticlesParams, updateSetOfSubTomograms
 
 from tomo.protocols import ProtTomoBase
 from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
@@ -132,7 +132,7 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
         partAlign = partSet.getAlignment()
         storePath = self._getExtraPath("particles")
         makePath(storePath)
-        writeSetOfParticles(partSet, storePath, alignType=partAlign)
+        writeSetOfSubTomograms(partSet, storePath, alignType=partAlign)
 
     def createInitialModelStep(self):
         command_params = {

@@ -180,8 +180,70 @@ def readCoordinate3D(box, inputTomo):
     coord.setVolume(inputTomo)
     return coord
 
-def writeSetOfSubTomograms(micSet, filename):
-    writeSetOfParticles(micSet, filename)
+def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
+    """ Convert the imgSet particles to .hdf files as expected by Eman.
+        This function should be called from a current dir where
+        the images in the set are available.
+        """
+    ext = pwutils.getExt(subtomogramSet.getFirstItem().getFileName())[1:]
+    if ext == 'hdf':
+        # create links if input has hdf format
+        for fn in subtomogramSet.getFiles():
+            newFn = pwutils.removeBaseExt(fn).split('__ctf')[0] + '.hdf'
+            newFn = pwutils.join(path, newFn)
+            pwutils.createLink(fn, newFn)
+            print("   %s -> %s" % (fn, newFn))
+    else:
+        from tomo.objects import Coordinate3D
+        firstCoord = subtomogramSet.getFirstItem().getCoordinate3D() or None
+        hasVolName = False
+        if firstCoord:
+            hasVolName = firstCoord.getVolName() or False
+
+        fileName = ""
+        a = 0
+        proc = Plugin.createEmanProcess(args='write')
+
+        for i, subtomo in iterSubtomogramsByVol(subtomogramSet):
+            volName = volId = subtomo.getVolId()
+            if hasVolName:
+                volName = pwutils.removeBaseExt(subtomo.getCoordinate3D().getVolName())
+            objDict = subtomo.getObjDict()
+
+            if not volId:
+                volId = 0
+
+            suffix = kwargs.get('suffix', '')
+            if hasVolName and (volName != str(volId)):
+                objDict['hdfFn'] = pwutils.join(path,
+                                                "%s%s.hdf" % (volName, suffix))
+            else:
+                objDict['hdfFn'] = pwutils.join(path,
+                                                "subtomo_%06d%s.hdf" % (volId, suffix))
+
+            alignType = kwargs.get('alignType')
+
+            if alignType != emcts.ALIGN_NONE:
+                shift, angles = alignmentToRow(subtomo.getTransform(), alignType)
+                # json cannot encode arrays so I convert them to lists
+                # json fail if has -0 as value
+                objDict['_shifts'] = shift.tolist()
+                objDict['_angles'] = angles.tolist()
+            objDict['_itemId'] = subtomo.getObjId()
+
+            # the index in EMAN begins with 0
+            if fileName != objDict['_filename']:
+                fileName = objDict['_filename']
+                if objDict['_index'] == 0:
+                    a = 0
+                else:
+                    a = 1
+            objDict['_index'] = int(objDict['_index'] - a)
+            # Write the e2converter.py process from where to read the image
+            print(json.dumps(objDict), file=proc.stdin, flush=True)
+            proc.stdout.readline()
+        proc.kill()
+
 
 def writeSetOfMicrographs(micSet, filename):
     """ Simplified function borrowed from xmipp. """
@@ -404,6 +466,12 @@ def iterParticlesByMic(partSet):
                                                direction='ASC')):
         yield i, part
 
+def iterSubtomogramsByVol(subtomogramSet):
+    """ Iterate subtomograms ordered by tomogram """
+    items = list(subtomogramSet.iterItems(orderBy=['_volId', 'id'], direction='ASC'))
+    for i, part in enumerate(items):
+        yield i, part
+
 
 def convertReferences(refSet, outputFn):
     """ Simplified version of writeSetOfParticles function.
@@ -530,7 +598,11 @@ def setCoords2Jsons(setTomograms, setCoords, path):
         coordDict = {"boxes_3d": coords,
                      "class_list": {"0": {"boxsize": setCoords.getBoxSize(), "name": "particles_00"}}
                      }
-        fnInputCoor = 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())
+        tomoBasename = pwutils.removeBaseExt(tomo.getFileName())
+        if "__" in tomoBasename:
+            fnInputCoor = '%s_info.json' % tomoBasename.split("__")[0]
+        else:
+            fnInputCoor = 'extra-%s_info.json' % tomoBasename
         pathInputCoor = pwutils.join(path, fnInputCoor)
         if coords:
             writeJson(coordDict, pathInputCoor)
@@ -538,7 +610,6 @@ def setCoords2Jsons(setTomograms, setCoords, path):
 def jsons2SetCoords(protocol, setTomograms, outPath):
     from tomo.objects import SetOfCoordinates3D
     coord3DSetDict = {}
-    coord3DMap = {}
     suffix = protocol._getOutputSuffix(SetOfCoordinates3D)
     coord3DSet = protocol._createSetOfCoordinates3D(setTomograms, suffix)
     coord3DSet.setName("tomoCoord")
@@ -546,11 +617,14 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
     coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
     first = True
     for tomo in setTomograms.iterItems():
-        jsonFnbase = pwutils.join(outPath,
-                                  'extra-%s_info.json'
-                                  % pwutils.removeBaseExt(tomo.getFileName()))
-        if not os.path.isfile(jsonFnbase):
+        outFile = '*%s_info.json' % pwutils.removeBaseExt(tomo.getFileName().split("__")[0])
+        pattern = os.path.join(outPath, outFile)
+        files = glob.glob(pattern)
+
+        if not files or not os.path.isfile(files[0]):
             continue
+
+        jsonFnbase = files[0]
         jsonBoxDict = loadJson(jsonFnbase)
 
         if first:
@@ -562,7 +636,7 @@ def jsons2SetCoords(protocol, setTomograms, outPath):
 
         # Populate Set of 3D Coordinates with 3D Coordinates
         readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
-        pwutils.cleanPath(pwutils.join(outPath, 'extra-%s_info.json' % pwutils.removeBaseExt(tomo.getFileName())))
+        pwutils.cleanPath(jsonFnbase)
 
     name = protocol.OUTPUT_PREFIX + suffix
     args = {}
