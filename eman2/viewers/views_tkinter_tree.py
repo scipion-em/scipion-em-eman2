@@ -53,7 +53,7 @@ class EmanDialog(ToolbarListDialog):
                                     **kwargs)
 
     def refresh_gui(self):
-        if self.proc.isAlive():
+        if self.proc.is_alive():
             self.after(1000, self.refresh_gui)
         else:
             outFile = '*%s_info.json' % pwutils.removeBaseExt(self.tomo.getFileName().split("__")[0])
