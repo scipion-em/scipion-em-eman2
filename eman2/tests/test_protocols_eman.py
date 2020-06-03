@@ -34,8 +34,6 @@ from pyworkflowtests.protocols import ProtOutputTest
 from pwem.objects.data import Pointer
 from pyworkflow.utils import magentaStr
 
-from ..constants import TOMO_NEEDED_MSG
-from .. import Plugin
 from ..protocols import *
 import tomo.protocols
 
@@ -422,6 +420,7 @@ class TestEmanAutopick(TestEmanBase):
         self.assertIsNotNone(protPick2.outputCoordinates,
                              "There was a problem with e2boxer gauss auto protocol")
 
+
 class TestEmanTomoBase(TestEmanBase):
     @classmethod
     def setUpClass(cls):
@@ -429,7 +428,7 @@ class TestEmanTomoBase(TestEmanBase):
 
     @classmethod
     def setData(cls, projectData='tomo-em'):
-        DataSet = Domain.importFromPlugin("tomo.tests", "DataSet", errorMsg=TOMO_NEEDED_MSG)
+        from tomo.tests import DataSet
         cls.dataset = DataSet.getDataSet(projectData)
         cls.tomogram = cls.dataset.getFile('tomo1')
         cls.coords3D = cls.dataset.getFile('overview_wbp.txt')
@@ -448,17 +447,14 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
         TestEmanTomoBase.setData()
 
     def _runTomoExtraction(self, tomoSource = 0, doInvert = False, doNormalize = False, boxSize = 32, downFactor = 1):
-        ProtImportCoordinates3D = Domain.importFromPlugin("tomo.protocols", "ProtImportCoordinates3D", errorMsg=TOMO_NEEDED_MSG)
-        ProtImportTomograms = Domain.importFromPlugin("tomo.protocols", "ProtImportTomograms",
-                                                   errorMsg=TOMO_NEEDED_MSG)
-        protImportTomogram = self.newProtocol(ProtImportTomograms,
+        protImportTomogram = self.newProtocol(tomo.protocols.ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
 
         self.launchProtocol(protImportTomogram)
 
-        protImportCoordinates3d = self.newProtocol(ProtImportCoordinates3D,
-                                 auto=ProtImportCoordinates3D.IMPORT_FROM_EMAN,
+        protImportCoordinates3d = self.newProtocol(tomo.protocols.ProtImportCoordinates3D,
+                                 auto=tomo.protocols.ProtImportCoordinates3D.IMPORT_FROM_EMAN,
                                  filesPath= self.coords3D,
                                  importTomograms=protImportTomogram.outputTomograms,
                                  filesPattern='', boxSize=32,
@@ -560,11 +556,7 @@ class TestEmanTomoInitialModel(TestEmanTomoBase):
         TestEmanTomoBase.setData()
 
     def _runPreviousProtocols(self):
-        ProtImportCoordinates3D = Domain.importFromPlugin("tomo.protocols", "ProtImportCoordinates3D",
-                                                   errorMsg=TOMO_NEEDED_MSG)
-        ProtImportTomograms = Domain.importFromPlugin("tomo.protocols", "ProtImportTomograms",
-                                                   errorMsg=TOMO_NEEDED_MSG)
-        protImportTomogram = self.newProtocol(ProtImportTomograms,
+        protImportTomogram = self.newProtocol(tomo.protocols.ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
 
@@ -572,8 +564,8 @@ class TestEmanTomoInitialModel(TestEmanTomoBase):
         self.assertIsNotNone(protImportTomogram.outputTomograms,
                              "There was a problem with tomogram output")
 
-        protImportCoordinates3d = self.newProtocol(ProtImportCoordinates3D,
-                                                   auto=ProtImportCoordinates3D.IMPORT_FROM_EMAN,
+        protImportCoordinates3d = self.newProtocol(tomo.protocols.ProtImportCoordinates3D,
+                                                   auto=tomo.protocols.ProtImportCoordinates3D.IMPORT_FROM_EMAN,
                                                    filesPath=self.coords3D,
                                                    importTomograms=protImportTomogram.outputTomograms,
                                                    filesPattern='', boxSize=32,
@@ -710,18 +702,14 @@ class TestEmanTomoSubtomogramRefinement(TestEmanTomoBase):
         TestEmanTomoBase.setData()
 
     def _runPreviousProtocols(self):
-        ProtImportCoordinates3D = Domain.importFromPlugin("tomo.protocols", "ProtImportCoordinates3D",
-                                                   errorMsg=TOMO_NEEDED_MSG)
-        ProtImportTomograms = Domain.importFromPlugin("tomo.protocols", "ProtImportTomograms",
-                                               errorMsg=TOMO_NEEDED_MSG)
-        protImportTomogram = self.newProtocol(ProtImportTomograms,
+        protImportTomogram = self.newProtocol(tomo.protocols.ProtImportTomograms,
                                               filesPath=self.tomogram,
                                               samplingRate=5)
 
         self.launchProtocol(protImportTomogram)
 
-        protImportCoordinates3d = self.newProtocol(ProtImportCoordinates3D,
-                                                   auto=ProtImportCoordinates3D.IMPORT_FROM_EMAN,
+        protImportCoordinates3d = self.newProtocol(tomo.protocols.ProtImportCoordinates3D,
+                                                   auto=tomo.protocols.ProtImportCoordinates3D.IMPORT_FROM_EMAN,
                                                    filesPath=self.coords3D,
                                                    importTomograms=protImportTomogram.outputTomograms,
                                                    filesPattern='', boxSize=32,
@@ -856,13 +844,11 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         TestEmanTomoBase.setData()
 
     def _runTomoTempMatch(self):
-        ProtImportTomograms = Domain.importFromPlugin("tomo.protocols", "ProtImportTomograms",
-                                               errorMsg=TOMO_NEEDED_MSG)
-        protImportTomogramBig = self.newProtocol(ProtImportTomograms,
+        protImportTomogramBig = self.newProtocol(tomo.protocols.ProtImportTomograms,
                                  filesPath=self.tomogram,
                                  samplingRate=5)
 
-        protImportTomogramSmall = self.newProtocol(ProtImportTomograms,
+        protImportTomogramSmall = self.newProtocol(tomo.protocols.ProtImportTomograms,
                                                  filesPath=self.smallTomogram,
                                                  samplingRate=5)
 
@@ -873,7 +859,8 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         self.assertSetSize(protImportTomogramBig.outputTomograms, size=1,
                              msg="There was a problem with tomogram output")
 
-        self.assertSetSize(protImportTomogramSmall.outputTomograms, size=1, msg="There was a problem with tomogram output")
+        self.assertSetSize(protImportTomogramSmall.outputTomograms, size=1, msg="There was a problem with tomogram "
+                                                                                "output")
 
         self.dataset = DataSet.getDataSet('eman')
         self.vol = self.dataset.getFile('volume')

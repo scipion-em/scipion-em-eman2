@@ -33,7 +33,6 @@ from pwem.objects.data import Coordinate, CTFModel
 from pwem.objects.data_tiltpairs import Angles
 from pwem.emlib.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR, MDL_ZCOOR,
                                  MDL_PICKING_PARTICLE_SIZE)
-from eman2.constants import TOMO_NEEDED_MSG
 from .convert import loadJson, readCTFModel, readSetOfParticles
 
 
@@ -100,8 +99,7 @@ class EmanImport:
                 raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
 
     def importCoordinates3D(self, fileName, addCoordinate):
-        from pwem import Domain
-        Coordinate3D = Domain.importFromPlugin("tomo.objects", "Coordinate3D", errorMsg=TOMO_NEEDED_MSG)
+        from tomo.objects import Coordinate3D
         if pwutils.exists(fileName):
             ext = pwutils.getExt(fileName)
 
