@@ -561,9 +561,9 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
         setattr(subTomogram, 'score', Float(particleParams["score"]))
         # Create 4x4 matrix from 4x3 e2spt_sgd align matrix and append row [0,0,0,1]
         am = particleParams["alignMatrix"]
-        angles = numpy.matrix([am[0:3], am[4:7], am[8:11], [0, 0, 0]])
+        angles = numpy.ndarray([am[0:3], am[4:7], am[8:11], [0, 0, 0]])
         samplingRate = outputSetOfSubTomograms.getSamplingRate()
-        shift = numpy.matrix([am[3] * samplingRate, am[7] * samplingRate, am[11] * samplingRate, 1])
+        shift = numpy.ndarray([am[3] * samplingRate, am[7] * samplingRate, am[11] * samplingRate, 1])
         matrix = numpy.concatenate((angles, shift.T), axis=1)
         subTomogram.setTransform(Transform(matrix))
 
