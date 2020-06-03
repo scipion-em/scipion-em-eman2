@@ -177,6 +177,7 @@ def readCoordinate3D(box, inputTomo):
     coord.setVolume(inputTomo)
     return coord
 
+
 def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
     """ Convert the imgSet particles to .hdf files as expected by Eman.
         This function should be called from a current dir where
@@ -191,7 +192,6 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
             pwutils.createLink(fn, newFn)
             print("   %s -> %s" % (fn, newFn))
     else:
-        from tomo.objects import Coordinate3D
         firstCoord = subtomogramSet.getFirstItem().getCoordinate3D() or None
         hasVolName = False
         if firstCoord:
