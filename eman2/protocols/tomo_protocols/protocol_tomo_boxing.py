@@ -28,7 +28,7 @@ from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
 from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED, EnumParam
 
-from eman2.convert import setCoords2Jsons, jsons2SetCoords
+from eman2.convert import setCoords3D2Jsons, jsons2SetCoords3D
 from eman2.viewers.views_tkinter_tree import EmanDialog
 
 from tomo.protocols import ProtTomoPicking
@@ -68,11 +68,11 @@ class EmanProtTomoBoxing(ProtTomoPicking):
         self._insertFunctionStep('launchBoxingGUIStep', interactive=True)
 
     def _createOutput(self):
-        jsons2SetCoords(self, self.inputTomograms.get(), self._getExtraPath())
+        jsons2SetCoords3D(self, self.inputTomograms.get(), self._getExtraPath())
 
     # --------------------------- STEPS functions -----------------------------
     def copyInputCoords(self):
-        setCoords2Jsons(self.inputTomograms.get(), self.inputCoordinates.get(), self._getExtraPath())
+        setCoords3D2Jsons(self.inputTomograms.get(), self.inputCoordinates.get(), self._getExtraPath())
 
     def launchBoxingGUIStep(self):
 

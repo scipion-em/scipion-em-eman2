@@ -511,18 +511,6 @@ def calculatePhaseShift(ampcont):
     return ctfPhaseShift
 
 
-def coordinates2json(pathInputCoor, inputCoor):
-    coords = []
-    for coor in inputCoor.iterCoordinates():
-        coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
-
-    coordDict = {"boxes_3d": coords,
-                 "class_list": {"0": {"boxsize": inputCoor.getBoxSize(), "name": "particles_00"}}
-                 }
-
-    writeJson(coordDict, pathInputCoor)
-
-
 def getLastParticlesParams(directory):
     """
     Return a dictionary containing the params values of the last iteration.
@@ -584,7 +572,7 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
                                       itemDataIterator=itertools.count(0))
 
 
-def setCoords2Jsons(setTomograms, setCoords, path):
+def setCoords3D2Jsons(setTomograms, setCoords, path):
     for tomo in setTomograms.iterItems():
         coords = []
         for coor in setCoords.iterCoordinates():
@@ -603,7 +591,8 @@ def setCoords2Jsons(setTomograms, setCoords, path):
         if coords:
             writeJson(coordDict, pathInputCoor)
 
-def jsons2SetCoords(protocol, setTomograms, outPath):
+
+def jsons2SetCoords3D(protocol, setTomograms, outPath):
     from tomo.objects import SetOfCoordinates3D
     coord3DSetDict = {}
     suffix = protocol._getOutputSuffix(SetOfCoordinates3D)

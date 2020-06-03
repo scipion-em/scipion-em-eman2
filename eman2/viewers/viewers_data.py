@@ -36,7 +36,7 @@ import tomo.objects
 from tomo.viewers.views_tkinter_tree import TomogramsTreeProvider
 from tomo.protocols.protocol_import_coordinates import ProtImportCoordinates3D
 
-from ..convert import setCoords2Jsons, jsons2SetCoords
+from ..convert import setCoords3D2Jsons, jsons2SetCoords3D
 from .views_tkinter_tree import EmanDialog
 
 
@@ -72,14 +72,14 @@ class EmanDataViewer(pwviewer.Viewer):
 
             tomoProvider = TomogramsTreeProvider(tomoList, path, 'json',)
 
-            setCoords2Jsons(outputCoords.getPrecedents(), outputCoords, path)
+            setCoords3D2Jsons(outputCoords.getPrecedents(), outputCoords, path)
 
             setView = EmanDialog(self._tkRoot, path, provider=tomoProvider)
 
             import tkinter as tk
             frame = tk.Frame()
             if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, frame):
-                jsons2SetCoords(self.protocol, outputCoords.getPrecedents(), path)
+                jsons2SetCoords3D(self.protocol, outputCoords.getPrecedents(), path)
 
             pwutils.cleanPattern(os.path.join(path, '*json'))
 
