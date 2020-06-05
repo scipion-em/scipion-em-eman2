@@ -159,7 +159,6 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
                       label='Extra pad',
                       help='Pad extra for tilted reconstruction. Slower and costs more memory, but reduces boundary artifacts when the sample is thick')
 
-
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._insertFunctionStep('createCommandStep')
@@ -240,7 +239,7 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
 
     def _methods(self):
         return [
-             "From an unaligned tilt series: aligned, and generated a tomogram using e2tomogram.py",
+            "From an unaligned tilt series: aligned, and generated a tomogram using e2tomogram.py",
             "Note: Tiltseries must have the correct Apix values in their headers"
         ]
 

@@ -48,9 +48,9 @@ class EmanDialog(ToolbarListDialog):
         self.inMemory = kwargs.get("inMemory", None)
         ToolbarListDialog.__init__(self, parent,
                                    "Tomogram List",
-                                    allowsEmptySelection=False,
-                                    itemDoubleClick=self.doubleClickOnTomogram,
-                                    **kwargs)
+                                   allowsEmptySelection=False,
+                                   itemDoubleClick=self.doubleClickOnTomogram,
+                                   **kwargs)
 
     def refresh_gui(self):
         if self.proc.is_alive():
@@ -63,7 +63,6 @@ class EmanDialog(ToolbarListDialog):
             moveFile((files[0]), os.path.join(self.path, os.path.basename(files[0])))
             cleanPath(os.path.join(self.path, "info"))
             self.tree.update()
-
 
     def doubleClickOnTomogram(self, e=None):
         self.tomo = e

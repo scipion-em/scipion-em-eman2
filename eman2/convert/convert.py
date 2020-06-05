@@ -135,6 +135,7 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
         readCoordinates(mic, micPosFn, coordSet, invertY)
     coordSet.setBoxSize(size)
 
+
 def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, updateItem=None):
     if "boxes_3d" in jsonBoxDict.keys():
         boxes = jsonBoxDict["boxes_3d"]
@@ -147,9 +148,11 @@ def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, updateItem=No
             newCoord = readCoordinate3D(box, inputTomo)
 
             # Execute Callback
-            if updateItem: updateItem(newCoord)
+            if updateItem:
+                updateItem(newCoord)
 
             coord3DSet.append(newCoord)
+
 
 def readCoordinates(mic, fileName, coordsSet, invertY=False):
     if pwutils.exists(fileName):
@@ -168,6 +171,7 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coord.setPosition(x, y)
                 coord.setMicrograph(mic)
                 coordsSet.append(coord)
+
 
 def readCoordinate3D(box, inputTomo):
     from tomo.objects import Coordinate3D
@@ -461,6 +465,7 @@ def iterParticlesByMic(partSet):
     for i, part in enumerate(partSet.iterItems(orderBy=['_micId', 'id'],
                                                direction='ASC')):
         yield i, part
+
 
 def iterSubtomogramsByVol(subtomogramSet):
     """ Iterate subtomograms ordered by tomogram """

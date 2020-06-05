@@ -26,7 +26,6 @@
 
 import os
 
-import pwem
 from pwem.wizards.wizard import EmWizard
 from pwem.viewers import CoordinatesObjectView
 from pyworkflow.utils import makePath, cleanPath, readProperties
@@ -35,17 +34,13 @@ from . import Plugin
 from .convert import writeSetOfMicrographs
 from .protocols import SparxGaussianProtPicking, EmanProtTomoExtraction, EmanProtTomoTempMatch
 
-# =============================================================================
-# PICKER
-# =============================================================================
-
 
 class SparxGaussianPickerWizard(EmWizard):
     _targets = [(SparxGaussianProtPicking, ['boxSize',
                                             'lowerThreshold', 'higherThreshold',
                                             'gaussWidth'])]
 
-    def show(self, form, *args):
+    def show(self, form):
         autopickProt = form.protocol
         micSet = autopickProt.getInputMicrographs()
         if not micSet:
@@ -76,9 +71,9 @@ class SparxGaussianPickerWizard(EmWizard):
 
         args = {
             "params": ','.join(params),
-            "preprocess": "scipion %s" % Plugin.getProgram('sxprocess.py'),
-            "picker": "scipion %s" % program,
-            "convert": pwem.join('cmd', 'convert.py'),
+            "preprocess": "emprogram %s" % Plugin.getProgram('sxprocess.py'),
+            "picker": "emprogram %s" % program,
+            "convert": "emconvert",
             'coordsDir': coordsDir,
             'micsSqlite': micSet.getFileName(),
             "boxSize": autopickProt.boxSize,
@@ -138,6 +133,7 @@ class EmanTomoExtractionWizard(EmWizard):
             boxSize = float(boxSize/tomoExtractProt.downFactor.get())
 
         form.setVar('boxSize', boxSize)
+
 
 class EmanTomoTempMatchWizard(EmWizard):
     _targets = [(EmanProtTomoTempMatch, ['boxSize'])]

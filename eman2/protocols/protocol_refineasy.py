@@ -533,7 +533,7 @@ Major features of this program:
         if not os.path.exists(angles) and os.path.exists(self._getFileName('clsEven',
                                                                            run=numRun, iter=iterN)):
             proc = Plugin.createEmanProcess(args='read %s %s %s %s 3d'
-                                                       % (self._getParticlesStack(), clsFn, classesFn,
-                                                          self._getBaseName('angles', iter=iterN)),
-                                                  direc=self._getExtraPath())
+                                                 % (self._getParticlesStack(), clsFn, classesFn,
+                                                    self._getBaseName('angles', iter=iterN)),
+                                            direc=self._getExtraPath())
             proc.wait()

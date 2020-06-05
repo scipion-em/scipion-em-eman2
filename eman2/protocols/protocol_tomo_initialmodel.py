@@ -143,7 +143,7 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
             'shrink': self.shrink.get(),
             'reference': self.reference.get().getFileName() if self.reference.get() else None,
             'outputPath': self.getOutputPath(),
-         }
+        }
         args = '%s/*.hdf' % self._getExtraPath("particles")
         if command_params['reference']:
             args += ' --reference=%(reference)s'
@@ -199,7 +199,7 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
         return [
             "Created an initial model using e2spt_sgd.py (stochastic gradient descent)",
             "A total of %d particles of dimensions %s were used (shrink %d)"
-               % (particles.getSize(), particles.getDimensions(), self.shrink.get()),
+            % (particles.getSize(), particles.getDimensions(), self.shrink.get()),
         ]
 
     def _summary(self):

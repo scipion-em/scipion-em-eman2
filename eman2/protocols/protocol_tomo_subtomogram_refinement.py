@@ -66,7 +66,7 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         EMProtocol.__init__(self, **kwargs)
         self.stepsExecutionMode = STEPS_PARALLEL
 
-    #--------------- DEFINE param functions ---------------
+    # --------------- DEFINE param functions ---------------
 
     def _defineParams(self, form):
         form.addSection(label='Input')
@@ -85,64 +85,63 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
                       label='Number of iterations',
                       help='The number of iterations to perform.')
         form.addParam('mass', params.FloatParam, default=500.0,
-                       label='Mass:',
-                       help='Default=500.0.'
-                            'mass')
+                      label='Mass:',
+                      help='Default=500.0')
         form.addParam('threads', params.IntParam, default=2,
-                       label='Threads:',
-                       help='Number of threads')
+                      label='Threads:',
+                      help='Number of threads')
         form.addParam('pkeep', params.FloatParam, default=0.8,
-                       label='Particle keep:',
-                       help='Fraction of particles to keep')
+                      label='Particle keep:',
+                      help='Fraction of particles to keep')
         form.addParam('goldstandard', params.IntParam, default=-1,
-                       expertLevel=params.LEVEL_ADVANCED,
-                       label='Gold standard:',
-                       help='initial resolution for gold standard refinement')
+                      expertLevel=params.LEVEL_ADVANCED,
+                      label='Gold standard:',
+                      help='initial resolution for gold standard refinement')
         form.addParam('goldcontinue', params.BooleanParam, default=False,
-                       expertLevel=params.LEVEL_ADVANCED,
-                       label='Gold continue',
-                       help='continue from an existing gold standard refinement')
+                      expertLevel=params.LEVEL_ADVANCED,
+                      label='Gold continue',
+                      help='continue from an existing gold standard refinement')
         form.addParam('maskFile', params.PointerParam, allowsNull=True,
-                       expertLevel=params.LEVEL_ADVANCED,
-                       pointerClass='VolumeMask', label='Mask file',
-                       help='Select the mask object')
+                      expertLevel=params.LEVEL_ADVANCED,
+                      pointerClass='VolumeMask', label='Mask file',
+                      help='Select the mask object')
         form.addParam('setsf', params.PointerParam, allowsNull=True,
                       expertLevel=params.LEVEL_ADVANCED,
-                       pointerClass='VolumeMask', label='Structure factor',
-                       help='Select the structure factor')
+                      pointerClass='VolumeMask', label='Structure factor',
+                      help='Select the structure factor')
         form.addParam('sym', params.StringParam, default='c1',
                       expertLevel=params.LEVEL_ADVANCED,
-                       label='Symmetry',
+                      label='Symmetry',
                       help='Symmetry (Default: c1')
         form.addParam('localfilter', params.BooleanParam, default=False,
                       expertLevel=params.LEVEL_ADVANCED,
-                       label='Local filter',
+                      label='Local filter',
                       help='use tophat local')
         form.addParam('maxtilt', params.FloatParam, default=90.0,
                       expertLevel=params.LEVEL_ADVANCED,
-                       label='maxtilt',
-                       help='Explicitly zeroes data beyond specified tilt angle.'
-                            'Assumes tilt axis exactly on Y and zero tilt in X-Y'
-                            'plane. Default 90 (no limit).')
+                      label='maxtilt',
+                      help='Explicitly zeroes data beyond specified tilt angle.'
+                           'Assumes tilt axis exactly on Y and zero tilt in X-Y'
+                           'plane. Default 90 (no limit).')
 
         form.addParallelSection(threads=2, mpi=4)
 
-    #--------------- INSERT steps functions ----------------
-
+    # --------------- INSERT steps functions ----------------
 
     def _insertAllSteps(self):
-        #TODO: Get the basename.hdf from the inputSetOfSubTomogram
+        # TODO: Get the basename.hdf from the inputSetOfSubTomogram
         self._insertFunctionStep('convertInputStep')
         self._insertFunctionStep('refinementSubtomogram')
-        #TODO: Set and show the output
+        # TODO: Set and show the output
         self._insertFunctionStep('createOutputStep')
 
-    #--------------- STEPS functions -----------------------
+    # --------------- STEPS functions -----------------------
     def convertInputStep(self):
         storePath = self._getExtraPath("subtomograms")
         pwutils.makePath(storePath)
 
-        self.newFn = pwutils.removeBaseExt(list(self.inputSetOfSubTomogram.get().getFiles())[0]).split('__ctf')[0] + '.hdf'
+        fns = list(self.inputSetOfSubTomogram.get().getFiles())[0]
+        self.newFn = pwutils.removeBaseExt(fns).split('__ctf')[0] + '.hdf'
         self.newFn = pwutils.join(storePath, self.newFn)
         writeSetOfSubTomograms(self.inputSetOfSubTomogram.get(), storePath)
 
@@ -211,7 +210,7 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         lastIteration = max(re.findall(r'\d+', ''.join(outputList)))
 
         output = [file for file in outputList if lastIteration in file]
-        return folder+output.pop()
+        return folder + output.pop()
 
     def getLastOutputFolder(self, files):
         folder = "./spt_"
@@ -220,7 +219,7 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         folder = folder + folderSuffix
         return folder
 
-    #--------------- INFO functions -------------------------
+    # --------------- INFO functions -------------------------
     def _summary(self):
         summary = []
         summary.append("Set Of SubTomograms source: %s" % (self.inputSetOfSubTomogram.get().getFileName()))

@@ -24,7 +24,8 @@
 # *
 # **************************************************************************
 
-import os, math
+import os
+import math
 
 from pyworkflow.utils.properties import Message
 from pyworkflow import utils as pwutils
@@ -93,7 +94,6 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         self._insertFunctionStep('tempMatchStep')
         self._insertFunctionStep("createOutputStep")
 
-
     # --------------------------- STEPS functions -----------------------------
 
     def preprocess(self):
@@ -104,15 +104,15 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
             self.correctOffset = None
         else:
             sizeThreshold = 1000
-            offset = math.floor((1000-self.inputSet.get().getXDim())/2)
-            self.correctOffset = lambda coord: coord.setPosition(coord.getX()-offset,
-                                                                 coord.getY()-offset, coord.getZ())
+            offset = math.floor((1000 - self.inputSet.get().getXDim()) / 2)
+            self.correctOffset = lambda coord: coord.setPosition(coord.getX() - offset,
+                                                                 coord.getY() - offset, coord.getZ())
         if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
             for tomo in self.inputSet.get():
                 tomoFile = os.path.basename(tomo.getFileName())
                 tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
                 self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), tomoFile,
-                                                             sizeThreshold, sizeThreshold, tomo.getDim()[2]),
+                                                                sizeThreshold, sizeThreshold, tomo.getDim()[2]),
                             env=eman2.Plugin.getEnviron())
         else:
             for tomo in self.inputSet.get():
@@ -133,7 +133,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
 
         params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s " \
                           "--rmedge --rmgold --boxsz=%d" % (volFile, self.nptcl.get(), self.dthr.get(),
-                          self.vthr.get(), self.delta.get(), self.sym.get(), self.box)
+                                                            self.vthr.get(), self.delta.get(), self.sym.get(), self.box)
 
         program = eman2.Plugin.getProgram("e2spt_tempmatch.py")
 
@@ -216,5 +216,5 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         return [
             "Subtomogram coordinates obtained with e2spt_tempmatch.py",
             "A total of %d tomograms of dimensions %s were used"
-               % (tomos.getSize(), tomos.getDimensions()),
+            % (tomos.getSize(), tomos.getDimensions()),
         ]
