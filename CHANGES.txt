@@ -1,3 +1,6 @@
+3.1.0:
+    - changed version to reflect Scipion 3 support
+    - tomo protocols added
 1.0.8:
     - add EMAN 2.31 support, remove 2.21
     - fix a few bugs in viewers
@@ -17,4 +20,3 @@
 1.0.2 - Include protocol.conf to create the source distribution
 1.0.1 - deprecated EMAN 2.11 support, updated viewers import, added protocols.conf
 1.0.0 - First plugin version
-
