@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -30,11 +30,11 @@ from pyworkflow.utils.path import cleanPattern
 from pyworkflow.protocol.params import (PointerParam, TextParam, IntParam,
                                         BooleanParam, StringParam,
                                         EnumParam, FloatParam)
-from pyworkflow.em.protocol import ProtInitialVolume
-from pyworkflow.em.data import SetOfClasses2D, SetOfAverages, Volume
+from pwem.protocols import ProtInitialVolume
+from pwem.objects.data import SetOfClasses2D, SetOfAverages, Volume
 
-import eman2
-from eman2.constants import *
+from .. import Plugin
+from ..constants import *
 
 
 class EmanProtInitModelSGD(ProtInitialVolume):
@@ -185,7 +185,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
     def createInitialModelStep(self, args):
         """ Run the EMAN program to create the initial model. """
         cleanPattern(self._getExtraPath('initmodel_??'))
-        program = eman2.Plugin.getProgram('e2initialmodel_sgd.py')
+        program = Plugin.getProgram('e2initialmodel_sgd.py')
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
@@ -196,7 +196,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
         if isinstance(inputSet, SetOfClasses2D):
             volumes.setSamplingRate(inputSet.getImages().getSamplingRate() * shrink)
         elif isinstance(inputSet, SetOfAverages):
-                volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
+            volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
         else:
             volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
 

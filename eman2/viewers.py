@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -24,31 +24,32 @@
 # *
 # **************************************************************************
 
-import os, math
+import os
+import math
 
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.gui.text as text
 from pyworkflow.gui.dialog import askYesNo, showInfo, showError
-from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER,
-                               WEB_DJANGO)
-from pyworkflow.em.data import FSC
-import pyworkflow.em.viewers.showj as showj
-from pyworkflow.em.viewers import (ObjectView, DataView, EmPlotter,
-                                   ChimeraView, ChimeraClientView, ClassesView,
-                                   DataViewer, FscViewer)
+from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER, WEB_DJANGO)
+
+from pwem.objects.data import FSC
+import pwem.viewers.showj as showj
+from pwem.viewers import (ObjectView, DataView, EmPlotter,
+                          ChimeraView, ChimeraClientView, ClassesView,
+                          DataViewer, FscViewer, EmProtocolViewer)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.executor import StepExecutor
 from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
                                         EnumParam, FloatParam, IntParam, BooleanParam)
 import pyworkflow.utils as pwutils
 
-import eman2
-from eman2.constants import *
-from eman2.convert import loadJson
-from eman2.protocols import (EmanProtBoxing, EmanProtCTFAuto,
-                             EmanProtInitModel, EmanProtRefine2D,
-                             EmanProtRefine2DBispec, EmanProtRefine,
-                             EmanProtTiltValidate, EmanProtInitModelSGD)
+from . import Plugin
+from .constants import *
+from .convert import loadJson
+from .protocols import (EmanProtBoxing, EmanProtCTFAuto,
+                        EmanProtInitModel, EmanProtRefine2D,
+                        EmanProtRefine2DBispec, EmanProtRefine,
+                        EmanProtTiltValidate, EmanProtInitModelSGD)
 
 
 class EmanViewer(DataViewer):
@@ -189,7 +190,7 @@ Examples:
         labels = 'enabled id _size _representative._filename '
         viewParams = {showj.ORDER: labels,
                       showj.VISIBLE: labels,
-                      showj.RENDER:'_representative._filename',
+                      showj.RENDER: '_representative._filename',
                       showj.SORT_BY: '_size desc'
                       }
 
@@ -236,7 +237,7 @@ Examples:
         return self.protocol.getClassName() == 'EmanProtRefine2D'
 
 
-class RefineEasyViewer(ProtocolViewer):
+class RefineEasyViewer(EmProtocolViewer):
     """ Visualization of e2refine_easy results. """
 
     _targets = [EmanProtRefine]
@@ -344,7 +345,7 @@ Examples:
 
         return views
 
-    def createScipionPartView(self, filename, viewParams={}):
+    def createScipionPartView(self, filename):
         inputParticlesId = self.protocol.inputParticles.get().strId()
         labels = 'enabled id _size _filename _transform._matrix'
         viewParams = {showj.ORDER: labels,
@@ -357,7 +358,7 @@ Examples:
                           env=self._env, viewParams=viewParams)
 
     def _runEulerXplor(self, paramName=None):
-        program = eman2.Plugin.getProgram('e2eulerxplor.py')
+        program = Plugin.getProgram('e2eulerxplor.py')
         hostConfig = self.protocol.getHostConfig()
         # Create the steps executor
         executor = StepExecutor(hostConfig)
@@ -382,16 +383,15 @@ Examples:
 
         if len(volumes) > 1:
             cmdFile = self.protocol._getExtraPath('chimera_volumes.cmd')
-            f = open(cmdFile, 'w+')
-            for vol in volumes:
-                # We assume that the chimera script will be generated
-                # at the same folder than eman volumes
-                if os.path.exists(vol):
-                    localVol = os.path.relpath(vol,
-                                               self.protocol._getExtraPath())
-                    f.write("open %s\n" % localVol)
-            f.write('tile\n')
-            f.close()
+            with open(cmdFile, 'w+') as f:
+                for vol in volumes:
+                    # We assume that the chimera script will be generated
+                    # at the same folder than eman volumes
+                    if os.path.exists(vol):
+                        localVol = os.path.relpath(vol,
+                                                   self.protocol._getExtraPath())
+                        f.write("open %s\n" % localVol)
+                f.write('tile\n')
             view = ChimeraView(cmdFile)
         else:
             view = ChimeraClientView(volumes[0])
@@ -552,10 +552,9 @@ Examples:
         return [fscViewer]
 
     def _plotFSC(self, fscFn, label):
-        resolution_inv = self._getColunmFromFilePar(fscFn, 0)
-        frc = self._getColunmFromFilePar(fscFn, 1)
+        res_inv, frc = self._getFscValues(fscFn)
         fsc = FSC(objLabel=label)
-        fsc.setData(resolution_inv, frc)
+        fsc.setData(res_inv, frc)
 
         return fsc
 
@@ -635,9 +634,6 @@ Examples:
     def _getGridSize(self, n=None):
         """ Figure out the layout of the plots given the number of
         references. """
-        if n is None:
-            n = len(self._refsList)
-
         if n == 1:
             gridsize = [1, 1]
         elif n == 2:
@@ -647,39 +643,35 @@ Examples:
 
         return gridsize
 
-    def _getColunmFromFilePar(self, fscFn, col):
-        f1 = open(fscFn)
-        value = []
-        for l in f1:
-            valList = l.split()
-            val = float(valList[col])
-            value.append(val)
-        f1.close()
-        return value
+    def _getFscValues(self, fscFn):
+        resolution_inv, frc = [], []
+        with open(fscFn) as f1:
+            for l in f1:
+                resolution_inv.append(float(l.split()[0]))
+                frc.append(float(l.split()[1]))
+
+        return resolution_inv, frc
 
     def _getNumberOfParticles(self, it, prefix='full'):
-        f = open(self.protocol._getFileName('angles', iter=it))
-        nLines = int(f.readlines()[-1].split()[0]) + 1
+        with open(self.protocol._getFileName('angles', iter=it)) as f:
+            nLines = int(f.readlines()[-1].split()[0]) + 1
 
         if prefix == 'full':
             return nLines
         else:
-            return nLines / 2
+            return nLines // 2
 
     def _iterAngles(self, it, half="full"):
-        f = open(self.protocol._getFileName('angles', iter=it))
         rest = 0 if half == 'even' else 1
-
-        for i, line in enumerate(f):
-            if '#' not in line:
-                angles = map(float, line.split())
-                if angles[1] != 0:  # skip disabled images
-                    rot = float("{0:.2f}".format(angles[2]))
-                    tilt = float("{0:.2f}".format(angles[3]))
-                    if half == 'full' or i % 2 == rest:
-                        yield rot, tilt
-
-        f.close()
+        with open(self.protocol._getFileName('angles', iter=it)) as f:
+            for i, line in enumerate(f):
+                if '#' not in line:
+                    angles = [float(x) for x in line.split()]
+                    if angles[1] != 0:  # skip disabled images
+                        rot = float("{0:.2f}".format(angles[2]))
+                        tilt = float("{0:.2f}".format(angles[3]))
+                        if half == 'full' or i % 2 == rest:
+                            yield rot, tilt
 
     def _getLabel(self, label, it):
         if label == FSC_UNMASK:
@@ -768,7 +760,7 @@ class TiltValidateViewer(ProtocolViewer):
         return xplotter
 
     def _showEmanPlot(self, paramName=None):
-        program = eman2.Plugin.getProgram('e2tiltvalidate.py')
+        program = Plugin.getProgram('e2tiltvalidate.py')
         args = "--path=TiltValidate_01 --radcut=%0.2f --gui --planethres=%0.2f" % (
             self.radcut.get(), self.planethres.get())
         if self.colozaxis:
@@ -803,7 +795,7 @@ class TiltValidateViewer(ProtocolViewer):
 
         if pwutils.exists(fileName):
             jsonPosDict = loadJson(fileName)
-            if jsonPosDict.has_key("particletilt_list"):
+            if "particletilt_list" in jsonPosDict:
                 tiltpairs = jsonPosDict["particletilt_list"]
                 maxcolorval = max(tiltpairs, key=lambda x: x[3])[3]
 
@@ -813,7 +805,7 @@ class TiltValidateViewer(ProtocolViewer):
                     datap.append(tp[0])
                     r.append(tp[1])
                     theta.append(math.radians(tp[2]))
-                    # Color the Z axis out of planeness
+                    # Color the Z axis out of plane
                     zaxis.append(self._computeRGBcolor(tp[3], 0, maxcolorval))
 
                 return datap, r, theta, zaxis
@@ -833,19 +825,17 @@ class TiltValidateViewer(ProtocolViewer):
             B = 0.0
             R = 0.33 * (1 + math.cos(radval) / math.cos(math.pi / 3 - radval))
             G = 1.0 - R
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
         if 2 * math.pi / 3 < radval < 4 * math.pi / 3:
             hue = radval - 2 * math.pi / 3
             R = 0.0
             G = 0.33 * (1 + math.cos(hue) / math.cos(math.pi / 3 - hue))
             B = 1.0 - G
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
         if radval > 4 * math.pi / 3:
             hue = radval - 4 * math.pi / 3
             G = 0
             B = 0.33 * (1 + math.cos(hue) / math.cos(math.pi / 3 - hue))
             R = 1.0 - B
-            return "#%02x%02x%02x" % (255 * R, 255 * G, 255 * B)
+        return "#%02x%02x%02x" % (255 * int(R), 255 * int(G), 255 * int(B))
 
     def _getGridSize(self, n=None):
         """ Figure out the layout of the plots given the number of references."""
@@ -885,8 +875,8 @@ class CtfViewer(ProtocolViewer):
 
     def _showCtf(self, paramName=None):
         views = []
-        obj = "obj = self.protocol." + self.getEnumText('outputType')
-        exec (obj)
+        outputType = self.getEnumText('outputType')
+        obj = getattr(self.protocol, outputType)
         strId = obj.strId()
         fn = obj.getFileName()
         particlesView = ObjectView(self._project, strId, fn)
@@ -894,7 +884,7 @@ class CtfViewer(ProtocolViewer):
         return views
 
     def _showEmanCtf(self, paramName=None):
-        program = eman2.Plugin.getProgram('e2ctf.py')
+        program = Plugin.getProgram('e2ctf.py')
         args = '--allparticles --minptcl=0 --minqual=0'
         args += ' --gui --constbfactor=-1.0 --sf=auto'
 

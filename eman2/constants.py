@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -23,18 +23,14 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-"""
-This file contains constants related to EMAN2 protocols
-"""
-
 
 EMAN2_HOME = 'EMAN2_HOME'
 
 # Supported versions
-V2_21 = '2.21'
 V2_3 = '2.3'
+V2_31 = '2.31'
 
-#------------------ Constants values ------------------------------------------
+# ------------------ Constants values -----------------------------------------
 
 # ctf processing type
 HIRES = 0
@@ -113,7 +109,7 @@ AVG_MINMAX = 9
 AVG_SIGMA = 10
 AVG_WEIGHTEDFOURIER = 11
 
-#processors normalize
+# processors normalize
 PROC_NORMALIZE = 0
 PROC_NORMALIZE_BYMASS = 1
 PROC_NORMALIZE_CIRCLEMEAN = 2

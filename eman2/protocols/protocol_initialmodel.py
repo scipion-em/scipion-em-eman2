@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -31,10 +31,10 @@ from pyworkflow.utils.path import cleanPattern
 from pyworkflow.protocol.params import (PointerParam, TextParam, IntParam,
                                         BooleanParam, LEVEL_ADVANCED,
                                         StringParam)
-from pyworkflow.em.protocol import ProtInitialVolume
-from pyworkflow.em.data import SetOfClasses2D, Volume
+from pwem.protocols import ProtInitialVolume
+from pwem.objects.data import SetOfClasses2D, Volume
 
-import eman2
+from .. import Plugin, SCRATCHDIR
 
 
 class EmanProtInitModel(ProtInitialVolume):
@@ -89,14 +89,13 @@ class EmanProtInitModel(ProtInitialVolume):
                       label='Use random orientations?',
                       help='Instead of seeding with a random volume, '
                            'seeds by randomizing input orientations')
-        if self._isVersion23():
-            form.addParam('autoMaskExp', IntParam, default=-1,
-                          expertLevel=LEVEL_ADVANCED,
-                          label='Automask expand (px)',
-                          help='Number of voxels of post-threshold expansion '
-                               'in the mask, for use when peripheral '
-                               'features are truncated '
-                               '(default=shrunk boxsize/20)')
+        form.addParam('autoMaskExp', IntParam, default=-1,
+                      expertLevel=LEVEL_ADVANCED,
+                      label='Automask expand (px)',
+                      help='Number of voxels of post-threshold expansion '
+                           'in the mask, for use when peripheral '
+                           'features are truncated '
+                           '(default=shrunk boxsize/20)')
         form.addParam('extraParams', StringParam, default='',
                       expertLevel=LEVEL_ADVANCED,
                       label='Additional arguments:',
@@ -125,7 +124,7 @@ class EmanProtInitModel(ProtInitialVolume):
             args += ' --tries=%(numberOfModels)d --iter=%(numberOfIterations)d'
             if self.randOrient:
                 args += ' --randorient'
-            if self._isVersion23() and self.autoMaskExp.get() != -1:
+            if self.autoMaskExp.get() != -1:
                 args += '--automaskexpand %d'
             if self.numberOfMpi > 1:
                 args += ' --parallel=mpi:%(mpis)d:%(scratch)s'
@@ -157,7 +156,7 @@ class EmanProtInitModel(ProtInitialVolume):
         orig = os.path.relpath(tmpStack,
                                self._getExtraPath())
         args = "%s %s --apix=%0.3f" % (orig, self._params['relImgsFn'], pixSize)
-        self.runJob(eman2.Plugin.getProgram('e2proc2d.py'), args,
+        self.runJob(Plugin.getProgram('e2proc2d.py'), args,
                     cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
@@ -165,9 +164,9 @@ class EmanProtInitModel(ProtInitialVolume):
         """ Run the EMAN program to create the initial model. """
         cleanPattern(self._getExtraPath('initial_models'))
         if self._isHighSym():
-            program = eman2.Plugin.getProgram('e2initialmodel_hisym.py')
+            program = Plugin.getProgram('e2initialmodel_hisym.py')
         else:
-            program = eman2.Plugin.getProgram('e2initialmodel.py')
+            program = Plugin.getProgram('e2initialmodel.py')
 
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -217,7 +216,7 @@ class EmanProtInitModel(ProtInitialVolume):
                         'symmetry': self.symmetry.get(),
                         'threads': self.numberOfThreads.get(),
                         'mpis': self.numberOfMpi.get(),
-                        'scratch': eman2.SCRATCHDIR}
+                        'scratch': SCRATCHDIR}
 
     def _isHighSym(self):
         return self.symmetry.get() in ["oct", "tet", "icos"]
@@ -229,6 +228,3 @@ class EmanProtInitModel(ProtInitialVolume):
             outputVols = glob(self._getExtraPath('initial_models/model_??_??.hdf'))
             outputVols.sort()
         return outputVols
-
-    def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')

@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -26,15 +26,13 @@
 
 from pyworkflow.protocol.params import (FloatParam, EnumParam,
                                         BooleanParam)
-from pyworkflow.protocol.constants import LEVEL_ADVANCED
 import pyworkflow.utils as pwutils
-from pyworkflow.em import CTFModel
-from pyworkflow.em.data import SetOfParticles
-from pyworkflow.em.protocol import ProtProcessParticles
+from pwem.objects.data import CTFModel, SetOfParticles
+from pwem.protocols import ProtProcessParticles
 
-import eman2
-from eman2.constants import *
-from eman2.convert import writeSetOfParticles, iterLstFile, jsonToCtfModel
+from .. import Plugin
+from ..constants import *
+from ..convert import writeSetOfParticles, iterLstFile, jsonToCtfModel
 
 
 class EmanProtCTFAuto(ProtProcessParticles):
@@ -53,7 +51,6 @@ class EmanProtCTFAuto(ProtProcessParticles):
         """ Centralize the names of the files. """
         myDict = {
             'partSet': self._getExtraPath('sets/all.lst'),
-            'partSetFlipBispec': self._getExtraPath('sets/all__ctf_flip_bispec.lst'),
             'partSetFlipInvar': self._getExtraPath('sets/all__ctf_flip_invar.lst'),
             'partSetFlipFullRes': self._getExtraPath('sets/all__ctf_flip_fullres.lst'),
             'partSetFlipLp5': self._getExtraPath('sets/all__ctf_flip_lp5.lst'),
@@ -98,12 +95,11 @@ class EmanProtCTFAuto(ProtProcessParticles):
                       label='Extra padding',
                       help='If particles were boxed more tightly than EMAN '
                            'requires, this will add some extra padding.')
-        if self._isVersion23():
-            form.addParam('invarType', EnumParam,
-                          choices=['auto', 'bispec', 'harmonic'],
-                          label='Invariant type', default=INVAR_AUTO,
-                          display=EnumParam.DISPLAY_COMBO,
-                          help='Which type of invariants to generate')
+        form.addParam('invarType', EnumParam,
+                      choices=['auto', 'bispec', 'harmonic'],
+                      label='Invariant type', default=INVAR_AUTO,
+                      display=EnumParam.DISPLAY_COMBO,
+                      help='Which type of invariants to generate')
         form.addParam('highDensity', BooleanParam, default=False,
                       label='High density ',
                       help='If particles are very close together, this will '
@@ -139,7 +135,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
     def runCTFStep(self, args):
         """ Run the EMAN e2ctf_auto.py program. """
-        program = eman2.Plugin.getProgram('e2ctf_auto.py')
+        program = Plugin.getProgram('e2ctf_auto.py')
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfThreads=1)
 
@@ -148,7 +144,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
         outputSets = self._getOutputSets()
         outputs = {}
 
-        for key, fn in outputSets.iteritems():
+        for key, fn in outputSets.items():
             outputSet = self._createSetOfParticles(suffix='_%s' % key)
             outputSet.copyInfo(inputSet)
             outputSet.setIsPhaseFlipped(True)
@@ -164,10 +160,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
             if key == 'FL':
                 outputName = 'outputParticles_flip_fullRes'
             elif key == 'bispec':
-                if not self._isVersion23():
-                    outputName = 'outputParticles_flip_bispec'
-                else:
-                    outputName = 'outputParticles_flip_invar'
+                outputName = 'outputParticles_flip_invar'
             else:
                 outputName = 'outputParticles_flip_lp%s' % key
 
@@ -196,8 +189,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
     def _summary(self):
         summary = []
 
-        if self.hasAttribute('outputParticles_flip_bispec') or \
-                self.hasAttribute('outputParticles_flip_invar'):
+        if self.hasAttribute('outputParticles_flip_invar'):
             summary.append('CTF estimation on particles completed, '
                            'produced filtered particles and bispectra.')
         else:
@@ -238,9 +230,8 @@ class EmanProtCTFAuto(ProtProcessParticles):
             args += " --highdensity"
         if self.invert:
             args += " --invert"
-        if self._isVersion23():
-            args += " --invartype %s" % self.getEnumText('invarType')
 
+        args += " --invartype %s" % self.getEnumText('invarType')
         args += " --constbfactor %0.2f --defocusmin %0.2f --defocusmax %0.2f" % (
             self.constBfact.get(),
             self.minDefocus.get(),
@@ -275,10 +266,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
             outputs.update({'20': 'partSetFlipLp20',
                             '12': 'partSetFlipLp12'})
 
-        if not self._isVersion23():
-            outputs['bispec'] = 'partSetFlipBispec'
-        else:
-            outputs['bispec'] = 'partSetFlipInvar'
+        outputs['bispec'] = 'partSetFlipInvar'
 
         return outputs
 
@@ -289,6 +277,3 @@ class EmanProtCTFAuto(ProtProcessParticles):
         oldPixSize = inputParts.getSamplingRate()
         newPixSize = float(oldDimX) / newBox * oldPixSize
         return newPixSize
-
-    def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')

@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -27,20 +27,21 @@
 import os
 import re
 from glob import glob
-import pyworkflow.em as em
 
+import pwem
+from pwem.protocols import ProtRefine3D
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam)
-from pyworkflow.utils.path import cleanPattern, makePath, createLink, exists
-from pyworkflow.em.data import Volume
+from pyworkflow.utils.path import cleanPattern, makePath, createLink
+from pwem.objects.data import Volume
 
-import eman2
-from eman2.convert import rowToAlignment, writeSetOfParticles
-from eman2.constants import *
+from .. import Plugin, SCRATCHDIR
+from ..convert import rowToAlignment, writeSetOfParticles
+from ..constants import *
 
 
-class EmanProtRefine(em.ProtRefine3D):
+class EmanProtRefine(ProtRefine3D):
     """
     This protocol wraps *e2refine_easy.py* EMAN2 program.
 
@@ -177,13 +178,12 @@ Major features of this program:
                       help='Default=boxsize/20. Specify number of voxels to '
                            'expand mask before soft edge. Use this if low '
                            'density peripheral features are cut off by the mask.')
-        if self._isVersion23():
-            form.addParam('noRandPhase', BooleanParam, default=False,
-                          label='Supress phase randomization',
-                          help='Suppress independent phase randomization '
-                               'of input map. Only appropriate if input '
-                               'map has been preprocessed in some suitable '
-                               'fashion.')
+        form.addParam('noRandPhase', BooleanParam, default=False,
+                      label='Supress phase randomization',
+                      help='Suppress independent phase randomization '
+                           'of input map. Only appropriate if input '
+                           'map has been preprocessed in some suitable '
+                           'fashion.')
 
         form.addSection(label='Advanced')
         form.addParam('speed', EnumParam,
@@ -281,7 +281,7 @@ Major features of this program:
         makePath(storePath)
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
         if not self.skipctf:
-            program = eman2.Plugin.getProgram('e2ctf.py')
+            program = Plugin.getProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %d" % acq.getVoltage()
@@ -295,7 +295,7 @@ Major features of this program:
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
 
-        program = eman2.Plugin.getProgram('e2buildsets.py')
+        program = Plugin.getProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -304,7 +304,7 @@ Major features of this program:
         """ Run the EMAN program to refine a volume. """
         if not self.doContinue:
             cleanPattern(self._getExtraPath('refine_01'))
-        program = eman2.Plugin.getProgram('e2refine_easy.py')
+        program = Plugin.getProgram('e2refine_easy.py')
         # mpi and threads are handled by EMAN itself
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
@@ -369,10 +369,10 @@ Major features of this program:
 
         refVolFn = "ref_vol.hdf"
         origVol = os.path.relpath(self.input3DReference.get().getFileName(),
-                               self._getExtraPath()).replace(":mrc", "")
+                                  self._getExtraPath()).replace(":mrc", "")
         args = "%s %s --apix=%0.3f" % (origVol, refVolFn,
                                        self.input3DReference.get().getSamplingRate())
-        self.runJob(eman2.Plugin.getProgram('e2proc3d.py'), args,
+        self.runJob(Plugin.getProgram('e2proc3d.py'), args,
                     cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
@@ -409,7 +409,7 @@ Major features of this program:
                   'm3dKeep': self.m3dKeep.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': eman2.SCRATCHDIR
+                  'scratch': SCRATCHDIR
                   }
         args = args % params
 
@@ -434,12 +434,9 @@ Major features of this program:
             args += " --tophat=%s" % self.getEnumText('tophat')
 
         if self.useBispec:
-            if self._isVersion23():
-                args += " --invar"
-            else:
-                args += " --bispec"
+            args += " --bispec"
 
-        if self._isVersion23() and self.noRandPhase:
+        if self.noRandPhase:
             args += " --norandomaphase"
 
         if self.extraParams.hasValue():
@@ -467,17 +464,15 @@ Major features of this program:
             return self._getFileName("partSet")
 
     def _iterTextFile(self, iterN):
-        f = open(self._getFileName('angles', iter=iterN))
-
-        for line in f:
-            if '#' not in line:
-                yield map(float, line.split())
-
-        f.close()
+        with open(self._getFileName('angles', iter=iterN)) as f:
+            for line in f:
+                if '#' not in line:
+                    yield [float(x) for x in line.split()]
 
     def _createItemMatrix(self, item, rowList):
         if rowList[1] == 1:
-            item.setTransform(rowToAlignment(rowList[2:], alignType=em.ALIGN_PROJ))
+            item.setTransform(rowToAlignment(rowList[2:],
+                                             alignType=pwem.constants.ALIGN_PROJ))
         else:
             setattr(item, "_appendItem", False)
 
@@ -501,8 +496,8 @@ Major features of this program:
 
     def _getIterData(self, it):
         data_sqlite = self._getFileName('data_scipion', iter=it)
-        if not exists(data_sqlite):
-            iterImgSet = em.SetOfParticles(filename=data_sqlite)
+        if not os.path.os.path.exists(data_sqlite):
+            iterImgSet = pwem.objects.SetOfParticles(filename=data_sqlite)
             iterImgSet.copyInfo(self._getInputParticles())
             self._fillDataFromIter(iterImgSet, it)
             iterImgSet.write()
@@ -535,13 +530,10 @@ Major features of this program:
         classesFn = self._getFileName("classes", run=numRun, iter=iterN)
         angles = self._getFileName('angles', iter=iterN)
 
-        if not exists(angles) and exists(self._getFileName('clsEven',
-                                                           run=numRun, iter=iterN)):
-            proc = eman2.Plugin.createEmanProcess(args='read %s %s %s %s 3d'
-                                          % (self._getParticlesStack(), clsFn, classesFn,
-                                             self._getBaseName('angles', iter=iterN)),
-                                     direc=self._getExtraPath())
+        if not os.path.exists(angles) and os.path.exists(self._getFileName('clsEven',
+                                                                           run=numRun, iter=iterN)):
+            proc = Plugin.createEmanProcess(args='read %s %s %s %s 3d'
+                                                 % (self._getParticlesStack(), clsFn, classesFn,
+                                                    self._getBaseName('angles', iter=iterN)),
+                                            direc=self._getExtraPath())
             proc.wait()
-
-    def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')

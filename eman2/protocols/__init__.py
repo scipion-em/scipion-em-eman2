@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -24,16 +24,22 @@
 # *
 # **************************************************************************
 
-from protocol_boxing import EmanProtBoxing
-from protocol_ctf import EmanProtCTFAuto
-from protocol_initialmodel import EmanProtInitModel
-from protocol_initialmodel_sgd import EmanProtInitModelSGD
-from protocol_reconstruct import EmanProtReconstruct
-from protocol_refine2d import EmanProtRefine2D
-from protocol_refine2d_bispec import EmanProtRefine2DBispec
-from protocol_refineasy import EmanProtRefine
-from protocol_tiltvalidate import EmanProtTiltValidate
-from protocol_autopick_boxer import EmanProtAutopick
-from protocol_autopick_sparx import SparxGaussianProtPicking
 
+from .protocol_boxing import EmanProtBoxing
+from .protocol_ctf import EmanProtCTFAuto
+from .protocol_initialmodel import EmanProtInitModel
+from .protocol_initialmodel_sgd import EmanProtInitModelSGD
+from .protocol_reconstruct import EmanProtReconstruct
+from .protocol_refine2d import EmanProtRefine2D
+from .protocol_refine2d_bispec import EmanProtRefine2DBispec
+from .protocol_refineasy import EmanProtRefine
+from .protocol_tiltvalidate import EmanProtTiltValidate
+from .protocol_autopick_boxer import EmanProtAutopick
+from .protocol_autopick_sparx import SparxGaussianProtPicking
 
+from .protocol_tomo_boxing import EmanProtTomoBoxing
+from .protocol_tomo_template_match import EmanProtTomoTempMatch
+from .protocol_tomo_extraction import EmanProtTomoExtraction
+from .protocol_tomo_subtomogram_refinement import EmanProtTomoRefinement
+from .protocol_tomo_initialmodel import EmanProtTomoInitialModel
+from .protocol_tomo_reconstruction import EmanProtTomoReconstruction
