@@ -162,10 +162,10 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         if self.localfilter:
             args += ' --localfilter '
         if self.numberOfMpi > 1:
-            args += ' --parallel=mpi:%(mpis)d:%(scratch)s' % self.numberOfMpi.get(), SCRATCHDIR
+            args += ' --parallel=mpi:%d:%s' % (self.numberOfMpi.get(), SCRATCHDIR)
         else:
-            args += ' --parallel=thread:%(threads)d' % self.numberOfThreads.get()
-        args += ' --threads=%(threads)d' % self.numberOfThreads.get()
+            args += ' --parallel=thread:%d' % self.numberOfThreads.get()
+        args += ' --threads=%d' % self.numberOfThreads.get()
 
         program = eman2.Plugin.getProgram('e2spt_refine.py')
         self._log.info('Launching: ' + program + ' ' + args)

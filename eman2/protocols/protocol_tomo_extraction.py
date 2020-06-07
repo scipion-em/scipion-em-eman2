@@ -36,8 +36,6 @@ from tomo.objects import SetOfSubTomograms, SubTomogram, TomoAcquisition
 import eman2
 from eman2.constants import *
 
-from .. import SCRATCHDIR
-
 # Tomogram type constants for particle extraction
 SAME_AS_PICKING = 0
 OTHER = 1
@@ -106,7 +104,8 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                       help='Use normalize.edgemean if the particles have a clear solvent background '
                            '(i.e., they are not part of a larger complex or embeded in a membrane)')
 
-        form.addParallelSection(threads=4, mpi=1)
+        # Uncomment once migrated to new tomo extraction (e2spt_extract.py)
+        # form.addParallelSection(threads=4, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
 
@@ -151,11 +150,9 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             self.cshrink = float(samplingRateCoord / samplingRateTomo)
             if self.cshrink > 1:
                 args += ' --cshrink %d' % self.cshrink
-            if self.numberOfMpi > 1:
-                args += ' --parallel=mpi:%(mpis)d:%(scratch)s' % self.numberOfMpi.get(), SCRATCHDIR
-            else:
-                args += ' --parallel=thread:%(threads)d' % self.numberOfThreads.get()
-            args += ' --threads=%(threads)d' % self.numberOfThreads.get()
+
+            # Uncomment once migrated to new tomo extraction (e2spt_extract.py)
+            # args += ' --threads=% d' % self.numberOfThreads.get()
             program = eman2.Plugin.getProgram('e2spt_boxer_old.py')
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)

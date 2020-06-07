@@ -181,8 +181,7 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
             'pkkeep': self.pkkeep.get(),
             'filterto': self.filterto.get(),
             'rmbeadthr': self.rmbeadthr.get(),
-            'threads': self.numberOfThreads.get(),
-            'mpis': self.numberOfMpi.get(),
+            'threads': self.numberOfThreads.get()
         }
 
         args = " ".join(self._getInputPaths())

@@ -134,7 +134,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s " \
                           "--rmedge --rmgold --boxsz=%d" % (volFile, self.nptcl.get(), self.dthr.get(),
                                                             self.vthr.get(), self.delta.get(), self.sym.get(), self.box)
-        params += ' --threads=%(threads)d' % self.numberOfThreads.get()
+        params += ' --threads=%d' % self.numberOfThreads.get()
 
         program = eman2.Plugin.getProgram("e2spt_tempmatch.py")
 
