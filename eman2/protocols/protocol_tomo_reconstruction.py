@@ -35,8 +35,6 @@ from pyworkflow.protocol import params
 from tomo.protocols import ProtTomoBase
 from tomo.objects import Tomogram, SetOfTomograms
 
-from .. import SCRATCHDIR
-
 
 class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
     """
@@ -132,11 +130,6 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
                       label='Landmarks to keep',
                       help='Fraction of landmarks to keep in the tracking')
 
-        form.addParam('threads', params.IntParam,
-                      default=12,
-                      label='Threads',
-                      help='Number of threads')
-
         form.addParam('filterto', params.FloatParam,
                       default=0.45,
                       label='ABS Filter',
@@ -164,6 +157,8 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
                       help='Pad extra for tilted reconstruction. Slower and costs more memory, but reduces boundary '
                            'artifacts when the sample is thick')
 
+        form.addParallelSection(threads=12, mpi=0)
+
         # --------------------------- INSERT steps functions ----------------------
 
     def _insertAllSteps(self):
@@ -188,7 +183,6 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
             'rmbeadthr': self.rmbeadthr.get(),
             'threads': self.numberOfThreads.get(),
             'mpis': self.numberOfMpi.get(),
-            'scratch': SCRATCHDIR
         }
 
         args = " ".join(self._getInputPaths())
@@ -196,7 +190,7 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         args += (' --notmp --tltstep=%(tiltStep)f --zeroid=%(zeroid)d --npk=%(npk)d'
                  ' --bxsz=%(bxsz)d --tltkeep=%(tltkeep)f --outsize=%(outsize)s'
                  ' --niter=%(niter)s --clipz=%(clipz)d'
-                 ' --pk_mindist=%(pk_mindist)f --pkkeep=%(pkkeep)f --threads=%(threads)d'
+                 ' --pk_mindist=%(pk_mindist)f --pkkeep=%(pkkeep)f'
                  ' --filterto=%(filterto)f --rmbeadthr=%(rmbeadthr)f'
                  )
 
@@ -213,10 +207,6 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         if self.extrapad.get():
             args += ' --extrapad'
 
-        if self.numberOfMpi > 1:
-            args += " --parallel=mpi:%(mpis)d:%(scratch)s"
-        else:
-            args += " --parallel=thread:%(threads)d"
         args += ' --threads=%(threads)d'
 
         program = eman2.Plugin.getProgram("e2tomogram.py")

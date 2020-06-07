@@ -89,9 +89,6 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         form.addParam('mass', params.FloatParam, default=500.0,
                       label='Mass:',
                       help='Default=500.0')
-        form.addParam('threads', params.IntParam, default=2,
-                      label='Threads:',
-                      help='Number of threads')
         form.addParam('pkeep', params.FloatParam, default=0.8,
                       label='Particle keep:',
                       help='Fraction of particles to keep')
@@ -153,7 +150,6 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         if self.inputRef.get() is not None:
             args += (' --reference=%s ' % self.inputRef.get().getFileName())
         args += (' --mass=%f' % self.mass)
-        args += ' --threads=%d' % self.threads
         args += ' --goldstandard=%d ' % self.goldstandard
         args += ' --pkeep=%f ' % self.pkeep
         args += ' --sym=%s ' % self.sym
