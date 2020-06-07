@@ -35,6 +35,8 @@ from pyworkflow.protocol import params
 from tomo.protocols import ProtTomoBase
 from tomo.objects import Tomogram, SetOfTomograms
 
+from .. import SCRATCHDIR
+
 
 class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
     """
@@ -77,7 +79,8 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         form.addParam('bxsz', params.IntParam,
                       default=32,
                       label='Box size for tracking (bxsz)',
-                      help='Box size of the particles for tracking. May be helpful to use a larger one for fiducial-less cases')
+                      help='Box size of the particles for tracking. May be helpful to use a larger one for '
+                           'fiducial-less cases')
 
         form.addSection(label='Optimization')
 
@@ -142,7 +145,8 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         form.addParam('rmbeadthr', params.FloatParam,
                       default=-1.0,
                       label='Density value threshold for removing beads',
-                      help='"Density value threshold (of sigma) for removing beads. High contrast objects beyond this value will be removed. Default is -1 for not removing. try 10 for removing fiducials')
+                      help='"Density value threshold (of sigma) for removing beads. High contrast objects beyond this '
+                           'value will be removed. Default is -1 for not removing. try 10 for removing fiducials')
 
         form.addParam('correctrot', params.BooleanParam,
                       default=False,
@@ -157,9 +161,11 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         form.addParam('extrapad', params.BooleanParam,
                       default=False,
                       label='Extra pad',
-                      help='Pad extra for tilted reconstruction. Slower and costs more memory, but reduces boundary artifacts when the sample is thick')
+                      help='Pad extra for tilted reconstruction. Slower and costs more memory, but reduces boundary '
+                           'artifacts when the sample is thick')
 
-    # --------------------------- INSERT steps functions ----------------------
+        # --------------------------- INSERT steps functions ----------------------
+
     def _insertAllSteps(self):
         self._insertFunctionStep('createCommandStep')
         self._insertFunctionStep('createOutputStep')
@@ -181,6 +187,9 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
             'threads': self.threads.get(),
             'filterto': self.filterto.get(),
             'rmbeadthr': self.rmbeadthr.get(),
+            'threads': self.numberOfThreads.get(),
+            'mpis': self.numberOfMpi.get(),
+            'scratch': SCRATCHDIR
         }
 
         args = " ".join(self._getInputPaths())
@@ -205,9 +214,16 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         if self.extrapad.get():
             args += ' --extrapad'
 
+        if self.numberOfMpi > 1:
+            args += " --parallel=mpi:%(mpis)d:%(scratch)s"
+        else:
+            args += " --parallel=thread:%(threads)d"
+        args += ' --threads=%(threads)d'
+
         program = eman2.Plugin.getProgram("e2tomogram.py")
         self._log.info('Launching: ' + program + ' ' + args % command_params)
-        self.runJob(program, args % command_params, cwd=self._getExtraPath())
+        self.runJob(program, args % command_params, cwd=self._getExtraPath(),
+                    numberOfMpi=1, numberOfThreads=1)
 
     def createOutputStep(self):
         tilt_series = self.tiltSeries.get()

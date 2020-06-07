@@ -39,6 +39,8 @@ from eman2.convert import loadJson, readSetOfCoordinates3D
 from tomo.protocols import ProtTomoPicking
 from tomo.objects import SetOfCoordinates3D
 
+from .. import SCRATCHDIR
+
 
 class EmanProtTomoTempMatch(ProtTomoPicking):
     """
@@ -134,11 +136,17 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         params = params + " --reference=%s --nptcl=%d --dthr=%f --vthr=%f --delta=%f --sym=%s " \
                           "--rmedge --rmgold --boxsz=%d" % (volFile, self.nptcl.get(), self.dthr.get(),
                                                             self.vthr.get(), self.delta.get(), self.sym.get(), self.box)
+        if self.numberOfMpi > 1:
+            params += ' --parallel=mpi:%(mpis)d:%(scratch)s' % self.numberOfMpi.get(), SCRATCHDIR
+        else:
+            params += ' --parallel=thread:%(threads)d' % self.numberOfThreads.get()
+        params += ' --threads=%(threads)d' % self.numberOfThreads.get()
 
         program = eman2.Plugin.getProgram("e2spt_tempmatch.py")
 
         self.runJob(program, params, cwd=os.path.abspath(self._getTmpPath()),
-                    env=eman2.Plugin.getEnviron())
+                    env=eman2.Plugin.getEnviron(),
+                    numberOfMpi=1, numberOfThreads=1)
 
         # Move output files to Extra Path
         moveFile(self._getTmpPath("ccc.hdf"), self._getExtraPath("particles" + ".hdf"))

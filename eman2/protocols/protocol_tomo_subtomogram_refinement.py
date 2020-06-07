@@ -41,6 +41,8 @@ import eman2
 from tomo.protocols import ProtTomoBase
 from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
 
+from .. import SCRATCHDIR
+
 SAME_AS_PICKING = 0
 
 
@@ -163,10 +165,16 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
             args += ' --goldcontinue '
         if self.localfilter:
             args += ' --localfilter '
+        if self.numberOfMpi > 1:
+            args += ' --parallel=mpi:%(mpis)d:%(scratch)s' % self.numberOfMpi.get(), SCRATCHDIR
+        else:
+            args += ' --parallel=thread:%(threads)d' % self.numberOfThreads.get()
+        args += ' --threads=%(threads)d' % self.numberOfThreads.get()
 
         program = eman2.Plugin.getProgram('e2spt_refine.py')
         self._log.info('Launching: ' + program + ' ' + args)
-        self.runJob(program, args)
+        self.runJob(program, args,
+                    numberOfMpi=1, numberOfThreads=1)
 
     def getLastFromOutputPath(self, pattern):
         threedPaths = glob(self.getOutputPath("*"))

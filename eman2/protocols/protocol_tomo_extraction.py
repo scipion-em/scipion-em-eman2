@@ -36,6 +36,8 @@ from tomo.objects import SetOfSubTomograms, SubTomogram, TomoAcquisition
 import eman2
 from eman2.constants import *
 
+from .. import SCRATCHDIR
+
 # Tomogram type constants for particle extraction
 SAME_AS_PICKING = 0
 OTHER = 1
@@ -149,8 +151,14 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             self.cshrink = float(samplingRateCoord / samplingRateTomo)
             if self.cshrink > 1:
                 args += ' --cshrink %d' % self.cshrink
+            if self.numberOfMpi > 1:
+                args += ' --parallel=mpi:%(mpis)d:%(scratch)s' % self.numberOfMpi.get(), SCRATCHDIR
+            else:
+                args += ' --parallel=thread:%(threads)d' % self.numberOfThreads.get()
+            args += ' --threads=%(threads)d' % self.numberOfThreads.get()
             program = eman2.Plugin.getProgram('e2spt_boxer_old.py')
-            self.runJob(program, args, cwd=self._getExtraPath())
+            self.runJob(program, args, cwd=self._getExtraPath(),
+                        numberOfMpi=1, numberOfThreads=1)
             moveFile(self._getExtraPath(os.path.join('sptboxer_01', 'basename.hdf')),
                      self._getExtraPath(pwutils.replaceBaseExt(tomo, 'hdf')))
             cleanPath(self._getExtraPath("sptboxer_01"))
