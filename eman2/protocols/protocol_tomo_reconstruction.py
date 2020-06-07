@@ -184,7 +184,6 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
             'clipz': self.clipz.get(),
             'pk_mindist': self.pkMindist.get(),
             'pkkeep': self.pkkeep.get(),
-            'threads': self.threads.get(),
             'filterto': self.filterto.get(),
             'rmbeadthr': self.rmbeadthr.get(),
             'threads': self.numberOfThreads.get(),
