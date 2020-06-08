@@ -77,7 +77,8 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         form.addParam('bxsz', params.IntParam,
                       default=32,
                       label='Box size for tracking (bxsz)',
-                      help='Box size of the particles for tracking. May be helpful to use a larger one for fiducial-less cases')
+                      help='Box size of the particles for tracking. May be helpful to use a larger one for '
+                           'fiducial-less cases')
 
         form.addSection(label='Optimization')
 
@@ -129,11 +130,6 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
                       label='Landmarks to keep',
                       help='Fraction of landmarks to keep in the tracking')
 
-        form.addParam('threads', params.IntParam,
-                      default=12,
-                      label='Threads',
-                      help='Number of threads')
-
         form.addParam('filterto', params.FloatParam,
                       default=0.45,
                       label='ABS Filter',
@@ -142,7 +138,8 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         form.addParam('rmbeadthr', params.FloatParam,
                       default=-1.0,
                       label='Density value threshold for removing beads',
-                      help='"Density value threshold (of sigma) for removing beads. High contrast objects beyond this value will be removed. Default is -1 for not removing. try 10 for removing fiducials')
+                      help='"Density value threshold (of sigma) for removing beads. High contrast objects beyond this '
+                           'value will be removed. Default is -1 for not removing. try 10 for removing fiducials')
 
         form.addParam('correctrot', params.BooleanParam,
                       default=False,
@@ -157,9 +154,13 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         form.addParam('extrapad', params.BooleanParam,
                       default=False,
                       label='Extra pad',
-                      help='Pad extra for tilted reconstruction. Slower and costs more memory, but reduces boundary artifacts when the sample is thick')
+                      help='Pad extra for tilted reconstruction. Slower and costs more memory, but reduces boundary '
+                           'artifacts when the sample is thick')
 
-    # --------------------------- INSERT steps functions ----------------------
+        form.addParallelSection(threads=12, mpi=0)
+
+        # --------------------------- INSERT steps functions ----------------------
+
     def _insertAllSteps(self):
         self._insertFunctionStep('createCommandStep')
         self._insertFunctionStep('createOutputStep')
@@ -178,9 +179,9 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
             'clipz': self.clipz.get(),
             'pk_mindist': self.pkMindist.get(),
             'pkkeep': self.pkkeep.get(),
-            'threads': self.threads.get(),
             'filterto': self.filterto.get(),
             'rmbeadthr': self.rmbeadthr.get(),
+            'threads': self.numberOfThreads.get()
         }
 
         args = " ".join(self._getInputPaths())
@@ -188,7 +189,7 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         args += (' --notmp --tltstep=%(tiltStep)f --zeroid=%(zeroid)d --npk=%(npk)d'
                  ' --bxsz=%(bxsz)d --tltkeep=%(tltkeep)f --outsize=%(outsize)s'
                  ' --niter=%(niter)s --clipz=%(clipz)d'
-                 ' --pk_mindist=%(pk_mindist)f --pkkeep=%(pkkeep)f --threads=%(threads)d'
+                 ' --pk_mindist=%(pk_mindist)f --pkkeep=%(pkkeep)f'
                  ' --filterto=%(filterto)f --rmbeadthr=%(rmbeadthr)f'
                  )
 
@@ -205,9 +206,12 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
         if self.extrapad.get():
             args += ' --extrapad'
 
+        args += ' --threads=%(threads)d'
+
         program = eman2.Plugin.getProgram("e2tomogram.py")
         self._log.info('Launching: ' + program + ' ' + args % command_params)
-        self.runJob(program, args % command_params, cwd=self._getExtraPath())
+        self.runJob(program, args % command_params, cwd=self._getExtraPath(),
+                    numberOfMpi=1, numberOfThreads=1)
 
     def createOutputStep(self):
         tilt_series = self.tiltSeries.get()

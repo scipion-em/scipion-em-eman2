@@ -41,6 +41,8 @@ import eman2
 from tomo.protocols import ProtTomoBase
 from tomo.objects import AverageSubTomogram, SetOfSubTomograms, SetOfAverageSubTomograms
 
+from .. import SCRATCHDIR
+
 SAME_AS_PICKING = 0
 
 
@@ -64,7 +66,6 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
 
     def __init__(self, **kwargs):
         EMProtocol.__init__(self, **kwargs)
-        self.stepsExecutionMode = STEPS_PARALLEL
 
     # --------------- DEFINE param functions ---------------
 
@@ -87,9 +88,6 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         form.addParam('mass', params.FloatParam, default=500.0,
                       label='Mass:',
                       help='Default=500.0')
-        form.addParam('threads', params.IntParam, default=2,
-                      label='Threads:',
-                      help='Number of threads')
         form.addParam('pkeep', params.FloatParam, default=0.8,
                       label='Particle keep:',
                       help='Fraction of particles to keep')
@@ -124,7 +122,7 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
                            'Assumes tilt axis exactly on Y and zero tilt in X-Y'
                            'plane. Default 90 (no limit).')
 
-        form.addParallelSection(threads=2, mpi=4)
+        form.addParallelSection(threads=4, mpi=1)
 
     # --------------- INSERT steps functions ----------------
 
@@ -151,7 +149,6 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         if self.inputRef.get() is not None:
             args += (' --reference=%s ' % self.inputRef.get().getFileName())
         args += (' --mass=%f' % self.mass)
-        args += ' --threads=%d' % self.threads
         args += ' --goldstandard=%d ' % self.goldstandard
         args += ' --pkeep=%f ' % self.pkeep
         args += ' --sym=%s ' % self.sym
@@ -163,10 +160,16 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
             args += ' --goldcontinue '
         if self.localfilter:
             args += ' --localfilter '
+        if self.numberOfMpi > 1:
+            args += ' --parallel=mpi:%d:%s' % (self.numberOfMpi.get(), SCRATCHDIR)
+        else:
+            args += ' --parallel=thread:%d' % self.numberOfThreads.get()
+        args += ' --threads=%d' % self.numberOfThreads.get()
 
         program = eman2.Plugin.getProgram('e2spt_refine.py')
         self._log.info('Launching: ' + program + ' ' + args)
-        self.runJob(program, args)
+        self.runJob(program, args,
+                    numberOfMpi=1, numberOfThreads=1)
 
     def getLastFromOutputPath(self, pattern):
         threedPaths = glob(self.getOutputPath("*"))

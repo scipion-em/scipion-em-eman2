@@ -104,7 +104,8 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                       help='Use normalize.edgemean if the particles have a clear solvent background '
                            '(i.e., they are not part of a larger complex or embeded in a membrane)')
 
-        form.addParallelSection(threads=4, mpi=1)
+        # Uncomment once migrated to new tomo extraction (e2spt_extract.py)
+        # form.addParallelSection(threads=4, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
 
@@ -149,8 +150,12 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             self.cshrink = float(samplingRateCoord / samplingRateTomo)
             if self.cshrink > 1:
                 args += ' --cshrink %d' % self.cshrink
+
+            # Uncomment once migrated to new tomo extraction (e2spt_extract.py)
+            # args += ' --threads=% d' % self.numberOfThreads.get()
             program = eman2.Plugin.getProgram('e2spt_boxer_old.py')
-            self.runJob(program, args, cwd=self._getExtraPath())
+            self.runJob(program, args, cwd=self._getExtraPath(),
+                        numberOfMpi=1, numberOfThreads=1)
             moveFile(self._getExtraPath(os.path.join('sptboxer_01', 'basename.hdf')),
                      self._getExtraPath(pwutils.replaceBaseExt(tomo, 'hdf')))
             cleanPath(self._getExtraPath("sptboxer_01"))

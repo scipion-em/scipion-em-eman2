@@ -85,8 +85,6 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         form.addParam('boxSize', FloatParam, important=True, label='Box size',
                       help="The wizard selects same box size as reference size")
 
-        form.addParallelSection(threads=1, mpi=1)
-
     # --------------------------- INSERT steps functions ----------------------
 
     def _insertAllSteps(self):
@@ -138,7 +136,8 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         program = eman2.Plugin.getProgram("e2spt_tempmatch.py")
 
         self.runJob(program, params, cwd=os.path.abspath(self._getTmpPath()),
-                    env=eman2.Plugin.getEnviron())
+                    env=eman2.Plugin.getEnviron(),
+                    numberOfMpi=1, numberOfThreads=1)
 
         # Move output files to Extra Path
         moveFile(self._getTmpPath("ccc.hdf"), self._getExtraPath("particles" + ".hdf"))
