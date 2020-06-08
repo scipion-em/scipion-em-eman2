@@ -66,7 +66,6 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
 
     def __init__(self, **kwargs):
         EMProtocol.__init__(self, **kwargs)
-        self.stepsExecutionMode = STEPS_PARALLEL
 
     # --------------- DEFINE param functions ---------------
 
@@ -123,7 +122,7 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
                            'Assumes tilt axis exactly on Y and zero tilt in X-Y'
                            'plane. Default 90 (no limit).')
 
-        form.addParallelSection(threads=2, mpi=4)
+        form.addParallelSection(threads=4, mpi=1)
 
     # --------------- INSERT steps functions ----------------
 
