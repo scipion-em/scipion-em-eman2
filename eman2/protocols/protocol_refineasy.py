@@ -434,7 +434,7 @@ Major features of this program:
             args += " --tophat=%s" % self.getEnumText('tophat')
 
         if self.useBispec:
-            args += " --bispec"
+            args += " --invar"
 
         if self.noRandPhase:
             args += " --norandomaphase"
