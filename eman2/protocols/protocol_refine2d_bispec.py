@@ -222,7 +222,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                       label='', default=ALN_ROTATE_TRANSLATE_TREE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classalignParams', StringParam,
-                      default='flip=0', label='params')
+                      default='flip=1', label='params')
         line = group.addLine('classaligncmp: ')
         line.addParam('classaligncmpType', EnumParam,
                       choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
