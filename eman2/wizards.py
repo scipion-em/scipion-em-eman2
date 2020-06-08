@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -26,18 +26,14 @@
 
 import os
 
-import pyworkflow as pw
-from pyworkflow.em.wizard import EmWizard
-from pyworkflow.em.viewers import CoordinatesObjectView
+from pwem.wizards.wizard import EmWizard
+from pwem.viewers import CoordinatesObjectView
 from pyworkflow.utils import makePath, cleanPath, readProperties
 
-import eman2
-from eman2.convert import writeSetOfMicrographs
-from eman2.protocols import SparxGaussianProtPicking
+from . import Plugin
+from .convert import writeSetOfMicrographs
+from .protocols import SparxGaussianProtPicking, EmanProtTomoExtraction, EmanProtTomoTempMatch
 
-# =============================================================================
-# PICKER
-# =============================================================================
 
 class SparxGaussianPickerWizard(EmWizard):
     _targets = [(SparxGaussianProtPicking, ['boxSize',
@@ -65,9 +61,8 @@ class SparxGaussianPickerWizard(EmWizard):
         writeSetOfMicrographs(micSet, micMdFn)
 
         pickerProps = os.path.join(coordsDir, 'picker.conf')
-        f = open(pickerProps, "w")
         params = ['boxSize', 'lowerThreshold', 'higherThreshold', 'gaussWidth']
-        program = eman2.Plugin.getBoxerCommand(boxerVersion='old')
+        program = Plugin.getBoxerCommand(boxerVersion='old')
 
         extraParams = "invert_contrast=%s:use_variance=%s:%s" % (
             autopickProt.doInvert,
@@ -76,10 +71,9 @@ class SparxGaussianPickerWizard(EmWizard):
 
         args = {
             "params": ','.join(params),
-            "preprocess": "%s %s" % (pw.getScipionScript(),
-                                     eman2.Plugin.getProgram('sxprocess.py')),
-            "picker": "%s %s" % (pw.getScipionScript(), program),
-            "convert": pw.join('apps', 'pw_convert.py'),
+            "preprocess": "emprogram %s" % Plugin.getProgram('sxprocess.py'),
+            "picker": "emprogram %s" % program,
+            "convert": "emconvert",
             'coordsDir': coordsDir,
             'micsSqlite': micSet.getFileName(),
             "boxSize": autopickProt.boxSize,
@@ -89,26 +83,26 @@ class SparxGaussianPickerWizard(EmWizard):
             "extraParams": extraParams
         }
 
-        f.write("""
-        parameters = %(params)s
-        boxSize.value = %(boxSize)s
-        boxSize.label = Box Size
-        boxSize.help = Box size in pixels
-        lowerThreshold.value =  %(lowerThreshold)s
-        lowerThreshold.label = Lower Threshold
-        lowerThreshold.help = Lower Threshold
-        higherThreshold.help = Higher Threshold
-        higherThreshold.value =  %(higherThreshold)s
-        higherThreshold.label = Higher Threshold
-        gaussWidth.help = Width of the Gaussian kernel used
-        gaussWidth.value =  %(gaussWidth)s
-        gaussWidth.label = Gauss Width
-        runDir = %(coordsDir)s
-        preprocessCommand = %(preprocess)s demoparms --makedb=thr_low=%%(lowerThreshold):thr_hi=%%(higherThreshold):boxsize=%%(boxSize):gauss_width=%%(gaussWidth):%(extraParams)s
-        autopickCommand = %(picker)s --gauss_autoboxer=demoparms --write_dbbox --boxsize=%%(boxSize) --norm=normalize.ramp.normvar %%(micrograph) 
-        convertCommand = %(convert)s --coordinates --from eman2 --to xmipp --input  %(micsSqlite)s --output %(coordsDir)s
-        """ % args)
-        f.close()
+        with open(pickerProps, "w") as f:
+            f.write("""
+            parameters = %(params)s
+            boxSize.value = %(boxSize)s
+            boxSize.label = Box Size
+            boxSize.help = Box size in pixels
+            lowerThreshold.value =  %(lowerThreshold)s
+            lowerThreshold.label = Lower Threshold
+            lowerThreshold.help = Lower Threshold
+            higherThreshold.help = Higher Threshold
+            higherThreshold.value =  %(higherThreshold)s
+            higherThreshold.label = Higher Threshold
+            gaussWidth.help = Width of the Gaussian kernel used
+            gaussWidth.value =  %(gaussWidth)s
+            gaussWidth.label = Gauss Width
+            runDir = %(coordsDir)s
+            preprocessCommand = %(preprocess)s demoparms --makedb=thr_low=%%(lowerThreshold):thr_hi=%%(higherThreshold):boxsize=%%(boxSize):gauss_width=%%(gaussWidth):%(extraParams)s
+            autopickCommand = %(picker)s --gauss_autoboxer=demoparms --write_dbbox --boxsize=%%(boxSize) --norm=normalize.ramp.normvar %%(micrograph) 
+            convertCommand = %(convert)s --coordinates --from eman2 --to xmipp --input  %(micsSqlite)s --output %(coordsDir)s
+            """ % args)
         process = CoordinatesObjectView(project, micMdFn, coordsDir, autopickProt,
                                         mode=CoordinatesObjectView.MODE_AUTOMATIC,
                                         pickerProps=pickerProps).show()
@@ -118,3 +112,39 @@ class SparxGaussianPickerWizard(EmWizard):
         if myprops['applyChanges'] == 'true':
             for param in params:
                 form.setVar(param, myprops[param + '.value'])
+
+
+class EmanTomoExtractionWizard(EmWizard):
+    _targets = [(EmanProtTomoExtraction, ['boxSize'])]
+
+    def show(self, form):
+        tomoExtractProt = form.protocol
+        inputCoordinates = tomoExtractProt.inputCoordinates.get()
+        if not inputCoordinates:
+            print('You must specify input coordinates')
+            return
+
+        boxSize = inputCoordinates.getBoxSize()
+        if not boxSize:
+            print('These coordinates do not have box size. Please, enter box size manually.')
+            return
+
+        if tomoExtractProt.downFactor.get() != 1:
+            boxSize = float(boxSize/tomoExtractProt.downFactor.get())
+
+        form.setVar('boxSize', boxSize)
+
+
+class EmanTomoTempMatchWizard(EmWizard):
+    _targets = [(EmanProtTomoTempMatch, ['boxSize'])]
+
+    def show(self, form):
+        tomoExtractProt = form.protocol
+        inputReference = tomoExtractProt.ref.get()
+        if not inputReference:
+            print('You must specify input reference volume')
+            return
+
+        boxSize = inputReference.getDim()[0]
+
+        form.setVar('boxSize', boxSize)

@@ -4,14 +4,18 @@ EMAN2 plugin
 
 This plugin provide wrappers around several programs of `EMAN2 <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
 
-.. figure:: http://scipion-test.cnb.csic.es:9980/badges/eman2_devel.svg
-   :align: left
-   :alt: build status
++------------------+------------------+
+| stable: |stable| | devel: | |devel| |
++------------------+------------------+
+
+.. |stable| image:: http://scipion-test.cnb.csic.es:9980/badges/eman2_prod.svg
+.. |devel| image:: http://scipion-test.cnb.csic.es:9980/badges/eman2_sdevel.svg
+
 
 Installation
 ------------
 
-You will need to use `2.0 <https://github.com/I2PC/scipion/releases/tag/V2.0.0>`_ version of Scipion to be able to run these protocols. To install the plugin, you have two options:
+You will need to use `3.0 <https://github.com/I2PC/scipion/releases/tag/V3.0.0>`_ version of Scipion to be able to run these protocols. To install the plugin, you have two options:
 
 a) Stable version
 
@@ -35,7 +39,7 @@ b) Developer's version
 
 EMAN2 binaries will be installed automatically with the plugin, but you can also link an existing installation.
 
-    * Default installation path assumed is ``software/em/eman-2.3``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
+    * Default installation path assumed is ``software/em/eman-2.31``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
 
     **IMPORTANT: From plugin version 1.0.5 EMAN2DIR was renamed to EMAN2_HOME. Please update your scipion.conf file!**
 
@@ -62,7 +66,7 @@ A complete list of tests can also be seen by executing ``scipion test --show --g
 Supported versions
 ------------------
 
-2.21, 2.3
+2.3, 2.31
 
 In 2018 the plugin was updated to support the latest (at that moment) EMAN2: 2.21. This required a lot of code refactoring and the support of old EMAN2 version 2.11 had to be discontinued. Several new protocols were added: 2D refinements, tilt validation, ctf-auto and new e2boxer. The full changelog since Scipion-1.x is available `here <https://github.com/scipion-em/scipion-em-eman2/issues/1>`_.
 

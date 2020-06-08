@@ -8,7 +8,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -30,10 +30,10 @@ import os
 
 from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         BooleanParam, LEVEL_ADVANCED)
-from pyworkflow.em.protocol import ProtParticlePickingAuto
+from pwem.protocols import ProtParticlePickingAuto
 
-import eman2
-from eman2.convert import readSetOfCoordinates
+from .. import Plugin
+from ..convert import readSetOfCoordinates
 
 
 class SparxGaussianProtPicking(ProtParticlePickingAuto):
@@ -77,7 +77,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
                                           self.lowerThreshold.get(),
                                           self.higherThreshold.get(),
                                           self.boxSize.get(), self.gaussWidth.get(),
-                                          self.useVarImg, self.doInvert)
+                                          self.useVarImg.get(), self.doInvert.get())
         return [initId]
 
     # --------------------------- STEPS functions -----------------------------
@@ -95,7 +95,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
         params += 'invert_contrast=%(doInvert)s:use_variance=%(useVarImg)s:'
         params += 'gauss_width=%(gaussWidth)s:%(extraParams)s'
 
-        self.runJob(eman2.Plugin.getProgram('sxprocess.py'),
+        self.runJob(Plugin.getProgram('sxprocess.py'),
                     params % args, cwd=self.getCoordsDir(),
                     numberOfThreads=1)
 
@@ -103,7 +103,7 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
         micFile = os.path.relpath(mic.getFileName(), self.getCoordsDir())
         params = ('--gauss_autoboxer=demoparms --write_dbbox --boxsize=%d %s'
                   % (self.boxSize, micFile))
-        program = eman2.Plugin.getBoxerCommand(boxerVersion='old')
+        program = Plugin.getBoxerCommand(boxerVersion='old')
 
         self.runJob(program, params, cwd=self.getCoordsDir())
 

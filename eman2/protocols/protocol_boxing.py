@@ -8,7 +8,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -30,14 +30,13 @@ import os
 
 from pyworkflow.object import String
 from pyworkflow.utils.properties import Message
-from pyworkflow.utils.path import join, getExt
+from pyworkflow.utils.path import getExt
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.em.protocol import ProtParticlePicking
-from pyworkflow.protocol.params import (BooleanParam, IntParam,
-                                        StringParam)
+from pwem.protocols import ProtParticlePicking
+from pyworkflow.protocol.params import BooleanParam, IntParam, StringParam
 
-import eman2
-from eman2.convert import loadJson, readSetOfCoordinates
+from .. import Plugin
+from ..convert import loadJson, readSetOfCoordinates
 
 
 class EmanProtBoxing(ProtParticlePicking):
@@ -80,14 +79,13 @@ class EmanProtBoxing(ProtParticlePicking):
                       label='Particle size (px)',
                       help="Longest axis of particle in pixels (diameter, "
                            "not radius).")
-        if self._isVersion23():
-            form.addParam('device', StringParam, default='cpu',
-                          condition='useNewBoxer',
-                          label='Device',
-                          help='For Convnet training only.\n'
-                               'Pick a device to use. Choose from cpu, '
-                               'gpu, or gpuX (X=0,1,...) when multiple '
-                               'gpus are available. Default is cpu.')
+        form.addParam('device', StringParam, default='cpu',
+                      condition='useNewBoxer',
+                      label='Device',
+                      help='For Convnet training only.\n'
+                           'Pick a device to use. Choose from cpu, '
+                           'gpu, or gpuX (X=0,1,...) when multiple '
+                           'gpus are available. Default is cpu.')
 
         form.addParam('invertY', BooleanParam, default=False,
                       label='Invert Y coordinates',
@@ -111,12 +109,12 @@ class EmanProtBoxing(ProtParticlePicking):
     # --------------------------- STEPS functions -----------------------------
     def launchBoxingGUIStep(self):
         # Print the eman version, useful to report bugs
-        self.runJob(eman2.Plugin.getProgram('e2version.py'), '')
+        self.runJob(Plugin.getProgram('e2version.py'), '')
         useNewBoxer = self._useNewBoxer()
         # Program to execute and it arguments
         boxerVersion = 'old' if not useNewBoxer else 'new'
-        boxer = eman2.Plugin.getBoxerCommand(boxerVersion=boxerVersion)
-        program = eman2.Plugin.getProgram(boxer)
+        boxer = Plugin.getBoxerCommand(boxerVersion=boxerVersion)
+        program = Plugin.getProgram(boxer)
         arguments = ''
 
         if useNewBoxer:
@@ -128,8 +126,7 @@ class EmanProtBoxing(ProtParticlePicking):
                 'ptclSize': self.particleSize.get(),
                 'thr': self.numberOfThreads.get()
             })
-            if self._isVersion23():
-                arguments += " --device=%s" % self.device.get()
+            arguments += " --device=%s" % self.device.get()
 
         arguments += " %(inputMics)s"
 
@@ -150,7 +147,8 @@ class EmanProtBoxing(ProtParticlePicking):
             # Function to check if gaussian algorithm was used to pick
             # and if so ask user if she wants to perform an automatic
             # picking for the remaining micrographs
-            gaussJsonFile = join("e2boxercache", "gauss_box_DB.json")
+            gaussJsonFile = os.path.join("e2boxercache", "gauss_box_DB.json")
+            # join("e2boxercache", "gauss_box_DB.json")
             # Check if gauss json file exists and load it
             if os.path.exists(gaussJsonFile):
                 jsonGaussDict = loadJson(gaussJsonFile)
@@ -168,8 +166,8 @@ class EmanProtBoxing(ProtParticlePicking):
                     # picking for the rest of mics
                     self._params['boxSize'] = gaussParsDict['boxsize']
                     # Run sxprocess.py to store parameters
-                    program = eman2.Plugin.getProgram("sxprocess.py")
-                    argsList = ["'%s'=%s:" % (key, val) for (key, val) in gaussParsDict.iteritems()]
+                    program = Plugin.getProgram("sxprocess.py")
+                    argsList = ["'%s'=%s:" % (key, val) for (key, val) in gaussParsDict.items()]
                     args = 'demoparms --makedb ' + "".join(argsList)
                     # Remove last ":" to avoid error
                     args = args[:-1]
@@ -179,8 +177,8 @@ class EmanProtBoxing(ProtParticlePicking):
                     # Now run e2boxer.py with stored parameters
                     arguments = "--gauss_autoboxer=demoparms --write_dbbox "
                     arguments += " --boxsize=%(boxSize)s " + "%(inputMics)s"
-                    boxer = eman2.Plugin.getBoxerCommand(boxerVersion='old')
-                    program = eman2.Plugin.getProgram(boxer)
+                    boxer = Plugin.getBoxerCommand(boxerVersion='old')
+                    program = Plugin.getProgram(boxer)
                     self._log.info('Launching: ' + program + ' ' + arguments % self._params)
                     self.runJob(program, arguments % self._params, cwd=self.getCoordsDir())
 
@@ -220,6 +218,3 @@ class EmanProtBoxing(ProtParticlePicking):
 
     def _useNewBoxer(self):
         return True if self.useNewBoxer else False
-
-    def _isVersion23(self):
-        return eman2.Plugin.isVersion('2.3')

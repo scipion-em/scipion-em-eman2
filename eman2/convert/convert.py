@@ -10,7 +10,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -29,24 +29,26 @@
 # **************************************************************************
 
 import glob
+import itertools
 import json
 import numpy
 import os
 
-import pyworkflow.em as em
+import pwem.constants as emcts
 import pyworkflow.utils as pwutils
-from pyworkflow.em.data import Coordinate, Particle
-from pyworkflow.em.convert import ImageHandler
-import pyworkflow.em.metadata as md
+from pwem.objects.data import Coordinate, Particle, Transform
+from pyworkflow.object import Float
+from pwem.emlib.image import ImageHandler
+import pwem.emlib.metadata as md
 
-import eman2
+from .. import Plugin
 
 
 def loadJson(jsonFn):
     """ This function loads the Json dictionary into memory """
-    jsonFile = open(jsonFn)
-    jsonDict = json.load(jsonFile)
-    jsonFile.close()
+    with open(jsonFn) as jsonFile:
+        jsonDict = json.load(jsonFile)
+
     return jsonDict
 
 
@@ -61,9 +63,9 @@ def readCTFModel(ctfModel, filename):
     keyPos = None
     ctfPhaseShift = 0.0
 
-    if jsonDict.has_key('ctf_frame'):
+    if 'ctf_frame' in jsonDict:
         keyPos = jsonDict['ctf_frame'][1]
-    elif jsonDict.has_key('ctf'):
+    elif 'ctf' in jsonDict:
         keyPos = jsonDict['ctf'][0]
     else:
         setWrongDefocus(ctfModel)
@@ -78,7 +80,7 @@ def readCTFModel(ctfModel, filename):
         ctfPhaseShift = calculatePhaseShift(ampcont)
 
         ctfModel.setStandardDefocus(defocusU, defocusV, defocusAngle)
-        if jsonDict.has_key('ctf_im2d'):
+        if 'ctf_im2d' in jsonDict:
             # psdFile = jsonDict['ctf_im2d']['__image__'][0]
             fnBase = pwutils.removeExt(filename) + '_jsonimg'
             psdFile = "1@%s.hdf" % fnBase
@@ -134,11 +136,29 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
     coordSet.setBoxSize(size)
 
 
+def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, updateItem=None):
+    if "boxes_3d" in jsonBoxDict.keys():
+        boxes = jsonBoxDict["boxes_3d"]
+
+        for box in boxes:
+            classKey = box[5]
+            coord3DSet = coord3DSetDict[classKey]
+            coord3DSet.enableAppend()
+
+            newCoord = readCoordinate3D(box, inputTomo)
+
+            # Execute Callback
+            if updateItem:
+                updateItem(newCoord)
+
+            coord3DSet.append(newCoord)
+
+
 def readCoordinates(mic, fileName, coordsSet, invertY=False):
     if pwutils.exists(fileName):
         jsonPosDict = loadJson(fileName)
 
-        if jsonPosDict.has_key("boxes"):
+        if "boxes" in jsonPosDict:
             boxes = jsonPosDict["boxes"]
 
             for box in boxes:
@@ -153,6 +173,79 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
                 coordsSet.append(coord)
 
 
+def readCoordinate3D(box, inputTomo):
+    from tomo.objects import Coordinate3D
+    x, y, z = box[:3]
+    coord = Coordinate3D()
+    coord.setPosition(x, y, z)
+    coord.setVolume(inputTomo)
+    return coord
+
+
+def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
+    """ Convert the imgSet particles to .hdf files as expected by Eman.
+        This function should be called from a current dir where
+        the images in the set are available.
+        """
+    ext = pwutils.getExt(subtomogramSet.getFirstItem().getFileName())[1:]
+    if ext == 'hdf':
+        # create links if input has hdf format
+        for fn in subtomogramSet.getFiles():
+            newFn = pwutils.removeBaseExt(fn).split('__ctf')[0] + '.hdf'
+            newFn = pwutils.join(path, newFn)
+            pwutils.createLink(fn, newFn)
+            print("   %s -> %s" % (fn, newFn))
+    else:
+        firstCoord = subtomogramSet.getFirstItem().getCoordinate3D() or None
+        hasVolName = False
+        if firstCoord:
+            hasVolName = firstCoord.getVolName() or False
+
+        fileName = ""
+        a = 0
+        proc = Plugin.createEmanProcess(args='write')
+
+        for i, subtomo in iterSubtomogramsByVol(subtomogramSet):
+            volName = volId = subtomo.getVolId()
+            if hasVolName:
+                volName = pwutils.removeBaseExt(subtomo.getCoordinate3D().getVolName())
+            objDict = subtomo.getObjDict()
+
+            if not volId:
+                volId = 0
+
+            suffix = kwargs.get('suffix', '')
+            if hasVolName and (volName != str(volId)):
+                objDict['hdfFn'] = pwutils.join(path,
+                                                "%s%s.hdf" % (volName, suffix))
+            else:
+                objDict['hdfFn'] = pwutils.join(path,
+                                                "subtomo_%06d%s.hdf" % (volId, suffix))
+
+            alignType = kwargs.get('alignType')
+
+            if alignType != emcts.ALIGN_NONE:
+                shift, angles = alignmentToRow(subtomo.getTransform(), alignType)
+                # json cannot encode arrays so I convert them to lists
+                # json fail if has -0 as value
+                objDict['_shifts'] = shift.tolist()
+                objDict['_angles'] = angles.tolist()
+            objDict['_itemId'] = subtomo.getObjId()
+
+            # the index in EMAN begins with 0
+            if fileName != objDict['_filename']:
+                fileName = objDict['_filename']
+                if objDict['_index'] == 0:
+                    a = 0
+                else:
+                    a = 1
+            objDict['_index'] = int(objDict['_index'] - a)
+            # Write the e2converter.py process from where to read the image
+            print(json.dumps(objDict), file=proc.stdin, flush=True)
+            proc.stdout.readline()
+        proc.kill()
+
+
 def writeSetOfMicrographs(micSet, filename):
     """ Simplified function borrowed from xmipp. """
     mdata = md.MetaData()
@@ -160,7 +253,7 @@ def writeSetOfMicrographs(micSet, filename):
     for img in micSet:
         objId = mdata.addObject()
         imgRow = md.Row()
-        imgRow.setValue(md.MDL_ITEM_ID, long(objId))
+        imgRow.setValue(md.MDL_ITEM_ID, objId)
 
         index, fname = img.getLocation()
         fn = ImageHandler.locationToXmipp((index, fname))
@@ -211,7 +304,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
 
         fileName = ""
         a = 0
-        proc = eman2.Plugin.createEmanProcess(args='write')
+        proc = Plugin.createEmanProcess(args='write')
 
         for i, part in iterParticlesByMic(partSet):
             micName = micId = part.getMicId()
@@ -232,7 +325,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
 
             alignType = kwargs.get('alignType')
 
-            if alignType != em.ALIGN_NONE:
+            if alignType != emcts.ALIGN_NONE:
                 shift, angles = alignmentToRow(part.getTransform(), alignType)
                 # json cannot encode arrays so I convert them to lists
                 # json fail if has -0 as value
@@ -249,8 +342,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
                     a = 1
             objDict['_index'] = int(objDict['_index'] - a)
             # Write the e2converter.py process from where to read the image
-            print >> proc.stdin, json.dumps(objDict)
-            proc.stdin.flush()
+            print(json.dumps(objDict), file=proc.stdin, flush=True)
             proc.stdout.readline()
         proc.kill()
 
@@ -260,7 +352,7 @@ def getImageDimensions(imageFile):
      not currently supported by the native image library (Xmipp).
      Underneath, it will call a script to do the job.
     """
-    proc = eman2.Plugin.createEmanProcess('e2ih.py', args=imageFile)
+    proc = Plugin.createEmanProcess('e2ih.py', args=imageFile)
     return tuple(map(int, proc.stdout.readline().split()))
 
 
@@ -275,29 +367,28 @@ def convertImage(inputLoc, outputLoc):
         This does not works for EMAN out of here.
         """
         if isinstance(loc, tuple):
-            if loc[0] != em.NO_INDEX:
+            if loc[0] != emcts.NO_INDEX:
                 return "%06d@%s" % loc
             return loc[1]
         else:
             return loc
 
-    proc = eman2.Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
-                                                        _getFn(outputLoc)))
+    proc = Plugin.createEmanProcess('e2ih.py', args='%s %s' % (_getFn(inputLoc),
+                                                               _getFn(outputLoc)))
     proc.wait()
 
 
 def iterLstFile(filename):
-    f = open(filename)
-    for line in f:
-        if '#' not in line:
-            # Decompose Eman filename
-            index, filename = int(line.split()[0]) + 1, line.split()[1]
-            yield (index, filename)
-    f.close()
+    with open(filename) as f:
+        for line in f:
+            if '#' not in line:
+                # Decompose Eman filename
+                index, filename = int(line.split()[0]) + 1, line.split()[1]
+                yield index, filename
 
 
 def geometryFromMatrix(matrix, inverseTransform):
-    from pyworkflow.em.convert.transformations import  translation_from_matrix, euler_from_matrix
+    from pwem.convert.transformations import translation_from_matrix, euler_from_matrix
     if inverseTransform:
         from numpy.linalg import inv
         matrix = inv(matrix)
@@ -312,7 +403,7 @@ def matrixFromGeometry(shifts, angles, inverseTransform):
     """ Create the transformation matrix from a given
     2D shifts in X and Y...and the 3 euler angles.
     """
-    from pyworkflow.em.convert.transformations import  euler_matrix
+    from pwem.convert.transformations import euler_matrix
     from numpy import deg2rad
     radAngles = -deg2rad(angles)
 
@@ -351,9 +442,9 @@ def rowToAlignment(alignmentList, alignType):
         """
     # use all angles in 2D since we might have mirrors
     # is2D = alignType == em.ALIGN_2D
-    inverseTransform = alignType == em.ALIGN_PROJ
+    inverseTransform = alignType == emcts.ALIGN_PROJ
 
-    alignment = em.Transform()
+    alignment = Transform()
     angles = numpy.zeros(3)
     shifts = numpy.zeros(3)
     shifts[0] = alignmentList[3]
@@ -376,13 +467,20 @@ def iterParticlesByMic(partSet):
         yield i, part
 
 
+def iterSubtomogramsByVol(subtomogramSet):
+    """ Iterate subtomograms ordered by tomogram """
+    items = list(subtomogramSet.iterItems(orderBy=['_volId', 'id'], direction='ASC'))
+    for i, part in enumerate(items):
+        yield i, part
+
+
 def convertReferences(refSet, outputFn):
     """ Simplified version of writeSetOfParticles function.
     Writes out an hdf stack.
     """
     fileName = ""
     a = 0
-    proc = eman2.Plugin.createEmanProcess(args='write')
+    proc = Plugin.createEmanProcess(args='write')
 
     for part in refSet:
         objDict = part.getObjDict()
@@ -399,7 +497,7 @@ def convertReferences(refSet, outputFn):
         objDict['_index'] = int(objDict['_index'] - a)
 
         # Write the e2converter.py process from where to read the image
-        print >> proc.stdin, json.dumps(objDict)
+        print(json.dumps(objDict), file=proc.stdin)
         proc.stdin.flush()
         proc.stdout.readline()
     proc.kill()
@@ -416,3 +514,126 @@ def calculatePhaseShift(ampcont):
     ctfPhaseShift = numpy.rad2deg(PhaseShift)
 
     return ctfPhaseShift
+
+
+def getLastParticlesParams(directory):
+    """
+    Return a dictionary containing the params values of the last iteration.
+
+    Key: Particle index (int)
+    Value: Dict[{coverage: float, score: float, alignMatrix: list[float]}]
+    """
+    # JSON files with particles params: path/to/particle_parms_NN.json
+    particleParamsPaths = glob.glob(os.path.join(directory, 'particle_parms_*.json'))
+    if not particleParamsPaths:
+        raise Exception("Particle params files not found")
+
+    lastParticleParamsPath = sorted(particleParamsPaths)[-1]
+    particlesParams = json.load(open(lastParticleParamsPath))
+    output = {}
+
+    for key, values in particlesParams.items():
+        # key: '(path/to/particles/basename.hdf', nParticle)'
+        # values: '{"coverage": 1.0, "score": 2.0, "xform.align3d": {"matrix": [...]}}'
+        import re
+        match = re.search(r'(\d+)\)$', key)
+        if not match:
+            continue
+        particleIndex = int(match.group(1))
+        coverage = values.get("coverage")
+        score = values.get("score")
+        alignMatrix = values.get("xform.align3d", {}).get("matrix")
+
+        if coverage and score and alignMatrix:
+            customParticleParams = dict(
+                coverage=coverage,
+                score=score,
+                alignMatrix=alignMatrix
+            )
+            output[particleIndex] = customParticleParams
+
+    return output
+
+
+def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, particlesParams):
+    """Update a set of subtomograms from a template and copy attributes coverage/score/transform"""
+
+    def updateSubTomogram(subTomogram, index):
+        particleParams = particlesParams.get(index)
+        if not particleParams:
+            raise Exception("Could not get params for particle %d" % index)
+        setattr(subTomogram, 'coverage', Float(particleParams["coverage"]))
+        setattr(subTomogram, 'score', Float(particleParams["score"]))
+        # Create 4x4 matrix from 4x3 e2spt_sgd align matrix and append row [0,0,0,1]
+        am = particleParams["alignMatrix"]
+        angles = numpy.array([am[0:3], am[4:7], am[8:11], [0, 0, 0]])
+        samplingRate = outputSetOfSubTomograms.getSamplingRate()
+        shift = numpy.array([am[3] * samplingRate, am[7] * samplingRate, am[11] * samplingRate, 1])
+        matrix = numpy.column_stack((angles, shift.T))
+        subTomogram.setTransform(Transform(matrix))
+
+    outputSetOfSubTomograms.copyItems(inputSetOfSubTomograms,
+                                      updateItemCallback=updateSubTomogram,
+                                      itemDataIterator=itertools.count(0))
+
+
+def setCoords3D2Jsons(setTomograms, setCoords, path):
+    for tomo in setTomograms.iterItems():
+        coords = []
+        for coor in setCoords.iterCoordinates():
+            if pwutils.removeBaseExt(tomo.getFileName()) == pwutils.removeBaseExt(coor.getVolName()):
+                coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
+
+        coordDict = {"boxes_3d": coords,
+                     "class_list": {"0": {"boxsize": setCoords.getBoxSize(), "name": "particles_00"}}
+                     }
+        tomoBasename = pwutils.removeBaseExt(tomo.getFileName())
+        if "__" in tomoBasename:
+            fnInputCoor = '%s_info.json' % tomoBasename.split("__")[0]
+        else:
+            fnInputCoor = 'extra-%s_info.json' % tomoBasename
+        pathInputCoor = pwutils.join(path, fnInputCoor)
+        if coords:
+            writeJson(coordDict, pathInputCoor)
+
+
+def jsons2SetCoords3D(protocol, setTomograms, outPath):
+    from tomo.objects import SetOfCoordinates3D
+    coord3DSetDict = {}
+    suffix = protocol._getOutputSuffix(SetOfCoordinates3D)
+    coord3DSet = protocol._createSetOfCoordinates3D(setTomograms, suffix)
+    coord3DSet.setName("tomoCoord")
+    coord3DSet.setPrecedents(setTomograms)
+    coord3DSet.setSamplingRate(setTomograms.getSamplingRate())
+    first = True
+    for tomo in setTomograms.iterItems():
+        outFile = '*%s_info.json' % pwutils.removeBaseExt(tomo.getFileName().split("__")[0])
+        pattern = os.path.join(outPath, outFile)
+        files = glob.glob(pattern)
+
+        if not files or not os.path.isfile(files[0]):
+            continue
+
+        jsonFnbase = files[0]
+        jsonBoxDict = loadJson(jsonFnbase)
+
+        if first:
+            coord3DSet.setBoxSize(int(jsonBoxDict["class_list"]["0"]["boxsize"]))
+            first = False
+
+        index = int((list(jsonBoxDict["class_list"].keys()))[0])
+        coord3DSetDict[index] = coord3DSet
+
+        # Populate Set of 3D Coordinates with 3D Coordinates
+        readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, tomo.clone())
+        pwutils.cleanPath(jsonFnbase)
+
+    name = protocol.OUTPUT_PREFIX + suffix
+    args = {}
+    args[name] = coord3DSet
+    protocol._defineOutputs(**args)
+    protocol._defineSourceRelation(setTomograms, coord3DSet)
+
+    # Update Outputs
+    for index, coord3DSet in coord3DSetDict.items():
+        protocol._updateOutputSet(name, coord3DSet, state=coord3DSet.STREAM_CLOSED)

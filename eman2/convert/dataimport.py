@@ -8,7 +8,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -26,11 +26,13 @@
 # *
 # **************************************************************************
 
+import os
+
 import pyworkflow.utils as pwutils
-from pyworkflow.em.data import Coordinate, CTFModel
-from pyworkflow.em.data_tiltpairs import Angles
-from pyworkflow.em.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR,
-                                    MDL_PICKING_PARTICLE_SIZE)
+from pwem.objects.data import Coordinate, CTFModel
+from pwem.objects.data_tiltpairs import Angles
+from pwem.emlib.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR, MDL_ZCOOR,
+                                 MDL_PICKING_PARTICLE_SIZE)
 from .convert import loadJson, readCTFModel, readSetOfParticles
 
 
@@ -49,7 +51,7 @@ class EmanImport:
                 fnBase = pwutils.replaceBaseExt(fileName, 'hdf')
                 keyName = 'tiltparams_micrographs/' + fnBase.replace('_info', '')
                 jsonAngDict = loadJson(fileName)
-                if jsonAngDict.has_key(keyName):
+                if keyName in jsonAngDict:
                     angles = jsonAngDict[keyName]
                     tilt, y2, y = angles[:3]  # y2=tilted, y=gamma(untilted)
                     ang = Angles()
@@ -67,9 +69,9 @@ class EmanImport:
                 jsonPosDict = loadJson(fileName)
                 boxes = []
 
-                if jsonPosDict.has_key("boxes"):
+                if "boxes" in jsonPosDict:
                     boxes = jsonPosDict["boxes"]
-                elif jsonPosDict.has_key("boxes_rct"):
+                elif "boxes_rct" in jsonPosDict:
                     boxes = jsonPosDict["boxes_rct"]
                 if boxes:
                     for box in boxes:
@@ -96,6 +98,38 @@ class EmanImport:
             else:
                 raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
 
+    def importCoordinates3D(self, fileName, addCoordinate):
+        from tomo.objects import Coordinate3D
+        if pwutils.exists(fileName):
+            ext = pwutils.getExt(fileName)
+
+            if ext == ".json":
+                jsonPosDict = loadJson(fileName)
+                boxes = []
+
+                if "boxes_3d" in jsonPosDict:
+                    boxes = jsonPosDict["boxes_3d"]
+                if boxes:
+                    for box in boxes:
+                        x, y, z = box[:3]
+                        coord = Coordinate3D()
+                        coord.setPosition(x, y, z)
+                        addCoordinate(coord)
+
+            elif ext == ".txt":
+                md = MetaData()
+                md.readPlain(fileName, "xcoor ycoor zcoor")
+                for objId in md:
+                    x = md.getValue(MDL_XCOOR, objId)
+                    y = md.getValue(MDL_YCOOR, objId)
+                    z = md.getValue(MDL_ZCOOR, objId)
+                    coord = Coordinate3D()
+                    coord.setPosition(x, y, z)
+                    addCoordinate(coord)
+
+            else:
+                raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
+
     def getBoxSize(self, coordFile):
         """ Try to infer the box size from the given coordinate file.
         In the case of .box files, the size is the 3rd column
@@ -108,17 +142,17 @@ class EmanImport:
             return md.getValue(MDL_PICKING_PARTICLE_SIZE, md.firstObject())
 
         elif coordFile.endswith('.json'):
-            infoDir = pwutils.dirname(coordFile)
+            infoDir = os.path.dirname(coordFile)
             # Still go one level up of info dir
-            jsonBase = pwutils.join(pwutils.dirname(infoDir), 'e2boxercache', 'base.json')
+            jsonBase = pwutils.join(os.path.dirname(infoDir), 'e2boxercache', 'base.json')
             jsonBase2 = pwutils.join(infoDir, 'project.json')
             if pwutils.exists(jsonBase):
                 jsonDict = loadJson(jsonBase)
-                if jsonDict.has_key('box_size'):
+                if 'box_size' in jsonDict:
                     return int(jsonDict["box_size"])
             elif pwutils.exists(jsonBase2):
                 jsonDict = loadJson(jsonBase2)
-                if jsonDict.has_key('global.boxsize'):
+                if 'global.boxsize' in jsonDict:
                     return int(jsonDict["global.boxsize"])
 
         return None
@@ -143,8 +177,5 @@ class EmanImport:
         self.protocol._defineOutputs(outputParticles=partSet)
 
     def validateParticles(self):
-        """ Should be overwritten in subclasses to
-        return summary message for NORMAL EXECUTION.
-        """
         errors = []
         return errors

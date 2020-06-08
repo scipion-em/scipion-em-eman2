@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -27,10 +27,10 @@
 import os
 import subprocess
 
-import pyworkflow.em
+import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, V2_21, V2_3
+from .constants import EMAN2_HOME, V2_3, V2_31
 
 
 _logo = "eman2_logo.png"
@@ -40,14 +40,14 @@ _references = ['Tang2007']
 SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 
 
-class Plugin(pyworkflow.em.Plugin):
+class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_21, V2_3]
+    _supportedVersions = [V2_3, V2_31]
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2_HOME, 'eman-2.3')
+        cls._defineEmVar(EMAN2_HOME, 'eman-2.31')
 
     @classmethod
     def getEnviron(cls):
@@ -72,7 +72,7 @@ class Plugin(pyworkflow.em.Plugin):
         return environ
 
     @classmethod
-    def isVersion(cls, version='2.3'):
+    def isVersion(cls, version='2.31'):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
@@ -105,9 +105,20 @@ class Plugin(pyworkflow.em.Plugin):
         cmd = cls.getEmanCommand(program, args, python=True)
 
         print("** Running: '%s'" % cmd)
-        proc = subprocess.Popen(cmd, shell=True, env=cls.getEnviron(),
+        cmd = cmd.split()
+        proc = subprocess.Popen(cmd, env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE, cwd=direc)
+                                stdout=subprocess.PIPE,
+                                cwd=direc,
+                                universal_newlines=True)
+
+        # Python 2 to 3 conversion: iterating over lines in subprocess stdout -> If universal_newlines is False the file
+        # objects stdin, stdout and stderr will be opened as binary streams, and no line ending conversion is done.
+        # If universal_newlines is True, these file objects will be opened as text streams in universal newlines mode
+        # using the encoding returned by locale.getpreferredencoding(False). For stdin, line ending characters '\n' in
+        # the input will be converted to the default line separator os.linesep. For stdout and stderr, all line endings
+        # in the output will be converted to '\n'. For more information see the documentation of the io.TextIOWrapper
+        # class when the newline argument to its constructor is None.
 
         return proc
 
@@ -115,23 +126,19 @@ class Plugin(pyworkflow.em.Plugin):
     def defineBinaries(cls, env):
         SW_EM = env.getEmFolder()
 
-        eman22_commands = [
-            ('./eman2.21.linux64.centos7.sh -b -p "%s/eman-2.21"' %
-             SW_EM, '%s/eman-2.21/bin/python' % SW_EM)]
-
         shell = os.environ.get("SHELL", "bash")
         eman23_commands = [
             (shell + ' ./eman2.3.linux64.sh -b -p "%s/eman-2.3"' %
              SW_EM, '%s/eman-2.3/bin/python' % SW_EM)]
-
-        env.addPackage('eman', version='2.21',
-                       tar='eman2.21.linux64.centos7.tgz',
-                       commands=eman22_commands)
+        eman231_commands = [
+            (shell + ' ./eman2.31_sphire1.3.linux64.sh -b -p "%s/eman-2.31"' %
+             SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
 
         env.addPackage('eman', version='2.3',
                        tar='eman2.3.linux64.tgz',
-                       commands=eman23_commands,
+                       commands=eman23_commands)
+
+        env.addPackage('eman', version='2.31',
+                       tar='eman2.31.linux64.tgz',
+                       commands=eman231_commands,
                        default=True)
-
-
-pyworkflow.em.Domain.registerPlugin(__name__)

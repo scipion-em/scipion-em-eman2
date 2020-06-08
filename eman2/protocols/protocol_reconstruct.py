@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -30,12 +30,12 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam,
                                         LEVEL_ADVANCED)
 from pyworkflow.utils.path import cleanPattern, makePath
-from pyworkflow.em.data import Volume
-from pyworkflow.em.protocol import ProtReconstruct3D
+from pwem.objects.data import Volume
+from pwem.protocols import ProtReconstruct3D
 
-import eman2
-from eman2.convert import writeSetOfParticles
-from eman2.constants import *
+from .. import Plugin
+from ..convert import writeSetOfParticles
+from ..constants import *
 
 
 class EmanProtReconstruct(ProtReconstruct3D):
@@ -195,7 +195,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
         makePath(storePath)
         writeSetOfParticles(partSet, storePath, alignType=partAlign)
         if not self.skipctf:
-            program = eman2.Plugin.getProgram('e2ctf.py')
+            program = Plugin.getProgram('e2ctf.py')
             acq = partSet.getAcquisition()
 
             args = " --voltage %3d" % acq.getVoltage()
@@ -209,7 +209,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfThreads=1)
 
-        program = eman2.Plugin.getProgram('e2buildsets.py')
+        program = Plugin.getProgram('e2buildsets.py')
         args = " --setname=inputSet --allparticles --minhisnr=-1"
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
@@ -217,9 +217,9 @@ class EmanProtReconstruct(ProtReconstruct3D):
         """ Run the EMAN program to reconstruct a volume. """
         cleanPattern(self._getFileName("volume"))
         if self.useE2make3d:
-            program = eman2.Plugin.getProgram('e2make3d.py')
+            program = Plugin.getProgram('e2make3d.py')
         else:
-            program = eman2.Plugin.getProgram('e2make3dpar.py')
+            program = Plugin.getProgram('e2make3dpar.py')
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
     def createOutputStep(self):
@@ -233,7 +233,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
         errors = []
-        if not self.useE2make3d and self.reconstructionMethod!= RECON_FOURIER:
+        if not self.useE2make3d and self.reconstructionMethod != RECON_FOURIER:
             errors.append('e2make3dpar.py program can use only Fourier method '
                           'for reconstruction!')
 
