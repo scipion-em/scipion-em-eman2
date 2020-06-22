@@ -25,6 +25,8 @@
 # **************************************************************************
 
 import os
+import glob
+from os.path import abspath
 
 from pwem.emlib.image import ImageHandler
 from pyworkflow import utils as pwutils
@@ -112,6 +114,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
     def _insertAllSteps(self):
         self._insertFunctionStep('writeSetOfCoordinates3D')
         self._insertFunctionStep('extractParticles')
+        self._insertFunctionStep('convertOutput')
         self._insertFunctionStep('createOutputStep')
 
     # --------------------------- STEPS functions -----------------------------
@@ -127,15 +130,15 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                 pwutils.replaceBaseExt(tomo.getFileName(), 'coords'))
 
             out = open(self.coordsFileName, "w")
-            for coord3DSet in self.inputCoordinates.get().iterCoordinates():
-                if os.path.basename(tomo.getFileName()) == os.path.basename(coord3DSet.getVolName()):
-                    out.write("%d\t%d\t%d\n" % (coord3DSet.getX(), coord3DSet.getY(), coord3DSet.getZ()))
-                    coordDict.append(coord3DSet.clone())
+            for coord3D in self.inputCoordinates.get():#.iterCoordinates():
+                if os.path.basename(tomo.getFileName()) == os.path.basename(coord3D.getVolName()):
+                    out.write("%d\t%d\t%d\n" % (coord3D.getX(), coord3D.getY(), coord3D.getZ()))
+                    coordDict.append(coord3D.clone())
+            out.close()
             if coordDict:
                 self.lines.append(coordDict)
                 self.tomoFiles.append(tomo.getFileName())
                 self.samplingRateTomo = tomo.getSamplingRate()
-            out.close()
 
     def extractParticles(self):
         samplingRateCoord = self.inputCoordinates.get().getSamplingRate()
@@ -160,6 +163,16 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                      self._getExtraPath(pwutils.replaceBaseExt(tomo, 'hdf')))
             cleanPath(self._getExtraPath("sptboxer_01"))
 
+    def convertOutput(self):
+        program = eman2.Plugin.getProgram('e2proc3d.py')
+        for hdfFile in glob.glob(self._getExtraPath('*.hdf')):
+            args = ' --unstacking'
+            args += ' %s' % abspath(hdfFile)
+            args += ' %s' % abspath(self._getExtraPath(pwutils.replaceBaseExt(hdfFile, 'mrc')))
+            self.runJob(program, args, cwd=self._getExtraPath(),
+                        numberOfMpi=1, numberOfThreads=1)
+            os.remove(hdfFile)
+
     def createOutputStep(self):
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(self._getOutputSuffix(SetOfSubTomograms))
         self.outputSubTomogramsSet.setSamplingRate(self.getInputTomograms().getSamplingRate() / self.downFactor.get())
@@ -173,8 +186,10 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             for ind, tomoFile in enumerate(self.tomoFiles):
                 if os.path.basename(tomoFile) == os.path.basename(item.getFileName()):
                     coordSet = self.lines[ind]
-                    outputSet = self.readSetOfSubTomograms(self._getExtraPath(pwutils.replaceBaseExt(tomoFile, "hdf")),
-                                                           self.outputSubTomogramsSet, coordSet, item.getObjId())
+                    outputSet = self.readSetOfSubTomograms(self._getExtraPath(os.path.basename(tomoFile)),
+                                                           self.outputSubTomogramsSet,
+                                                           coordSet,
+                                                           item.getObjId())
 
         self._defineOutputs(outputSetOfSubtomogram=outputSet)
         self._defineSourceRelation(self.inputCoordinates, outputSet)
@@ -228,19 +243,21 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
         else:
             return self.inputTomograms.get()
 
-    def readSetOfSubTomograms(self, workDir, outputSubTomogramsSet, coordSet, volId):
-        imgh = ImageHandler()
-        x, y, z, n = imgh.getDimensions(workDir)
-        for index in range(1, n + 1):
+    def readSetOfSubTomograms(self, tomoFile, outputSubTomogramsSet, coordSet, volId):
+        subtomoFileList = sorted(glob.glob(pwutils.removeExt(tomoFile) + '*.mrc'))
+        counter = 0
+        for subtomoFile in subtomoFileList:
             subtomogram = SubTomogram()
             subtomogram.cleanObjId()
-            subtomogram.setLocation(index, workDir)
+            subtomogram.setLocation(counter, subtomoFile)
             dfactor = self.downFactor.get()
             if dfactor != 1:
-                fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % index)
+                fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % counter)
                 ImageHandler.scaleSplines(subtomogram.getLocation(), fnSubtomo, dfactor)
                 subtomogram.setVolId(volId)
                 subtomogram.setLocation(fnSubtomo)
-            subtomogram.setCoordinate3D(coordSet[index - 1])
+            subtomogram.setCoordinate3D(coordSet[counter])
+            subtomogram.setVolName(tomoFile)
             outputSubTomogramsSet.append(subtomogram)
+            counter += 1
         return outputSubTomogramsSet
