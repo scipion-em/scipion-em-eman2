@@ -32,7 +32,7 @@ from pwem.emlib.image import ImageHandler
 from pyworkflow import utils as pwutils
 from pwem.protocols import EMProtocol
 import pyworkflow.protocol.params as params
-from pyworkflow.utils.path import moveFile, cleanPath
+from pyworkflow.utils.path import moveFile, cleanPath, cleanPattern
 from tomo.protocols import ProtTomoBase
 from tomo.objects import SetOfSubTomograms, SubTomogram, TomoAcquisition
 import eman2
@@ -127,12 +127,12 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             self.coordsFileName = self._getExtraPath(
                 pwutils.replaceBaseExt(tomo.getFileName(), 'coords'))
 
-            out = open(self.coordsFileName, "w")
-            for coord3D in self.inputCoordinates.get().iterCoordinates(volume=tomo):
-                if os.path.basename(tomo.getFileName()) == os.path.basename(coord3D.getVolName()):
-                    out.write("%d\t%d\t%d\n" % (coord3D.getX(), coord3D.getY(), coord3D.getZ()))
-                    coordDict.append(coord3D.clone())
-            out.close()
+            with open(self.coordsFileName, "w") as out:
+                for coord3D in self.inputCoordinates.get():#.iterCoordinates(volume=tomo):
+                    if os.path.basename(tomo.getFileName()) == os.path.basename(coord3D.getVolName()):
+                        out.write("%d\t%d\t%d\n" % (coord3D.getX(), coord3D.getY(), coord3D.getZ()))
+                        coordDict.append(coord3D.clone())
+
             if coordDict:
                 self.lines.append(coordDict)
                 self.tomoFiles.append(tomo.getFileName())
@@ -169,7 +169,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             args += ' %s' % abspath(self._getExtraPath(pwutils.replaceBaseExt(hdfFile, 'mrc')))
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)
-            os.remove(hdfFile)
+            cleanPattern(hdfFile)
 
     def createOutputStep(self):
         self.outputSubTomogramsSet = self._createSetOfSubTomograms(self._getOutputSuffix(SetOfSubTomograms))
@@ -243,8 +243,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
 
     def readSetOfSubTomograms(self, tomoFile, outputSubTomogramsSet, coordSet, volId):
         subtomoFileList = sorted(glob.glob(pwutils.removeExt(tomoFile) + '*.mrc'))
-        counter = 0
-        for subtomoFile in subtomoFileList:
+        for counter, subtomoFile in enumerate(subtomoFileList):
             subtomogram = SubTomogram()
             subtomogram.cleanObjId()
             subtomogram.setLocation(counter, subtomoFile)
@@ -257,5 +256,4 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             subtomogram.setCoordinate3D(coordSet[counter])
             subtomogram.setVolName(tomoFile)
             outputSubTomogramsSet.append(subtomogram)
-            counter += 1
         return outputSubTomogramsSet
