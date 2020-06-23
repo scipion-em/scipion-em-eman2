@@ -461,10 +461,10 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
                                                    samplingRate=5)
 
         self.launchProtocol(protImportCoordinates3d)
-        self.assertIsNotNone(protImportTomogram.outputTomograms,
-                             "There was a problem with tomogram output")
-        self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
-                             "There was a problem with coordinates 3d output")
+        self.assertSetSize(protImportTomogram.outputTomograms, 1,
+                           "There was a problem with tomogram output")
+        self.assertSetSize(protImportCoordinates3d.outputCoordinates, 5,
+                           "There was a problem with coordinates 3d output")
 
         if tomoSource == 1:
             protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
@@ -484,8 +484,8 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
                                                   boxSize=boxSize,
                                                   downFactor=downFactor)
         self.launchProtocol(protTomoExtraction)
-        self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
-                             "There was a problem with SetOfSubtomogram output")
+        self.assertSetSize(protTomoExtraction.outputSetOfSubtomogram, 5,
+                           "There was a problem with SetOfSubtomogram output")
         return protTomoExtraction
 
     def test_extractParticlesSameAsPicking(self):

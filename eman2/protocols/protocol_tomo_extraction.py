@@ -122,13 +122,18 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
     def writeSetOfCoordinates3D(self):
         self.lines = []
         self.tomoFiles = []
+        tomoList = []
         for tomo in self.getInputTomograms():
+            tomoList.append(tomo.clone())
+
+        for tomo in tomoList:
             coordDict = []
             self.coordsFileName = self._getExtraPath(
                 pwutils.replaceBaseExt(tomo.getFileName(), 'coords'))
 
             with open(self.coordsFileName, "w") as out:
-                for coord3D in self.inputCoordinates.get():#.iterCoordinates(volume=tomo):
+                coords = self.inputCoordinates.get()
+                for coord3D in coords.iterCoordinates(volume=tomo):
                     if os.path.basename(tomo.getFileName()) == os.path.basename(coord3D.getVolName()):
                         out.write("%d\t%d\t%d\n" % (coord3D.getX(), coord3D.getY(), coord3D.getZ()))
                         coordDict.append(coord3D.clone())
