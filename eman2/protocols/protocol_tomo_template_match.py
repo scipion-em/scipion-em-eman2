@@ -55,6 +55,15 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
     def __init__(self, **args):
         ProtTomoPicking.__init__(self, **args)
 
+    @classmethod
+    def isDisabled(cls):
+        """ Return True if this Protocol is disabled.
+        Disabled protocols will not be offered in the available protocols."""
+        if eman2.Plugin.getActiveVersion(versions=[eman2.V2_31]):
+            return True
+        else:
+            return False
+
     # --------------------------- DEFINE param functions ----------------------
 
     def _defineParams(self, form):
