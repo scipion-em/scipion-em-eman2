@@ -149,7 +149,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                     numberOfMpi=1, numberOfThreads=1)
 
         # Move output files to Extra Path
-        moveFile(self._getTmpPath("ccc.hdf"), self._getExtraPath("particles" + ".hdf"))
+        # moveFile(self._getTmpPath("ccc.hdf"), self._getExtraPath("particles" + ".hdf"))
 
         for tomo in self.inputSet.get():
             tomoName = os.path.basename(tomo.getFileName())

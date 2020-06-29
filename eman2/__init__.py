@@ -43,7 +43,7 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_3, V2_31]
+    _supportedVersions = [V2_3, V2_31, "2.x"]
 
     @classmethod
     def _defineVariables(cls):
@@ -76,9 +76,16 @@ class Plugin(pwem.Plugin):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
+    def getEmanActivation(cls):
+        return "conda activate eman2"
+
+    @classmethod
     def getProgram(cls, program, python=False):
         """ Return the program binary that will be used. """
-        program = os.path.join(cls.getHome('bin'), program)
+        if cls.isVersion("2.x"):
+            program = '%s %s && %s' % (cls.getCondaActivationCmd(), cls.getEmanActivation(), program)
+        else:
+            program = os.path.join(cls.getHome('bin'), program)
 
         if python:
             python = cls.getHome('bin/python')
@@ -134,6 +141,17 @@ class Plugin(pwem.Plugin):
             (shell + ' ./eman2.31_sphire1.3.linux64.sh -b -p "%s/eman-2.31"' %
              SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
 
+        # For Eman2.32
+        installationCmd = cls.getCondaActivationCmd()
+        installationCmd += 'conda create -n eman2 eman-deps-dev=22.1 -c cryoem -c defaults -c conda-forge && '
+        installationCmd += 'cd .. && mv cryoem-* eman-source && '
+        installationCmd += 'mkdir eman-build && '
+        installationCmd += 'conda activate eman2 && '
+        installationCmd += 'cd eman-build && '
+        installationCmd += 'cmake ../eman-source/ -DENABLE_OPTIMIZE_MACHINE=ON && '
+        installationCmd += 'make -j && make install'
+        eman232_commands = [(installationCmd, "")]
+
         env.addPackage('eman', version='2.3',
                        tar='eman2.3.linux64.tgz',
                        commands=eman23_commands)
@@ -141,4 +159,11 @@ class Plugin(pwem.Plugin):
         env.addPackage('eman', version='2.31',
                        tar='eman2.31.linux64.tgz',
                        commands=eman231_commands,
+                       default=False)
+
+        env.addPackage('eman', version='2.x',
+                       url='https://github.com/cryoem/eman2/tarball/master/',
+                       buildDir='cryoem-eman2-78e01d7',
+                       commands=eman232_commands,
+                       targetDir="eman-source",
                        default=True)
