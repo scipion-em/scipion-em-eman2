@@ -149,7 +149,7 @@ class Plugin(pwem.Plugin):
         installationCmd += 'conda activate eman2 && '
         installationCmd += 'cd eman-build && '
         installationCmd += 'cmake ../eman-source/ -DENABLE_OPTIMIZE_MACHINE=ON && '
-        installationCmd += 'make -j && make install'
+        installationCmd += 'make -j 4 && make install'
         eman232_commands = [(installationCmd, "")]
 
         env.addPackage('eman', version='2.3',
