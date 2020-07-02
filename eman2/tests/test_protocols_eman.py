@@ -34,6 +34,8 @@ from pyworkflowtests.protocols import ProtOutputTest
 from pwem.objects.data import Pointer
 from pyworkflow.utils import magentaStr
 
+import eman2
+
 from ..protocols import *
 import tomo.protocols
 
@@ -887,12 +889,18 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         protTomoTempMatch = self._runTomoTempMatch()
 
         outputCoordsBig = protTomoTempMatch[0].output3DCoordinates
-        self.assertEqual(outputCoordsBig.getSize(), 19)
+        if eman2.Plugin.isVersion(eman2.V2_3):
+            self.assertEqual(outputCoordsBig.getSize(), 19)
+        elif eman2.Plugin.isVersion(eman2.V3_0_0):
+            self.assertEqual(outputCoordsBig.getSize(), 17)
         self.assertEqual(outputCoordsBig.getBoxSize(), 128)
         self.assertEqual(outputCoordsBig.getSamplingRate(), 5)
 
         outputCoordsSmall = protTomoTempMatch[1].output3DCoordinates
-        self.assertEqual(outputCoordsSmall.getSize(), 2)
+        if eman2.Plugin.isVersion(eman2.V2_3):
+            self.assertEqual(outputCoordsSmall.getSize(), 2)
+        elif eman2.Plugin.isVersion(eman2.V3_0_0):
+            self.assertEqual(outputCoordsSmall.getSize(), 45)
         self.assertEqual(outputCoordsSmall.getBoxSize(), 128)
         self.assertEqual(outputCoordsSmall.getSamplingRate(), 5)
 
