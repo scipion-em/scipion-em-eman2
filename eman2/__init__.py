@@ -159,12 +159,11 @@ class Plugin(pwem.Plugin):
         env.addPackage('eman', version='2.31',
                        tar='eman2.31.linux64.tgz',
                        commands=eman231_commands,
-                       default=False)
+                       default=True)
 
         env.addPackage('eman', version='3.0.0-alpha',
                        # url='https://github.com/cryoem/eman2/tarball/master/',
                        url='https://github.com/cryoem/eman2/archive/8170d34.tar.gz',
                        buildDir='eman2-8170d345255c39a2441109562cccf4cb59e7e014',
                        commands=eman3_commands,
-                       targetDir="eman-source",
-                       default=True)
+                       targetDir="eman-source")
