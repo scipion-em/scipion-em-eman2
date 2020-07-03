@@ -152,16 +152,16 @@ class Plugin(pwem.Plugin):
         installationCmd += 'make -j 4 && make install'
         eman3_commands = [(installationCmd, "")]
 
-        env.addPackage('eman', version='2.3',
+        env.addPackage('eman', version=V2_3,
                        tar='eman2.3.linux64.tgz',
                        commands=eman23_commands)
 
-        env.addPackage('eman', version='2.31',
+        env.addPackage('eman', version=V2_31,
                        tar='eman2.31.linux64.tgz',
                        commands=eman231_commands,
                        default=True)
 
-        env.addPackage('eman', version='3.0.0-alpha',
+        env.addPackage('eman', version=V3_0_0,
                        # url='https://github.com/cryoem/eman2/tarball/master/',
                        url='https://github.com/cryoem/eman2/archive/8170d34.tar.gz',
                        buildDir='eman2-8170d345255c39a2441109562cccf4cb59e7e014',
