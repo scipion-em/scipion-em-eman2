@@ -143,13 +143,13 @@ class Plugin(pwem.Plugin):
 
         # For Eman3.0.0-alpha
         installationCmd = cls.getCondaActivationCmd()
-        installationCmd += 'conda create -n eman' + V3_0_0 + ' eman-deps-dev=22.1 -c cryoem -c defaults -c conda-forge && '
+        installationCmd += 'conda create -y -n eman' + V3_0_0 + ' eman-deps-dev=22.1 -c cryoem -c defaults -c conda-forge && '
         installationCmd += 'cd .. && mv eman2-* eman-source && '
         installationCmd += 'mkdir eman-build && '
         installationCmd += 'conda activate eman' + V3_0_0 + ' && '
         installationCmd += 'cd eman-build && '
         installationCmd += 'cmake ../eman-source/ -DENABLE_OPTIMIZE_MACHINE=ON && '
-        installationCmd += 'make -j 4 && make install'
+        installationCmd += 'make -j %d && make install' % env.getProcessors()
         eman3_commands = [(installationCmd, "")]
 
         env.addPackage('eman', version=V2_3,
