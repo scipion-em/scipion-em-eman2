@@ -150,7 +150,7 @@ class Plugin(pwem.Plugin):
         installationCmd += 'cd eman-build && '
         installationCmd += 'cmake ../eman-source/ -DENABLE_OPTIMIZE_MACHINE=ON && '
         installationCmd += 'make -j 4 && make install'
-        eman3_commands = [(installationCmd, "")]
+        eman3_commands = [(installationCmd, "%s/eman-build/" % SW_EM)]
 
         env.addPackage('eman', version=V2_3,
                        tar='eman2.3.linux64.tgz',
@@ -166,4 +166,4 @@ class Plugin(pwem.Plugin):
                        url='https://github.com/cryoem/eman2/archive/8170d34.tar.gz',
                        buildDir='eman2-8170d345255c39a2441109562cccf4cb59e7e014',
                        commands=eman3_commands,
-                       targetDir="eman-source")
+                       targetDir='eman-build')
