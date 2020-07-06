@@ -30,7 +30,7 @@ import subprocess
 import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, V2_3, V2_31
+from .constants import EMAN2_HOME, V2_3, V2_31, V3_0_0
 
 
 _logo = "eman2_logo.png"
@@ -43,11 +43,11 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_3, V2_31]
+    _supportedVersions = [V2_3, V2_31, V3_0_0]
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2_HOME, 'eman-2.31')
+        cls._defineEmVar(EMAN2_HOME, 'eman-' + cls.getActiveVersion())
 
     @classmethod
     def getEnviron(cls):
@@ -76,9 +76,16 @@ class Plugin(pwem.Plugin):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
+    def getEmanActivation(cls):
+        return "conda activate eman" + V3_0_0
+
+    @classmethod
     def getProgram(cls, program, python=False):
         """ Return the program binary that will be used. """
-        program = os.path.join(cls.getHome('bin'), program)
+        if cls.isVersion(V3_0_0):
+            program = '%s %s && %s' % (cls.getCondaActivationCmd(), cls.getEmanActivation(), program)
+        else:
+            program = os.path.join(cls.getHome('bin'), program)
 
         if python:
             python = cls.getHome('bin/python')
@@ -134,11 +141,29 @@ class Plugin(pwem.Plugin):
             (shell + ' ./eman2.31_sphire1.3.linux64.sh -b -p "%s/eman-2.31"' %
              SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
 
-        env.addPackage('eman', version='2.3',
+        # For Eman3.0.0-alpha
+        installationCmd = cls.getCondaActivationCmd()
+        installationCmd += 'conda create -y -n eman' + V3_0_0 + ' eman-deps-dev=22.1 -c cryoem -c defaults -c conda-forge && '
+        installationCmd += 'cd .. && mv eman2-* eman-source && '
+        installationCmd += 'mkdir eman-build && '
+        installationCmd += 'conda activate eman' + V3_0_0 + ' && '
+        installationCmd += 'cd eman-build && '
+        installationCmd += 'cmake ../eman-source/ -DENABLE_OPTIMIZE_MACHINE=ON && '
+        installationCmd += 'make -j %d && make install' % env.getProcessors()
+        eman3_commands = [(installationCmd, "%s/eman-build/" % SW_EM)]
+
+        env.addPackage('eman', version=V2_3,
                        tar='eman2.3.linux64.tgz',
                        commands=eman23_commands)
 
-        env.addPackage('eman', version='2.31',
+        env.addPackage('eman', version=V2_31,
                        tar='eman2.31.linux64.tgz',
                        commands=eman231_commands,
                        default=True)
+
+        env.addPackage('eman', version=V3_0_0,
+                       # url='https://github.com/cryoem/eman2/tarball/master/',
+                       url='https://github.com/cryoem/eman2/archive/8170d34.tar.gz',
+                       buildDir='eman2-8170d345255c39a2441109562cccf4cb59e7e014',
+                       commands=eman3_commands,
+                       targetDir='eman-build')
