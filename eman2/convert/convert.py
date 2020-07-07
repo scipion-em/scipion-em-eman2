@@ -199,7 +199,7 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
         firstCoord = subtomogramSet.getFirstItem().getCoordinate3D() or None
         hasVolName = False
         if firstCoord:
-            hasVolName = firstCoord.getVolName() or False
+            hasVolName = subtomogramSet.getFirstItem().getVolName() or False
 
         fileName = ""
         a = 0
@@ -208,7 +208,7 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
         for i, subtomo in iterSubtomogramsByVol(subtomogramSet):
             volName = volId = subtomo.getVolId()
             if hasVolName:
-                volName = pwutils.removeBaseExt(subtomo.getCoordinate3D().getVolName())
+                volName = pwutils.removeBaseExt(subtomogramSet.getFirstItem().getVolName())
             objDict = subtomo.getObjDict()
 
             if not volId:
