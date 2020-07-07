@@ -47,7 +47,7 @@ class Plugin(pwem.Plugin):
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2_HOME, 'eman-' + cls.getActiveVersion())
+        cls._defineEmVar(EMAN2_HOME, 'eman-' + V2_31)
 
     @classmethod
     def getEnviron(cls):
