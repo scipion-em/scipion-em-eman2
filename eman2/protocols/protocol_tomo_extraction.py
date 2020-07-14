@@ -225,14 +225,18 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
 
     def _summary(self):
         summary = []
-        summary.append("Tomogram source: %s"
+        summary.append("Tomogram source: *%s*"
                        % self.getEnumText("tomoSource"))
         if self.getOutputsSize() >= 1:
-            summary.append("Particle box size: %s" % self.boxSize.get())
-            summary.append("Subtomogram extracted: %s" %
+            summary.append("Particle box size: *%s*" % self.boxSize.get())
+            summary.append("Subtomogram extracted: *%s*" %
                            self.inputCoordinates.get().getSize())
         else:
             summary.append("Output subtomograms not ready yet.")
+        if self.doInvert:
+            summary.append('*White over black.*')
+        else:
+            summary.append('*Black over white.*')
         return summary
 
     # --------------------------- UTILS functions ----------------------------------
