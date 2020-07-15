@@ -136,7 +136,9 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
                 for coord3D in coords.iterCoordinates(volume=tomo):
                     if os.path.basename(tomo.getFileName()) == os.path.basename(coord3D.getVolName()):
                         out.write("%d\t%d\t%d\n" % (coord3D.getX(), coord3D.getY(), coord3D.getZ()))
-                        coordDict.append(coord3D.clone())
+                        newCoord = coord3D.clone()
+                        newCoord.setVolume(coord3D.getVolume())
+                        coordDict.append(newCoord)
 
             if coordDict:
                 self.lines.append(coordDict)
@@ -147,7 +149,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
         samplingRateCoord = self.inputCoordinates.get().getSamplingRate()
         samplingRateTomo = self.getInputTomograms().getFirstItem().getSamplingRate()
         for tomo in self.tomoFiles:
-            args = '%s ' % tomo
+            args = '%s ' % os.path.abspath(tomo)
             args += "--coords % s --boxsize % d" % (pwutils.replaceBaseExt(tomo, 'coords'), self.boxSize.get())
             if self.doInvert:
                 args += ' --invert'
@@ -223,14 +225,18 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
 
     def _summary(self):
         summary = []
-        summary.append("Tomogram source: %s"
+        summary.append("Tomogram source: *%s*"
                        % self.getEnumText("tomoSource"))
         if self.getOutputsSize() >= 1:
-            summary.append("Particle box size: %s" % self.boxSize.get())
-            summary.append("Subtomogram extracted: %s" %
+            summary.append("Particle box size: *%s*" % self.boxSize.get())
+            summary.append("Subtomogram extracted: *%s*" %
                            self.inputCoordinates.get().getSize())
         else:
             summary.append("Output subtomograms not ready yet.")
+        if self.doInvert:
+            summary.append('*White over black.*')
+        else:
+            summary.append('*Black over white.*')
         return summary
 
     # --------------------------- UTILS functions ----------------------------------
@@ -255,10 +261,11 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             dfactor = self.downFactor.get()
             if dfactor != 1:
                 fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % counter)
-                ImageHandler.scaleSplines(subtomogram.getLocation(), fnSubtomo, dfactor)
+                ImageHandler.scaleSplines(subtomogram.getLocation()[1]+':mrc', fnSubtomo, dfactor)
                 subtomogram.setVolId(volId)
                 subtomogram.setLocation(fnSubtomo)
             subtomogram.setCoordinate3D(coordSet[counter])
+            subtomogram.setTransform(coordSet[counter]._eulerMatrix)
             subtomogram.setVolName(tomoFile)
             outputSubTomogramsSet.append(subtomogram)
         return outputSubTomogramsSet

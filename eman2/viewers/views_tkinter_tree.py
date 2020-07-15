@@ -74,7 +74,7 @@ class EmanDialog(ToolbarListDialog):
         self._moveCoordsToInfo(tomo)
 
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
-        arguments = "%s" % tomo.getFileName()
+        arguments = "%s" % os.path.abspath(tomo.getFileName())
         if inMemory:
             arguments += " --inmemory"
         runJob(None, program, arguments, env=eman2.Plugin.getEnviron(), cwd=self.path)

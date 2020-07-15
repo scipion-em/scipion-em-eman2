@@ -199,7 +199,7 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
         firstCoord = subtomogramSet.getFirstItem().getCoordinate3D() or None
         hasVolName = False
         if firstCoord:
-            hasVolName = firstCoord.getVolName() or False
+            hasVolName = subtomogramSet.getFirstItem().getVolName() or False
 
         fileName = ""
         a = 0
@@ -208,7 +208,7 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
         for i, subtomo in iterSubtomogramsByVol(subtomogramSet):
             volName = volId = subtomo.getVolId()
             if hasVolName:
-                volName = pwutils.removeBaseExt(subtomo.getCoordinate3D().getVolName())
+                volName = pwutils.removeBaseExt(subtomogramSet.getFirstItem().getVolName())
             objDict = subtomo.getObjDict()
 
             if not volId:
@@ -578,16 +578,16 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
 
 
 def setCoords3D2Jsons(setTomograms, setCoords, path):
-    for tomo in setTomograms.iterItems():
+    for tomo in setTomograms.getFiles():
         coords = []
         for coor in setCoords.iterCoordinates():
-            if pwutils.removeBaseExt(tomo.getFileName()) == pwutils.removeBaseExt(coor.getVolName()):
+            if pwutils.removeBaseExt(tomo) == pwutils.removeBaseExt(coor.getVolName()):
                 coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
 
         coordDict = {"boxes_3d": coords,
                      "class_list": {"0": {"boxsize": setCoords.getBoxSize(), "name": "particles_00"}}
                      }
-        tomoBasename = pwutils.removeBaseExt(tomo.getFileName())
+        tomoBasename = pwutils.removeBaseExt(tomo)
         if "__" in tomoBasename:
             fnInputCoor = '%s_info.json' % tomoBasename.split("__")[0]
         else:
