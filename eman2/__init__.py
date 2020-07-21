@@ -29,6 +29,7 @@ import subprocess
 
 import pwem
 import pyworkflow.utils as pwutils
+from scipion.install.funcs import VOID_TGZ
 
 from .constants import EMAN2_HOME, V2_3, V2_31, V3_0_0
 
@@ -142,15 +143,20 @@ class Plugin(pwem.Plugin):
              SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
 
         # For Eman3.0.0-alpha
+        eman3_commands = []
+        eman3_commands.append(('wget -c https://github.com/cryoem/eman2/archive/8170d34.tar.gz', "8170d34.tar.gz"))
+        eman3_commands.append(("tar -xvf 8170d34.tar.gz", []))
+        eman3_commands.append(("mv eman2* eman-source", []))
         installationCmd = cls.getCondaActivationCmd()
         installationCmd += 'conda create -y -n eman' + V3_0_0 + ' eman-deps-dev=22.1 -c cryoem -c defaults -c conda-forge && '
-        installationCmd += 'cd .. && mv eman2-* eman-source && '
         installationCmd += 'mkdir eman-build && '
         installationCmd += 'conda activate eman' + V3_0_0 + ' && '
         installationCmd += 'cd eman-build && '
         installationCmd += 'cmake ../eman-source/ -DENABLE_OPTIMIZE_MACHINE=ON && '
         installationCmd += 'make -j %d && make install' % env.getProcessors()
-        eman3_commands = [(installationCmd, "%s/eman-build/" % SW_EM)]
+
+        eman3_commands.append((installationCmd,
+                               "eman-build/libpyEM/CMakeFiles/pyPolarData2.dir/libpyPolarData2.cpp.o"))
 
         env.addPackage('eman', version=V2_3,
                        tar='eman2.3.linux64.tgz',
@@ -162,8 +168,5 @@ class Plugin(pwem.Plugin):
                        default=True)
 
         env.addPackage('eman', version=V3_0_0,
-                       # url='https://github.com/cryoem/eman2/tarball/master/',
-                       url='https://github.com/cryoem/eman2/archive/8170d34.tar.gz',
-                       buildDir='eman2-8170d345255c39a2441109562cccf4cb59e7e014',
                        commands=eman3_commands,
-                       targetDir='eman-build')
+                       tar=VOID_TGZ)
