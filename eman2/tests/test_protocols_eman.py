@@ -841,9 +841,6 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         TestEmanTomoBase.setData()
 
     def _runTomoTempMatch(self):
-        if EmanProtTomoTempMatch.isDisabled():
-            print("Test Cancelled. Template Matching is not supported in Eman 2.31")
-            return
         protImportTomogramBig = self.newProtocol(tomo.protocols.ProtImportTomograms,
                                                  filesPath=self.tomogram,
                                                  samplingRate=5)
@@ -886,6 +883,9 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         return protTomoTempMatchBig, protTomoTempMatchSmall
 
     def test_TempMatch(self):
+        if EmanProtTomoTempMatch.isDisabled():
+            print("Test Cancelled. Template Matching is not supported in Eman 2.31")
+            return
         protTomoTempMatch = self._runTomoTempMatch()
 
         outputCoordsBig = protTomoTempMatch[0].output3DCoordinates
