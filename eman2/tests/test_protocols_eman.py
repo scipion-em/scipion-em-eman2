@@ -892,7 +892,7 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         if eman2.Plugin.isVersion(eman2.V2_3):
             self.assertEqual(outputCoordsBig.getSize(), 19)
         elif eman2.Plugin.isVersion(eman2.V3_0_0):
-            self.assertEqual(outputCoordsBig.getSize(), 17)
+            self.assertAlmostEqual(outputCoordsBig.getSize(), 17, delta=1)
         self.assertEqual(outputCoordsBig.getBoxSize(), 128)
         self.assertEqual(outputCoordsBig.getSamplingRate(), 5)
 
@@ -900,7 +900,7 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         if eman2.Plugin.isVersion(eman2.V2_3):
             self.assertEqual(outputCoordsSmall.getSize(), 2)
         elif eman2.Plugin.isVersion(eman2.V3_0_0):
-            self.assertEqual(outputCoordsSmall.getSize(), 45)
+            self.assertAlmostEqual(outputCoordsSmall.getSize(), 45, delta=1)
         self.assertEqual(outputCoordsSmall.getBoxSize(), 128)
         self.assertEqual(outputCoordsSmall.getSamplingRate(), 5)
 
