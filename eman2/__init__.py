@@ -167,6 +167,6 @@ class Plugin(pwem.Plugin):
                        commands=eman231_commands,
                        default=True)
 
-        env.addPackage('eman', version=V3_0_0,
-                       commands=eman3_commands,
-                       tar=VOID_TGZ)
+        # env.addPackage('eman', version=V3_0_0,
+        #                commands=eman3_commands,
+        #                tar=VOID_TGZ)
