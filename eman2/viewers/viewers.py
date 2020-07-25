@@ -36,20 +36,20 @@ from pwem.objects.data import FSC
 import pwem.viewers.showj as showj
 from pwem.viewers import (ObjectView, DataView, EmPlotter,
                           ChimeraView, ChimeraClientView, ClassesView,
-                          DataViewer, FscViewer, EmProtocolViewer)
+                          DataViewer, FscViewer, EmProtocolViewer, ChimeraAngDist)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.executor import StepExecutor
 from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
                                         EnumParam, FloatParam, IntParam, BooleanParam)
 import pyworkflow.utils as pwutils
 
-from . import Plugin
-from .constants import *
-from .convert import loadJson
-from .protocols import (EmanProtBoxing, EmanProtCTFAuto,
-                        EmanProtInitModel, EmanProtRefine2D,
-                        EmanProtRefine2DBispec, EmanProtRefine,
-                        EmanProtTiltValidate, EmanProtInitModelSGD)
+from .. import Plugin
+from ..constants import *
+from ..convert import loadJson
+from ..protocols import (EmanProtBoxing, EmanProtCTFAuto,
+                         EmanProtInitModel, EmanProtRefine2D,
+                         EmanProtRefine2DBispec, EmanProtRefine,
+                         EmanProtTiltValidate, EmanProtInitModelSGD)
 
 
 class EmanViewer(DataViewer):
@@ -382,7 +382,7 @@ Examples:
         volumes = self._getVolumeNames()
 
         if len(volumes) > 1:
-            cmdFile = self.protocol._getExtraPath('chimera_volumes.cmd')
+            cmdFile = self.protocol._getExtraPath('chimera_volumes.cxc')
             with open(cmdFile, 'w+') as f:
                 for vol in volumes:
                     # We assume that the chimera script will be generated
@@ -464,10 +464,14 @@ Examples:
                     "Please, select a single volume to show it's angular "
                     "distribution")
 
-            view = ChimeraClientView(volumes[0], showProjection=True,
-                                     angularDistFile=sqliteFn,
-                                     spheresDistance=radius)
-        return view
+            vol = self.protocol.outputVolume
+            volOrigin = vol.getOrigin(force=True).getShifts()
+            samplingRate = vol.getSamplingRate()
+            return ChimeraAngDist(volumes[0], self.protocol._getTmpPath(),
+                                  voxelSize=samplingRate,
+                                  volOrigin=volOrigin,
+                                  angularDistFile=sqliteFn,
+                                  spheresDistance=radius)
 
     def _createAngDist2D(self, it):
         nrefs = self._getNumberOfRefs()
