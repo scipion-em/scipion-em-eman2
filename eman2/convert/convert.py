@@ -336,7 +336,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
             # the index in EMAN begins with 0
             if fileName != objDict['_filename']:
                 fileName = objDict['_filename']
-                if objDict['_index'] == 0:
+                if objDict['_index'] == 0:  # TODO: Index appears to be the problem (when not given it works ok)
                     a = 0
                 else:
                     a = 1
@@ -469,7 +469,7 @@ def iterParticlesByMic(partSet):
 
 def iterSubtomogramsByVol(subtomogramSet):
     """ Iterate subtomograms ordered by tomogram """
-    items = list(subtomogramSet.iterItems(orderBy=['_volId', 'id'], direction='ASC'))
+    items = [subtomo.clone() for subtomo in subtomogramSet.iterItems(orderBy=['_volId', 'id'], direction='ASC')]
     for i, part in enumerate(items):
         yield i, part
 

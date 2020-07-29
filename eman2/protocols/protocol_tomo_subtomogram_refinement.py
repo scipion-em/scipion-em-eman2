@@ -137,11 +137,8 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
     def convertInputStep(self):
         storePath = self._getExtraPath("subtomograms")
         pwutils.makePath(storePath)
-
-        fns = list(self.inputSetOfSubTomogram.get().getFiles())[0]
-        self.newFn = pwutils.removeBaseExt(fns).split('__ctf')[0] + '.hdf'
-        self.newFn = pwutils.join(storePath, self.newFn)
         writeSetOfSubTomograms(self.inputSetOfSubTomogram.get(), storePath)
+        self.newFn = glob(os.path.join(storePath, '*.hdf'))[0]
 
     def refinementSubtomogram(self):
         """ Run the Subtomogram refinement. """
