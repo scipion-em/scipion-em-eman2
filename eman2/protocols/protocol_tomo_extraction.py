@@ -259,11 +259,8 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
         for counter, subtomoFile in enumerate(subtomoFileList):
             subtomogram = SubTomogram()
             subtomogram.cleanObjId()
-            # subtomogram.setLocation(counter, subtomoFile)
+            subtomogram.setLocation(subtomoFile)
             dfactor = self.downFactor.get()
-            convertFile = self._getExtraPath('convert_' + pwutils.removeBaseExt(subtomoFile) + '.mrc')
-            ih.convert(subtomoFile + ':mrc', convertFile)
-            subtomogram.setLocation(convertFile)
             if dfactor != 1:
                 fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % counter)
                 ImageHandler.scaleSplines(subtomogram.getLocation()[1]+':mrc', fnSubtomo, dfactor)
