@@ -191,7 +191,7 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             for ind, tomoFile in enumerate(self.tomoFiles):
                 if os.path.basename(tomoFile) == os.path.basename(item.getFileName()):
                     coordSet = self.lines[ind]
-                    outputSet = self.readSetOfSubTomograms(self._getExtraPath(os.path.basename(tomoFile)),
+                    outputSet = self.readSetOfSubTomograms(tomoFile,
                                                            self.outputSubTomogramsSet,
                                                            coordSet,
                                                            item.getObjId())
@@ -253,11 +253,13 @@ class EmanProtTomoExtraction(EMProtocol, ProtTomoBase):
             return self.inputTomograms.get()
 
     def readSetOfSubTomograms(self, tomoFile, outputSubTomogramsSet, coordSet, volId):
-        subtomoFileList = sorted(glob.glob(pwutils.removeExt(tomoFile) + '*.mrc'))
+        outRegex = self._getExtraPath(pwutils.removeBaseExt(tomoFile) + '*.mrc')
+        subtomoFileList = sorted(glob.glob(outRegex))
+        ih = ImageHandler()
         for counter, subtomoFile in enumerate(subtomoFileList):
             subtomogram = SubTomogram()
             subtomogram.cleanObjId()
-            subtomogram.setLocation(counter, subtomoFile)
+            subtomogram.setLocation(subtomoFile)
             dfactor = self.downFactor.get()
             if dfactor != 1:
                 fnSubtomo = self._getExtraPath("downsampled_subtomo%d.mrc" % counter)
