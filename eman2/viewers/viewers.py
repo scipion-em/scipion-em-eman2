@@ -35,8 +35,8 @@ from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER, WEB_DJANGO)
 from pwem.objects.data import FSC
 import pwem.viewers.showj as showj
 from pwem.viewers import (ObjectView, DataView, EmPlotter,
-                          ChimeraView, ChimeraClientView, ClassesView,
-                          DataViewer, FscViewer, EmProtocolViewer, ChimeraAngDist)
+                          ChimeraView, ClassesView, DataViewer,
+                          FscViewer, EmProtocolViewer, ChimeraAngDist)
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.executor import StepExecutor
 from pyworkflow.protocol.params import (LabelParam, NumericRangeParam,
@@ -380,22 +380,15 @@ Examples:
     def _showVolumesChimera(self):
         """ Create a chimera script to visualize selected volumes. """
         volumes = self._getVolumeNames()
-
-        if len(volumes) > 1:
-            cmdFile = self.protocol._getExtraPath('chimera_volumes.cxc')
-            with open(cmdFile, 'w+') as f:
-                for vol in volumes:
-                    # We assume that the chimera script will be generated
-                    # at the same folder than eman volumes
-                    if os.path.exists(vol):
-                        localVol = os.path.relpath(vol,
-                                                   self.protocol._getExtraPath())
-                        f.write("open %s\n" % localVol)
-                f.write('tile\n')
-            view = ChimeraView(cmdFile)
-        else:
-            view = ChimeraClientView(volumes[0])
-
+        cmdFile = self.protocol._getExtraPath('chimera_volumes.cxc')
+        with open(cmdFile, 'w+') as f:
+            for vol in volumes:
+                if os.path.exists(vol):
+                    localVol = os.path.relpath(vol,
+                                               self.protocol._getExtraPath())
+                    f.write("open %s\n" % localVol)
+            f.write('tile\n')
+        view = ChimeraView(cmdFile)
         return [view]
 
     def _createVolumesSqlite(self):
@@ -445,13 +438,12 @@ Examples:
             return sqliteFn
 
         if len(volumes) > 1:
-            raise Exception(
-                "Please, select a single volume to show it's angular "
-                "distribution")
+            showError("Error",
+                      "Please select a single volume to show it's angular distribution",
+                      self.getTkRoot())
         elif not os.path.exists(angularDist):
-            raise Exception(
-                "Please, select a valid iteration to show the angular "
-                "distribution")
+            showError("Error",
+                "Please select a valid iteration to show the angular distribution", self.getTkRoot())
         else:
             if self.showHalves.get() == HALF_EVEN:
                 sqliteFn = createSqlite('even')
@@ -460,9 +452,9 @@ Examples:
             elif self.showHalves.get() == FULL_MAP:
                 sqliteFn = createSqlite('full')
             else:
-                raise Exception(
-                    "Please, select a single volume to show it's angular "
-                    "distribution")
+                showError("Error",
+                          "Please select a single volume to show it's angular distribution",
+                          self.getTkRoot())
 
             vol = self.protocol.outputVolume
             volOrigin = vol.getOrigin(force=True).getShifts()
