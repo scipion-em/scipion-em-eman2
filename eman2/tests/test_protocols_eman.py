@@ -34,6 +34,8 @@ from pyworkflowtests.protocols import ProtOutputTest
 from pwem.objects.data import Pointer
 from pyworkflow.utils import magentaStr
 
+import eman2
+
 from ..protocols import *
 import tomo.protocols
 
@@ -461,10 +463,10 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
                                                    samplingRate=5)
 
         self.launchProtocol(protImportCoordinates3d)
-        self.assertIsNotNone(protImportTomogram.outputTomograms,
-                             "There was a problem with tomogram output")
-        self.assertIsNotNone(protImportCoordinates3d.outputCoordinates,
-                             "There was a problem with coordinates 3d output")
+        self.assertSetSize(protImportTomogram.outputTomograms, 1,
+                           "There was a problem with tomogram output")
+        self.assertSetSize(protImportCoordinates3d.outputCoordinates, 5,
+                           "There was a problem with coordinates 3d output")
 
         if tomoSource == 1:
             protTomoExtraction = self.newProtocol(EmanProtTomoExtraction,
@@ -484,8 +486,8 @@ class TestEmanTomoExtraction(TestEmanTomoBase):
                                                   boxSize=boxSize,
                                                   downFactor=downFactor)
         self.launchProtocol(protTomoExtraction)
-        self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
-                             "There was a problem with SetOfSubtomogram output")
+        self.assertSetSize(protTomoExtraction.outputSetOfSubtomogram, 5,
+                           "There was a problem with SetOfSubtomogram output")
         return protTomoExtraction
 
     def test_extractParticlesSameAsPicking(self):
@@ -881,15 +883,24 @@ class TestEmanTomoTempMatch(TestEmanTomoBase):
         return protTomoTempMatchBig, protTomoTempMatchSmall
 
     def test_TempMatch(self):
+        if EmanProtTomoTempMatch.isDisabled():
+            print("Test Cancelled. Template Matching is not supported in Eman 2.31")
+            return
         protTomoTempMatch = self._runTomoTempMatch()
 
         outputCoordsBig = protTomoTempMatch[0].output3DCoordinates
-        self.assertEqual(outputCoordsBig.getSize(), 19)
+        if eman2.Plugin.isVersion(eman2.V2_3):
+            self.assertEqual(outputCoordsBig.getSize(), 19)
+        elif eman2.Plugin.isVersion(eman2.V3_0_0):
+            self.assertAlmostEqual(outputCoordsBig.getSize(), 17, delta=1)
         self.assertEqual(outputCoordsBig.getBoxSize(), 128)
         self.assertEqual(outputCoordsBig.getSamplingRate(), 5)
 
         outputCoordsSmall = protTomoTempMatch[1].output3DCoordinates
-        self.assertEqual(outputCoordsSmall.getSize(), 2)
+        if eman2.Plugin.isVersion(eman2.V2_3):
+            self.assertEqual(outputCoordsSmall.getSize(), 2)
+        elif eman2.Plugin.isVersion(eman2.V3_0_0):
+            self.assertAlmostEqual(outputCoordsSmall.getSize(), 45, delta=1)
         self.assertEqual(outputCoordsSmall.getBoxSize(), 128)
         self.assertEqual(outputCoordsSmall.getSamplingRate(), 5)
 

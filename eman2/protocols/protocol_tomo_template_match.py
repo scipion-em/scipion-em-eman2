@@ -55,6 +55,15 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
     def __init__(self, **args):
         ProtTomoPicking.__init__(self, **args)
 
+    @classmethod
+    def isDisabled(cls):
+        """ Return True if this Protocol is disabled.
+        Disabled protocols will not be offered in the available protocols."""
+        if eman2.Plugin.getActiveVersion(versions=[eman2.V2_31]):
+            return True
+        else:
+            return False
+
     # --------------------------- DEFINE param functions ----------------------
 
     def _defineParams(self, form):
@@ -140,7 +149,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
                     numberOfMpi=1, numberOfThreads=1)
 
         # Move output files to Extra Path
-        moveFile(self._getTmpPath("ccc.hdf"), self._getExtraPath("particles" + ".hdf"))
+        # moveFile(self._getTmpPath("ccc.hdf"), self._getExtraPath("particles" + ".hdf"))
 
         for tomo in self.inputSet.get():
             tomoName = os.path.basename(tomo.getFileName())

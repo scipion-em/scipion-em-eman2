@@ -199,7 +199,7 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
         firstCoord = subtomogramSet.getFirstItem().getCoordinate3D() or None
         hasVolName = False
         if firstCoord:
-            hasVolName = firstCoord.getVolName() or False
+            hasVolName = subtomogramSet.getFirstItem().getVolName() or False
 
         fileName = ""
         a = 0
@@ -208,7 +208,7 @@ def writeSetOfSubTomograms(subtomogramSet, path, **kwargs):
         for i, subtomo in iterSubtomogramsByVol(subtomogramSet):
             volName = volId = subtomo.getVolId()
             if hasVolName:
-                volName = pwutils.removeBaseExt(subtomo.getCoordinate3D().getVolName())
+                volName = pwutils.removeBaseExt(subtomogramSet.getFirstItem().getVolName())
             objDict = subtomo.getObjDict()
 
             if not volId:
@@ -336,7 +336,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
             # the index in EMAN begins with 0
             if fileName != objDict['_filename']:
                 fileName = objDict['_filename']
-                if objDict['_index'] == 0:
+                if objDict['_index'] == 0:  # TODO: Index appears to be the problem (when not given it works ok)
                     a = 0
                 else:
                     a = 1
@@ -469,7 +469,7 @@ def iterParticlesByMic(partSet):
 
 def iterSubtomogramsByVol(subtomogramSet):
     """ Iterate subtomograms ordered by tomogram """
-    items = list(subtomogramSet.iterItems(orderBy=['_volId', 'id'], direction='ASC'))
+    items = [subtomo.clone() for subtomo in subtomogramSet.iterItems(orderBy=['_volId', 'id'], direction='ASC')]
     for i, part in enumerate(items):
         yield i, part
 
@@ -578,16 +578,16 @@ def updateSetOfSubTomograms(inputSetOfSubTomograms, outputSetOfSubTomograms, par
 
 
 def setCoords3D2Jsons(setTomograms, setCoords, path):
-    for tomo in setTomograms.iterItems():
+    for tomo in setTomograms.getFiles():
         coords = []
         for coor in setCoords.iterCoordinates():
-            if pwutils.removeBaseExt(tomo.getFileName()) == pwutils.removeBaseExt(coor.getVolName()):
+            if pwutils.removeBaseExt(tomo) == pwutils.removeBaseExt(coor.getVolName()):
                 coords.append([coor.getX(), coor.getY(), coor.getZ(), "manual", 0.0, 0])
 
         coordDict = {"boxes_3d": coords,
                      "class_list": {"0": {"boxsize": setCoords.getBoxSize(), "name": "particles_00"}}
                      }
-        tomoBasename = pwutils.removeBaseExt(tomo.getFileName())
+        tomoBasename = pwutils.removeBaseExt(tomo)
         if "__" in tomoBasename:
             fnInputCoor = '%s_info.json' % tomoBasename.split("__")[0]
         else:

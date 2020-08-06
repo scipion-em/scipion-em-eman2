@@ -77,11 +77,6 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
                            'h(n), tet, oct, icos.\n'
                            'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
                            'for a detailed description of symmetry in Eman.')
-
-        form.addParam('gaussFilter', params.FloatParam, default=-1,
-                      expertLevel=params.LEVEL_ADVANCED,
-                      label='Gauss',
-                      help='The Gaussian filter level')
         form.addParam('filterto', params.FloatParam, default=0.02,
                       expertLevel=params.LEVEL_ADVANCED,
                       label='Filterto',
@@ -133,7 +128,6 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
     def createInitialModelStep(self):
         command_params = {
             'symmetry': self.symmetry.get(),
-            'gaussFilter': self.gaussFilter.get(),
             'filterto': self.filterto.get(),
             'batchSize': self.batchSize.get(),
             'learningRate': self.learningRate.get(),
@@ -144,11 +138,12 @@ class EmanProtTomoInitialModel(EMProtocol, ProtTomoBase):
             'reference': self.reference.get().getFileName() if self.reference.get() else None,
             'outputPath': self.getOutputPath(),
         }
+
         args = '%s/*.hdf' % self._getExtraPath("particles")
         if command_params['reference']:
             args += ' --reference=%(reference)s'
 
-        args += (' --sym=%(symmetry)s --gaussz=%(gaussFilter)f --filterto=%(filterto)f'
+        args += (' --sym=%(symmetry)s --filterto=%(filterto)f'
                  ' --batchsize=%(batchSize)d --learnrate=%(learningRate)f --niter=%(numberOfIterations)d'
                  ' --nbatch=%(numberOfBatches)d')
 
