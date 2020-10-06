@@ -45,7 +45,6 @@ class EmanDialog(ToolbarListDialog):
     def __init__(self, parent, path, **kwargs):
         self.path = path
         self.provider = kwargs.get("provider", None)
-        self.inMemory = kwargs.get("inMemory", None)
         ToolbarListDialog.__init__(self, parent,
                                    "Tomogram List",
                                    allowsEmptySelection=False,
@@ -66,17 +65,15 @@ class EmanDialog(ToolbarListDialog):
 
     def doubleClickOnTomogram(self, e=None):
         self.tomo = e
-        self.proc = threading.Thread(target=self.lanchEmanForTomogram, args=(self.inMemory, self.tomo,))
+        self.proc = threading.Thread(target=self.lanchEmanForTomogram, args=(self.tomo,))
         self.proc.start()
         self.after(1000, self.refresh_gui)
 
-    def lanchEmanForTomogram(self, inMemory, tomo):
+    def lanchEmanForTomogram(self, tomo):
         self._moveCoordsToInfo(tomo)
 
         program = eman2.Plugin.getProgram("e2spt_boxer.py")
         arguments = "%s" % os.path.abspath(tomo.getFileName())
-        if inMemory:
-            arguments += " --inmemory"
         runJob(None, program, arguments, env=eman2.Plugin.getEnviron(), cwd=self.path)
 
     def _moveCoordsToInfo(self, tomo):

@@ -26,7 +26,7 @@
 
 from pyworkflow.utils.properties import Message
 from pyworkflow.gui.dialog import askYesNo
-from pyworkflow.protocol.params import BooleanParam, PointerParam, LEVEL_ADVANCED, EnumParam
+from pyworkflow.protocol.params import BooleanParam, PointerParam, EnumParam
 
 from eman2.convert import setCoords3D2Jsons, jsons2SetCoords3D
 from eman2.viewers.views_tkinter_tree import EmanDialog
@@ -47,10 +47,6 @@ class EmanProtTomoBoxing(ProtTomoPicking):
     def _defineParams(self, form):
         ProtTomoPicking._defineParams(self, form)
 
-        form.addParam('inMemory', BooleanParam, default=False,
-                      label='Read in Memory', expertLevel=LEVEL_ADVANCED,
-                      help='This will read the entire tomogram into memory.'
-                           'Much faster, but you must have enough ram.')
         form.addParam('selection', EnumParam, choices=['Yes', 'No'], default=1,
                       label='Modify previous coordinates?', display=EnumParam.DISPLAY_HLIST,
                       help='This option allows to add and/or remove coordinates to a previous SetOfCoordinates')
@@ -80,7 +76,7 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
         tomoProvider = TomogramsTreeProvider(tomoList, self._getExtraPath(), "json")
 
-        self.dlg = EmanDialog(None, self._getExtraPath(), provider=tomoProvider, inMemory=self.inMemory.get(),)
+        self.dlg = EmanDialog(None, self._getExtraPath(), provider=tomoProvider,)
 
         # Open dialog to request confirmation to create output
         import tkinter as tk
