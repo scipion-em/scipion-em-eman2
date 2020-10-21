@@ -130,7 +130,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
     def tempMatchStep(self):
         self.box = self.boxSize.get()
 
-        volFile = os.path.abspath(self.ref.get().getFileName())
+        volFile = os.path.abspath(self.ref.get().getFileName()).replace(':mrc', '')
         params = ""
 
         for tomo in self.inputSet.get():
