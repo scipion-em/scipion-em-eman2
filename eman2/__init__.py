@@ -85,15 +85,19 @@ class Plugin(pwem.Plugin):
     def getProgram(cls, program, python=False):
         """ Return the program binary that will be used. """
         if cls.isVersion(V3_0_0):
-            program = '%s %s && %s' % (cls.getCondaActivationCmd(), cls.getEmanActivation(), program)
+            cmd = '%s %s && ' % (cls.getCondaActivationCmd(), cls.getEmanActivation())
+            if python:
+                python = subprocess.check_output(cmd + 'which python', shell=True).decode("utf-8")
+                return '%(python)s %(program)s ' % locals()
+            else:
+                return cmd + '%(program)s ' % locals()
         else:
             program = os.path.join(cls.getHome('bin'), program)
-
-        if python:
-            python = cls.getHome('bin/python')
-            return '%(python)s %(program)s ' % locals()
-        else:
-            return '%(program)s ' % locals()
+            if python:
+                python = cls.getHome('bin/python')
+                return '%(python)s %(program)s ' % locals()
+            else:
+                return '%(program)s ' % locals()
 
     @classmethod
     def getEmanCommand(cls, program, args, python=False):
@@ -145,11 +149,11 @@ class Plugin(pwem.Plugin):
 
         # For Eman3.0.0-alpha
         eman3_commands = []
-        eman3_commands.append(('wget -c https://github.com/cryoem/eman2/archive/8170d34.tar.gz', "8170d34.tar.gz"))
-        eman3_commands.append(("tar -xvf 8170d34.tar.gz", []))
+        eman3_commands.append(('wget -c https://github.com/cryoem/eman2/archive/2f7a976.tar.gz', "2f7a976.tar.gz"))
+        eman3_commands.append(("tar -xvf 2f7a976.tar.gz", []))
         eman3_commands.append(("mv eman2* eman-source", []))
         installationCmd = cls.getCondaActivationCmd()
-        installationCmd += 'conda create -y -n eman' + V3_0_0 + ' eman-deps-dev=22.1 -c cryoem -c defaults -c conda-forge && '
+        installationCmd += 'conda create -y -n eman' + V3_0_0 + ' eman-deps-dev -c cryoem -c defaults -c conda-forge && '
         installationCmd += 'mkdir eman-build && '
         installationCmd += 'conda activate eman' + V3_0_0 + ' && '
         installationCmd += 'cd eman-build && '
@@ -168,6 +172,6 @@ class Plugin(pwem.Plugin):
                        commands=eman231_commands,
                        default=True)
 
-        # env.addPackage('eman', version=V3_0_0,
-        #                commands=eman3_commands,
-        #                tar=VOID_TGZ)
+        env.addPackage('eman', version=V3_0_0,
+                       commands=eman3_commands,
+                       tar=VOID_TGZ)

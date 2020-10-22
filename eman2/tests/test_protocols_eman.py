@@ -566,11 +566,15 @@ class TestEmanTomoInitialModel(TestEmanTomoBase):
         self.assertIsNotNone(protImportTomogram.outputTomograms,
                              "There was a problem with tomogram output")
 
+        if eman2.Plugin.getActiveVersion(versions=[eman2.V3_0_0]):
+            boxSize = 128
+        else:
+            boxSize = 32
         protImportCoordinates3d = self.newProtocol(tomo.protocols.ProtImportCoordinates3D,
                                                    auto=tomo.protocols.ProtImportCoordinates3D.IMPORT_FROM_EMAN,
                                                    filesPath=self.coords3D,
                                                    importTomograms=protImportTomogram.outputTomograms,
-                                                   filesPattern='', boxSize=32,
+                                                   filesPattern='', boxSize=boxSize,
                                                    samplingRate=5)
 
         self.launchProtocol(protImportCoordinates3d)
@@ -582,7 +586,7 @@ class TestEmanTomoInitialModel(TestEmanTomoBase):
                                               tomoSource=0,
                                               doInvert=False,
                                               doNormalize=False,
-                                              boxSize=32)
+                                              boxSize=boxSize)
 
         self.launchProtocol(protTomoExtraction)
         self.assertIsNotNone(protTomoExtraction.outputSetOfSubtomogram,
