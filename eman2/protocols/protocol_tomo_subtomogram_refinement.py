@@ -150,7 +150,7 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         args += ' --pkeep=%f ' % self.pkeep
         args += ' --sym=%s ' % self.sym
         args += ' --maxtilt=%s ' % self.maxtilt
-        args += ' --path=%s ' % self.getOutputPath()
+        args += ' --path=%s ' % os.path.join(self.getOutputPath(), '')
         if self.niter > 1:
             args += ' --niter=%d' % self.niter
         if self.goldcontinue:
@@ -199,7 +199,7 @@ class EmanProtTomoRefinement(EMProtocol, ProtTomoBase):
         self._defineSourceRelation(self.inputSetOfSubTomogram, outputSetOfSubTomograms)
 
     def getOutputPath(self, *args):
-        return self._getExtraPath(self.OUTPUT_DIR, *args)
+        return os.path.join(self._getExtraPath(self.OUTPUT_DIR, *args))
 
     def getOutputFile(self, folderpattern, folder, files, pattern):
         pattern = "^" + folderpattern + pattern
