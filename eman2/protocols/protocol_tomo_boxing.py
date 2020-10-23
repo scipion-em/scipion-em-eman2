@@ -72,6 +72,10 @@ class EmanProtTomoBoxing(ProtTomoPicking):
 
     def launchBoxingGUIStep(self):
 
+        if self.getOutputsSize() >= 1:
+            lastOutput = [output for _, output in self.iterOutputAttributes()][-1]
+            setCoords3D2Jsons(self.inputTomograms.get(), lastOutput, self._getExtraPath())
+
         tomoList = [tomo.clone() for tomo in self.inputTomograms.get().iterItems()]
 
         tomoProvider = TomogramsTreeProvider(tomoList, self._getExtraPath(), "json")
