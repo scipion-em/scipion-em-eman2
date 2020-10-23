@@ -591,7 +591,8 @@ def setCoords3D2Jsons(setTomograms, setCoords, path):
         if "__" in tomoBasename:
             fnInputCoor = '%s_info.json' % tomoBasename.split("__")[0]
         else:
-            fnInputCoor = 'extra-%s_info.json' % tomoBasename
+            parentFolder = pwutils.removeBaseExt(os.path.dirname(tomo))
+            fnInputCoor = '%s-%s_info.json' % (parentFolder, tomoBasename)
         pathInputCoor = pwutils.join(path, fnInputCoor)
         if coords:
             writeJson(coordDict, pathInputCoor)
