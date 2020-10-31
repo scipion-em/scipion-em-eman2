@@ -109,7 +109,7 @@ class Plugin(pwem.Plugin):
     @classmethod
     def createEmanProcess(cls, script='e2converter.py', args=None, direc="."):
         """ Open a new Process with all EMAN environment (python...etc)
-        that will server as an adaptor to use EMAN library
+        that will serve as an adaptor to use EMAN library
         """
         program = os.path.join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args, python=True)
