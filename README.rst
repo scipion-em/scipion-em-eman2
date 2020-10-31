@@ -4,6 +4,27 @@ EMAN2 plugin
 
 This plugin provide wrappers around several programs of `EMAN2 <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
 
+.. image:: https://img.shields.io/pypi/v/scipion-em-eman2.svg
+        :target: https://pypi.python.org/pypi/scipion-em-eman2
+        :alt: PyPI release
+
+.. image:: https://img.shields.io/pypi/l/scipion-em-eman2.svg
+        :target: https://pypi.python.org/pypi/scipion-em-eman2
+        :alt: License
+
+.. image:: https://img.shields.io/pypi/pyversions/scipion-em-eman2.svg
+        :target: https://pypi.python.org/pypi/scipion-em-eman2
+        :alt: Supported Python versions
+
+.. image:: https://img.shields.io/sonar/quality_gate/scipion-em_scipion-em-eman2?server=https%3A%2F%2Fsonarcloud.io
+        :target: https://sonarcloud.io/dashboard?id=scipion-em_scipion-em-eman2
+        :alt: SonarCloud quality gate
+
+.. image:: https://img.shields.io/pypi/dm/scipion-em-eman2
+        :target: https://pypi.python.org/pypi/scipion-em-eman2
+        :alt: Downloads
+
+
 +------------------+------------------+
 | stable: |stable| | devel: | |devel| |
 +------------------+------------------+
