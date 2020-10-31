@@ -34,9 +34,9 @@ from scipion.install.funcs import VOID_TGZ
 from .constants import EMAN2_HOME, V2_3, V2_31, V3_0_0
 
 
+__version__ = '3.1.1'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
-_url = "https://github.com/scipion-em/scipion-em-eman2"
 
 
 SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
@@ -46,6 +46,7 @@ class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
     _supportedVersions = [V2_3, V2_31, V3_0_0]
+    _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
     def _defineVariables(cls):
