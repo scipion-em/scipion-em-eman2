@@ -151,7 +151,7 @@ class Plugin(pwem.Plugin):
         eman3_commands = []
         eman3_commands.append(('wget -c https://github.com/cryoem/eman2/archive/2f7a976.tar.gz', "2f7a976.tar.gz"))
         eman3_commands.append(("tar -xvf 2f7a976.tar.gz", []))
-        eman3_commands.append(("mv eman2* eman-source", []))
+        eman3_commands.append(("mv eman2* eman-source", "eman-source"))
         installationCmd = cls.getCondaActivationCmd()
         installationCmd += 'conda create -y -n eman' + V3_0_0 + ' eman-deps-dev -c cryoem -c defaults -c conda-forge && '
         installationCmd += 'mkdir eman-build && '
