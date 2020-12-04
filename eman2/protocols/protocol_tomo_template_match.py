@@ -106,31 +106,43 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
     def preprocess(self):
         program = eman2.Plugin.getProgram("e2proc3d.py")
         setDim = self.inputSet.get().getDim()
-        if max(setDim) > 1000:
-            sizeThreshold = max(self.inputSet.get().getDim())
-            self.correctOffset = None
-        else:
-            sizeThreshold = 1000
-            offset = math.floor((1000 - self.inputSet.get().getXDim()) / 2)
-            self.correctOffset = lambda coord: coord.setPosition(coord.getX() - offset,
-                                                                 coord.getY() - offset, coord.getZ())
-        if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
-            for tomo in self.inputSet.get():
-                tomoFile = os.path.basename(tomo.getFileName())
-                tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
-                self.runJob(program, '%s %s --clip=%d,%d,%d' % (tomo.getFileName(), tomoFile,
-                                                                sizeThreshold, sizeThreshold, tomo.getDim()[2]),
-                            env=eman2.Plugin.getEnviron())
-        else:
-            for tomo in self.inputSet.get():
-                tomoFile = os.path.basename(tomo.getFileName())
-                tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
-                copyFile(tomo.getFileName(), tomoFile)
+        # if max(setDim) > 1000:
+        #     sizeThreshold = max(self.inputSet.get().getDim())
+        self.correctOffset = None
+        # else:
+        #     sizeThreshold = 1000
+        #     offset = math.floor((1000 - self.inputSet.get().getXDim()) / 2)
+        #     self.correctOffset = lambda coord: coord.setPosition(coord.getX() - offset,
+        #                                                          coord.getY() - offset, coord.getZ())
+        # if (setDim[0] < sizeThreshold) or (setDim[1] < sizeThreshold):
+        #     for tomo in self.inputSet.get():
+        #         tomoFile = os.path.basename(tomo.getFileName())
+        #         tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
+        #         self.runJob(program, '%s %s --clip=%d,%d,%d --apix=%f' % (tomo.getFileName(), tomoFile,
+        #                                                                   sizeThreshold, sizeThreshold, tomo.getDim()[2],
+        #                                                                   tomo.getSamplingRate()),
+        #                     env=eman2.Plugin.getEnviron())
+        # else:
+        for tomo in self.inputSet.get():
+            tomoFile = os.path.basename(tomo.getFileName())
+            tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
+            # copyFile(tomo.getFileName(), tomoFile)
+            self.runJob(program, '%s %s --apix=%f' % (tomo.getFileName(), tomoFile, tomo.getSamplingRate()),
+                        env=eman2.Plugin.getEnviron())
+
+        # Correct pixel sizes of reference
+        volFile = os.path.basename(self.ref.get().getFileName())
+        volFile = os.path.abspath(self._getTmpPath(volFile))
+        self.runJob(program, '%s %s --apix=%f' % (self.ref.get().getFileName(), volFile,
+                                                  self.ref.get().getSamplingRate()),
+                    env=eman2.Plugin.getEnviron())
 
     def tempMatchStep(self):
         self.box = self.boxSize.get()
 
-        volFile = os.path.abspath(self.ref.get().getFileName())
+        # volFile = os.path.abspath(self.ref.get().getFileName())
+        volFile = os.path.basename(self.ref.get().getFileName())
+        volFile = os.path.abspath(self._getTmpPath(volFile))
         params = ""
 
         for tomo in self.inputSet.get():
