@@ -106,7 +106,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
     def preprocess(self):
         program = eman2.Plugin.getProgram("e2proc3d.py")
         setDim = self.inputSet.get().getDim()
-        # if max(setDim) > 1000:
+        # if min(setDim) > 1000:
         #     sizeThreshold = max(self.inputSet.get().getDim())
         self.correctOffset = None
         # else:
@@ -124,14 +124,14 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         #                     env=eman2.Plugin.getEnviron())
         # else:
         for tomo in self.inputSet.get():
-            tomoFile = os.path.basename(tomo.getFileName())
+            tomoFile = pwutils.removeBaseExt(tomo.getFileName()) + '.mrc'
             tomoFile = os.path.abspath(self._getTmpPath(tomoFile))
             # copyFile(tomo.getFileName(), tomoFile)
             self.runJob(program, '%s %s --apix=%f' % (tomo.getFileName(), tomoFile, tomo.getSamplingRate()),
                         env=eman2.Plugin.getEnviron())
 
         # Correct pixel sizes of reference
-        volFile = os.path.basename(self.ref.get().getFileName())
+        volFile = pwutils.removeBaseExt(self.ref.get().getFileName()) + '.mrc'
         volFile = os.path.abspath(self._getTmpPath(volFile))
         self.runJob(program, '%s %s --apix=%f' % (self.ref.get().getFileName(), volFile,
                                                   self.ref.get().getSamplingRate()),
