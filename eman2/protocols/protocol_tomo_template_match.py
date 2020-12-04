@@ -141,7 +141,7 @@ class EmanProtTomoTempMatch(ProtTomoPicking):
         self.box = self.boxSize.get()
 
         # volFile = os.path.abspath(self.ref.get().getFileName())
-        volFile = os.path.basename(self.ref.get().getFileName())
+        volFile = pwutils.removeBaseExt(self.ref.get().getFileName()) + '.mrc'
         volFile = os.path.abspath(self._getTmpPath(volFile))
         params = ""
 
