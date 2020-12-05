@@ -89,8 +89,6 @@ Supported versions
 
 2.3, 2.31
 
-In 2018 the plugin was updated to support the latest (at that moment) EMAN2: 2.21. This required a lot of code refactoring and the support of old EMAN2 version 2.11 had to be discontinued. Several new protocols were added: 2D refinements, tilt validation, ctf-auto and new e2boxer. The full changelog since Scipion-1.x is available `here <https://github.com/scipion-em/scipion-em-eman2/issues/1>`_.
-
 Protocols
 ---------
 
