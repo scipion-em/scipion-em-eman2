@@ -194,7 +194,7 @@ class EmanProtTomoReconstruction(EMProtocol, ProtTomoBase):
                  )
 
         if command_params["tltax"] is not None:
-            args += '--tltax=%(tltax)f'
+            args += ' --tltax=%(tltax)f'
         if self.bytile.get():
             args += ' --bytile'
         if self.load.get():
