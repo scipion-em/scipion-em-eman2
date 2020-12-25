@@ -58,7 +58,7 @@ class TestEmanBase(BaseTest):
     def runImportMicrograph(cls, pattern, samplingRate, voltage,
                             scannedPixelSize, magnification, sphericalAberration):
         """ Run an Import micrograph protocol. """
-        # We have two options: passe the SamplingRate or
+        # We have two options: pass the SamplingRate or
         # the ScannedPixelSize + microscope magnification
         if samplingRate is not None:
             cls.protImport = cls.newProtocol(ProtImportMicrographs,
