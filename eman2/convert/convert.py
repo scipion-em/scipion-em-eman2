@@ -59,6 +59,10 @@ def writeJson(jsonDict, jsonFn):
 
 
 def readCTFModel(ctfModel, filename):
+    """ Set values for the ctfModel.
+    :param ctfModel: output CTF model
+    :param filename: input file to parse
+    """
     jsonDict = loadJson(filename)
     keyPos = None
     ctfPhaseShift = 0.0
@@ -90,6 +94,9 @@ def readCTFModel(ctfModel, filename):
 
 
 def setWrongDefocus(ctfModel):
+    """ Set parameters if results parsing has failed.
+    :param ctfModel: the model to be updated
+    """
     ctfModel.setDefocusU(-999)
     ctfModel.setDefocusV(-1)
     ctfModel.setDefocusAngle(-999)
@@ -110,11 +117,10 @@ def jsonToCtfModel(ctfJsonFn, ctfModel):
 
 def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=False):
     """ Read from Eman .json files.
-    Params:
-        workDir: where the Eman boxer output files are located.
-        micSet: the SetOfMicrographs to associate the .json, which
-            name should be the same of the micrographs.
-        coordSet: the SetOfCoordinates that will be populated.
+    :param workDir: where the Eman boxer output files are located.
+    :param micSet: the SetOfMicrographs to associate the .json, which
+                   name should be the same of the micrographs.
+    :param coordSet: the SetOfCoordinates that will be populated.
     """
     if newBoxer:
         # read boxSize from info/project.json
@@ -155,6 +161,12 @@ def readSetOfCoordinates3D(jsonBoxDict, coord3DSetDict, inputTomo, updateItem=No
 
 
 def readCoordinates(mic, fileName, coordsSet, invertY=False):
+    """ Parse coords file and populate coordsSet.
+    :param mic: input micrograph object
+    :param fn: input file to parse
+    :param coordsSet: output set of coords
+    :param invertY: flip Y axis
+    """
     if pwutils.exists(fileName):
         jsonPosDict = loadJson(fileName)
 
@@ -388,6 +400,10 @@ def iterLstFile(filename):
 
 
 def geometryFromMatrix(matrix, inverseTransform):
+    """ Convert the transformation matrix to shifts and angles.
+    :param matrix: input matrix
+    :return: two lists, shifts and angles
+    """
     from pwem.convert.transformations import translation_from_matrix, euler_from_matrix
     if inverseTransform:
         from numpy.linalg import inv
@@ -400,8 +416,11 @@ def geometryFromMatrix(matrix, inverseTransform):
 
 
 def matrixFromGeometry(shifts, angles, inverseTransform):
-    """ Create the transformation matrix from a given
-    2D shifts in X and Y...and the 3 euler angles.
+    """ Create the transformation matrix from given
+    2D shifts in X and Y and the 3 euler angles.
+    :param shifts: input list of shifts
+    :param angles: input list of angles
+    :return matrix
     """
     from pwem.convert.transformations import euler_matrix
     from numpy import deg2rad

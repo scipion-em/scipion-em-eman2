@@ -30,9 +30,10 @@ import math
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.gui.text as text
 from pyworkflow.gui.dialog import askYesNo, showInfo, showError
-from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER, WEB_DJANGO)
+from pyworkflow.viewer import (ProtocolViewer, DESKTOP_TKINTER,
+                               WEB_DJANGO, CommandView)
 
-from pwem.objects.data import FSC
+from pwem.objects.data import FSC, Image, Volume
 import pwem.viewers.showj as showj
 from pwem.viewers import (ObjectView, DataView, EmPlotter,
                           ChimeraView, ClassesView, DataViewer,
@@ -57,11 +58,22 @@ class EmanViewer(DataViewer):
     with the Xmipp program xmipp_showj
     """
     _environments = [DESKTOP_TKINTER]
-    _targets = [EmanProtBoxing, EmanProtInitModel, EmanProtInitModelSGD]
+    _targets = [EmanProtBoxing, EmanProtInitModel,
+                EmanProtInitModelSGD, Image, Volume]
 
     def _visualize(self, obj, **args):
+        cls = type(obj)
+        if issubclass(cls, Volume) or issubclass(cls, Image):
+            fn = obj.getFileName()
+            if pwutils.getExt(fn) in ['.stk', '.vol', '.xmp']:
+                # eman2 expects spider files with .spi extension only
+                pwutils.createLink(fn, pwutils.replaceExt(fn, 'spi'))
+                fn = pwutils.replaceExt(fn, 'spi')
+            view = CommandView("%s %s &" % (Plugin.getProgram('e2display.py'), fn),
+                               env=Plugin.getEnviron())
+            return [view]
 
-        if isinstance(obj, EmanProtBoxing):
+        elif isinstance(obj, EmanProtBoxing):
             coords = obj.getCoords()
             if coords:
                 return DataViewer._visualize(self, obj.outputCoordinates)
