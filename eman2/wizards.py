@@ -32,7 +32,7 @@ from pyworkflow.utils import makePath, cleanPath, readProperties
 
 from . import Plugin
 from .convert import writeSetOfMicrographs
-from .protocols import SparxGaussianProtPicking, EmanProtTomoExtraction, EmanProtTomoTempMatch
+from .protocols import SparxGaussianProtPicking
 
 
 class SparxGaussianPickerWizard(EmWizard):
