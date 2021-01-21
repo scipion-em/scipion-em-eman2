@@ -24,5 +24,4 @@
 # *
 # **************************************************************************
 
-from .viewers_data import EmanDataViewer
 from .viewers import *

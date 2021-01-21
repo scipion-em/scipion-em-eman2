@@ -32,7 +32,7 @@ from pyworkflow.utils import makePath, cleanPath, readProperties
 
 from . import Plugin
 from .convert import writeSetOfMicrographs
-from .protocols import SparxGaussianProtPicking, EmanProtTomoExtraction, EmanProtTomoTempMatch
+from .protocols import SparxGaussianProtPicking
 
 
 class SparxGaussianPickerWizard(EmWizard):
@@ -112,39 +112,3 @@ class SparxGaussianPickerWizard(EmWizard):
         if myprops['applyChanges'] == 'true':
             for param in params:
                 form.setVar(param, myprops[param + '.value'])
-
-
-class EmanTomoExtractionWizard(EmWizard):
-    _targets = [(EmanProtTomoExtraction, ['boxSize'])]
-
-    def show(self, form):
-        tomoExtractProt = form.protocol
-        inputCoordinates = tomoExtractProt.inputCoordinates.get()
-        if not inputCoordinates:
-            print('You must specify input coordinates')
-            return
-
-        boxSize = inputCoordinates.getBoxSize()
-        if not boxSize:
-            print('These coordinates do not have box size. Please, enter box size manually.')
-            return
-
-        if tomoExtractProt.downFactor.get() != 1:
-            boxSize = float(boxSize/tomoExtractProt.downFactor.get())
-
-        form.setVar('boxSize', boxSize)
-
-
-class EmanTomoTempMatchWizard(EmWizard):
-    _targets = [(EmanProtTomoTempMatch, ['boxSize'])]
-
-    def show(self, form):
-        tomoExtractProt = form.protocol
-        inputReference = tomoExtractProt.ref.get()
-        if not inputReference:
-            print('You must specify input reference volume')
-            return
-
-        boxSize = inputReference.getDim()[0]
-
-        form.setVar('boxSize', boxSize)
