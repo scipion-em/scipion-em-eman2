@@ -32,8 +32,8 @@ from pyworkflow.object import String
 from pyworkflow.utils.properties import Message
 from pyworkflow.utils.path import getExt
 from pyworkflow.gui.dialog import askYesNo
-from pwem.protocols import ProtParticlePicking
 from pyworkflow.protocol.params import BooleanParam, IntParam, StringParam
+from pwem.protocols import ProtParticlePicking
 
 from .. import Plugin
 from ..convert import loadJson, readSetOfCoordinates

@@ -1,3 +1,4 @@
+3.2 - tomo protocols removed, since we have a separate eman tomo plugin
 3.1.1 - multiple fixes for tomo protocols
 3.1.0:
     - changed version to reflect Scipion 3 support

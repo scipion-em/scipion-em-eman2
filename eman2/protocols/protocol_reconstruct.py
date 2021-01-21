@@ -276,7 +276,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
                   'reconsMethod': reconsMethod
                   }
 
-        args = args % params
+        args %= params
 
         if self.padX.get() > 0:
             if self.padY.get() <= 0 or self.padX.get() == self.padY.get():

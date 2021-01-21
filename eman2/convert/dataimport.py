@@ -31,7 +31,7 @@ import os
 import pyworkflow.utils as pwutils
 from pwem.objects.data import Coordinate, CTFModel
 from pwem.objects.data_tiltpairs import Angles
-from pwem.emlib.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR, MDL_ZCOOR,
+from pwem.emlib.metadata import (MetaData, MDL_XCOOR, MDL_YCOOR,
                                  MDL_PICKING_PARTICLE_SIZE)
 from .convert import loadJson, readCTFModel, readSetOfParticles
 
@@ -95,38 +95,6 @@ class EmanImport:
                         coord = Coordinate()
                         coord.setPosition(x + half, y + half)
                         addCoordinate(coord)
-            else:
-                raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
-
-    def importCoordinates3D(self, fileName, addCoordinate):
-        from tomo.objects import Coordinate3D
-        if pwutils.exists(fileName):
-            ext = pwutils.getExt(fileName)
-
-            if ext == ".json":
-                jsonPosDict = loadJson(fileName)
-                boxes = []
-
-                if "boxes_3d" in jsonPosDict:
-                    boxes = jsonPosDict["boxes_3d"]
-                if boxes:
-                    for box in boxes:
-                        x, y, z = box[:3]
-                        coord = Coordinate3D()
-                        coord.setPosition(x, y, z)
-                        addCoordinate(coord)
-
-            elif ext == ".txt":
-                md = MetaData()
-                md.readPlain(fileName, "xcoor ycoor zcoor")
-                for objId in md:
-                    x = md.getValue(MDL_XCOOR, objId)
-                    y = md.getValue(MDL_YCOOR, objId)
-                    z = md.getValue(MDL_ZCOOR, objId)
-                    coord = Coordinate3D()
-                    coord.setPosition(x, y, z)
-                    addCoordinate(coord)
-
             else:
                 raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
 
