@@ -58,6 +58,8 @@ b) Developer's version
 
         scipion installp -p path_to_scipion-em-eman2 --devel
 
+**Important: in the plugin v3.2 all tomo protocols have been removed, they are now in https://github.com/scipion-em/scipion-em-emantomo**
+
 EMAN2 binaries will be installed automatically with the plugin, but you can also link an existing installation.
 
     * Default installation path assumed is ``software/em/eman-2.31``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
