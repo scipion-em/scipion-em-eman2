@@ -29,7 +29,6 @@ EMAN2_HOME = 'EMAN2_HOME'
 # Supported versions
 V2_3 = '2.3'
 V2_31 = '2.31'
-V3_0_0 = '3.0.0-alpha'
 
 # ------------------ Constants values -----------------------------------------
 

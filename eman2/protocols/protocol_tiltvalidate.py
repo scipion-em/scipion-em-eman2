@@ -25,6 +25,7 @@
 # **************************************************************************
 
 import os
+
 from pyworkflow.protocol.params import (PointerParam, FloatParam,
                                         LabelParam, EnumParam, StringParam,
                                         BooleanParam, IntParam, LEVEL_ADVANCED)
@@ -260,7 +261,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                   'verb': self.verbose.get()
                   }
 
-        args = args % params
+        args %= params
 
         for param in ['simcmp', 'simalign', 'simaligncmp',
                       'simralign', 'simraligncmp']:

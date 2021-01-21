@@ -455,7 +455,7 @@ Examples:
                       self.getTkRoot())
         elif not os.path.exists(angularDist):
             showError("Error",
-                "Please select a valid iteration to show the angular distribution", self.getTkRoot())
+                      "Please select a valid iteration to show the angular distribution", self.getTkRoot())
         else:
             if self.showHalves.get() == HALF_EVEN:
                 sqliteFn = createSqlite('even')

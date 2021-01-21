@@ -351,7 +351,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                   'mpis': self.numberOfMpi.get(),
                   'scratch': SCRATCHDIR
                   }
-        args = args % params
+        args %= params
 
         if self.extraParams.hasValue():
             args += " " + self.extraParams.get()
