@@ -1,5 +1,11 @@
 # Include the README
- include *.rst
+include *.rst
 
- # Include the license file
- include LICENSE
+# Include the license file
+include LICENSE
+
+# Include the changelog
+include CHANGES.txt
+
+# Include conf file
+include eman2/protocols.conf

@@ -125,4 +125,4 @@ class SparxGaussianProtPicking(ProtParticlePickingAuto):
 
     def readCoordsFromMics(self, workingDir, micList, coordSet):
         coordSet.setBoxSize(self.boxSize.get())
-        readSetOfCoordinates(workingDir, micList, coordSet, newBoxer=False)
+        readSetOfCoordinates(workingDir, micList, coordSet)

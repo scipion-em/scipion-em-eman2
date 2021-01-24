@@ -30,8 +30,8 @@ from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         EnumParam, PointerParam,
                                         StringParam, USE_GPU,
                                         GPU_LIST, BooleanParam)
-from pwem.protocols import ProtParticlePickingAuto
 from pyworkflow.utils import makePath, createLink
+from pwem.protocols import ProtParticlePickingAuto
 
 from .. import Plugin
 from ..convert import readSetOfCoordinates, convertReferences

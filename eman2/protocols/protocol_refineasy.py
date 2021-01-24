@@ -28,13 +28,13 @@ import os
 import re
 from glob import glob
 
-import pwem
+from pwem.constants import ALIGN_PROJ
 from pwem.protocols import ProtRefine3D
+from pwem.objects.data import Volume, SetOfParticles
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam)
 from pyworkflow.utils.path import cleanPattern, makePath, createLink
-from pwem.objects.data import Volume
 
 from .. import Plugin, SCRATCHDIR
 from ..convert import rowToAlignment, writeSetOfParticles
@@ -411,7 +411,7 @@ Major features of this program:
                   'mpis': self.numberOfMpi.get(),
                   'scratch': SCRATCHDIR
                   }
-        args = args % params
+        args %= params
 
         if self.doBreaksym:
             args += " --breaksym"
@@ -472,7 +472,7 @@ Major features of this program:
     def _createItemMatrix(self, item, rowList):
         if rowList[1] == 1:
             item.setTransform(rowToAlignment(rowList[2:],
-                                             alignType=pwem.constants.ALIGN_PROJ))
+                                             alignType=ALIGN_PROJ))
         else:
             setattr(item, "_appendItem", False)
 
@@ -496,8 +496,8 @@ Major features of this program:
 
     def _getIterData(self, it):
         data_sqlite = self._getFileName('data_scipion', iter=it)
-        if not os.path.os.path.exists(data_sqlite):
-            iterImgSet = pwem.objects.SetOfParticles(filename=data_sqlite)
+        if not os.path.exists(data_sqlite):
+            iterImgSet = SetOfParticles(filename=data_sqlite)
             iterImgSet.copyInfo(self._getInputParticles())
             self._fillDataFromIter(iterImgSet, it)
             iterImgSet.write()

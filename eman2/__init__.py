@@ -29,11 +29,11 @@ import subprocess
 
 import pwem
 import pyworkflow.utils as pwutils
-from scipion.install.funcs import VOID_TGZ
 
-from .constants import EMAN2_HOME, V2_3, V2_31, V3_0_0
+from .constants import EMAN2_HOME, V2_3, V2_31
 
 
+__version__ = '3.2'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
@@ -44,7 +44,8 @@ SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_3, V2_31, V3_0_0]
+    _supportedVersions = [V2_3, V2_31]
+    _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
     def _defineVariables(cls):
@@ -68,7 +69,7 @@ class Plugin(pwem.Plugin):
             'LD_LIBRARY_PATH': os.pathsep.join(pathList),
             'PYTHONPATH': os.pathsep.join(pathList),
             'SCIPION_MPI_FLAGS': os.environ.get('EMANMPIOPTS', '')
-        }, position=pwutils.Environ.REPLACE)
+        })
 
         return environ
 
@@ -77,16 +78,9 @@ class Plugin(pwem.Plugin):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
-    def getEmanActivation(cls):
-        return "conda activate eman" + V3_0_0
-
-    @classmethod
     def getProgram(cls, program, python=False):
         """ Return the program binary that will be used. """
-        if cls.isVersion(V3_0_0):
-            program = '%s %s && %s' % (cls.getCondaActivationCmd(), cls.getEmanActivation(), program)
-        else:
-            program = os.path.join(cls.getHome('bin'), program)
+        program = os.path.join(cls.getHome('bin'), program)
 
         if python:
             python = cls.getHome('bin/python')
@@ -107,7 +101,7 @@ class Plugin(pwem.Plugin):
     @classmethod
     def createEmanProcess(cls, script='e2converter.py', args=None, direc="."):
         """ Open a new Process with all EMAN environment (python...etc)
-        that will server as an adaptor to use EMAN library
+        that will serve as an adaptor to use EMAN library
         """
         program = os.path.join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args, python=True)
@@ -142,22 +136,6 @@ class Plugin(pwem.Plugin):
             (shell + ' ./eman2.31_sphire1.3.linux64.sh -b -p "%s/eman-2.31"' %
              SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
 
-        # For Eman3.0.0-alpha
-        eman3_commands = []
-        eman3_commands.append(('wget -c https://github.com/cryoem/eman2/archive/8170d34.tar.gz', "8170d34.tar.gz"))
-        eman3_commands.append(("tar -xvf 8170d34.tar.gz", []))
-        eman3_commands.append(("mv eman2* eman-source", []))
-        installationCmd = cls.getCondaActivationCmd()
-        installationCmd += 'conda create -y -n eman' + V3_0_0 + ' eman-deps-dev=22.1 -c cryoem -c defaults -c conda-forge && '
-        installationCmd += 'mkdir eman-build && '
-        installationCmd += 'conda activate eman' + V3_0_0 + ' && '
-        installationCmd += 'cd eman-build && '
-        installationCmd += 'cmake ../eman-source/ -DENABLE_OPTIMIZE_MACHINE=ON && '
-        installationCmd += 'make -j %d && make install' % env.getProcessors()
-
-        eman3_commands.append((installationCmd,
-                               "eman-build/libpyEM/CMakeFiles/pyPolarData2.dir/libpyPolarData2.cpp.o"))
-
         env.addPackage('eman', version=V2_3,
                        tar='eman2.3.linux64.tgz',
                        commands=eman23_commands)
@@ -166,7 +144,3 @@ class Plugin(pwem.Plugin):
                        tar='eman2.31.linux64.tgz',
                        commands=eman231_commands,
                        default=True)
-
-        # env.addPackage('eman', version=V3_0_0,
-        #                commands=eman3_commands,
-        #                tar=VOID_TGZ)

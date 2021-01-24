@@ -4,6 +4,27 @@ EMAN2 plugin
 
 This plugin provide wrappers around several programs of `EMAN2 <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
 
+.. image:: https://img.shields.io/pypi/v/scipion-em-eman2.svg
+        :target: https://pypi.python.org/pypi/scipion-em-eman2
+        :alt: PyPI release
+
+.. image:: https://img.shields.io/pypi/l/scipion-em-eman2.svg
+        :target: https://pypi.python.org/pypi/scipion-em-eman2
+        :alt: License
+
+.. image:: https://img.shields.io/pypi/pyversions/scipion-em-eman2.svg
+        :target: https://pypi.python.org/pypi/scipion-em-eman2
+        :alt: Supported Python versions
+
+.. image:: https://img.shields.io/sonar/quality_gate/scipion-em_scipion-em-eman2?server=https%3A%2F%2Fsonarcloud.io
+        :target: https://sonarcloud.io/dashboard?id=scipion-em_scipion-em-eman2
+        :alt: SonarCloud quality gate
+
+.. image:: https://img.shields.io/pypi/dm/scipion-em-eman2
+        :target: https://pypi.python.org/pypi/scipion-em-eman2
+        :alt: Downloads
+
+
 +------------------+------------------+
 | stable: |stable| | devel: | |devel| |
 +------------------+------------------+
@@ -37,12 +58,11 @@ b) Developer's version
 
         scipion installp -p path_to_scipion-em-eman2 --devel
 
+**Important: in the plugin v3.2 all tomo protocols have been removed, they are now in https://github.com/scipion-em/scipion-em-emantomo**
+
 EMAN2 binaries will be installed automatically with the plugin, but you can also link an existing installation.
 
     * Default installation path assumed is ``software/em/eman-2.31``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
-
-    **IMPORTANT: From plugin version 1.0.5 EMAN2DIR was renamed to EMAN2_HOME. Please update your scipion.conf file!**
-
     * If you need to pass special options to mpirun (like a hostfile), you can use the *EMANMPIOPTS* shell variable, but most users should not need this. A typical usage would be ``export EMANMPIOPTS="-hostfile myhosts.txt"``. You should only do this if necessary, though (note that then when supplying the parameter **--parallel=mpi:n:scratch_directory**, 'n' is no longer the number of cpus to use, but rather the number of nodes listed in myhosts.txt).
     * The default scratch directory is assumed */tmp/*. You can change it by setting *EMAN2SCRATCHDIR* in your shell environment.
 
@@ -67,8 +87,6 @@ Supported versions
 ------------------
 
 2.3, 2.31
-
-In 2018 the plugin was updated to support the latest (at that moment) EMAN2: 2.21. This required a lot of code refactoring and the support of old EMAN2 version 2.11 had to be discontinued. Several new protocols were added: 2D refinements, tilt validation, ctf-auto and new e2boxer. The full changelog since Scipion-1.x is available `here <https://github.com/scipion-em/scipion-em-eman2/issues/1>`_.
 
 Protocols
 ---------
