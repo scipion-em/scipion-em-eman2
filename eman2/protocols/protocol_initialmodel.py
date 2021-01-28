@@ -34,7 +34,8 @@ from pyworkflow.protocol.params import (PointerParam, TextParam, IntParam,
 from pwem.protocols import ProtInitialVolume
 from pwem.objects.data import SetOfClasses2D, Volume
 
-from .. import Plugin, SCRATCHDIR
+from .. import Plugin
+from ..constants import EMAN2SCRATCHDIR
 
 
 class EmanProtInitModel(ProtInitialVolume):
@@ -216,7 +217,7 @@ class EmanProtInitModel(ProtInitialVolume):
                         'symmetry': self.symmetry.get(),
                         'threads': self.numberOfThreads.get(),
                         'mpis': self.numberOfMpi.get(),
-                        'scratch': SCRATCHDIR}
+                        'scratch': Plugin.getVar(EMAN2SCRATCHDIR)}
 
     def _isHighSym(self):
         return self.symmetry.get() in ["oct", "tet", "icos"]

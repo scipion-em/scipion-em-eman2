@@ -59,7 +59,7 @@ class EmanImport:
                     ang.setAngles(y, y2, tilt)
                     addAngles(ang)
             else:
-                raise Exception('Unknown extension "%s" to import Eman tilt pair angles' % ext)
+                raise TypeError('Unknown extension "%s" to import Eman tilt pair angles' % ext)
 
     def importCoordinates(self, fileName, addCoordinate):
         if pwutils.exists(fileName):
@@ -96,7 +96,7 @@ class EmanImport:
                         coord.setPosition(x + half, y + half)
                         addCoordinate(coord)
             else:
-                raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
+                raise TypeError('Unknown extension "%s" to import Eman coordinates' % ext)
 
     def getBoxSize(self, coordFile):
         """ Try to infer the box size from the given coordinate file.

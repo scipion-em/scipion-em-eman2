@@ -30,15 +30,12 @@ import subprocess
 import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, V2_3, V2_31
+from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_3, V2_31
 
 
 __version__ = '3.2'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
-
-
-SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 
 
 class Plugin(pwem.Plugin):
@@ -50,6 +47,7 @@ class Plugin(pwem.Plugin):
     @classmethod
     def _defineVariables(cls):
         cls._defineEmVar(EMAN2_HOME, 'eman-' + V2_31)
+        cls._defineVar(EMAN2SCRATCHDIR, '/tmp')
 
     @classmethod
     def getEnviron(cls):

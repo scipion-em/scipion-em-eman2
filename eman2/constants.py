@@ -25,6 +25,7 @@
 # **************************************************************************
 
 EMAN2_HOME = 'EMAN2_HOME'
+EMAN2SCRATCHDIR = 'EMAN2SCRATCHDIR'
 
 # Supported versions
 V2_3 = '2.3'

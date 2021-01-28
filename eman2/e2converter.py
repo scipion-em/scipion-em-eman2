@@ -53,8 +53,8 @@ def writeParticles():
         if '_filename' in objDict:
             filename = str(objDict['_filename'])
         else:
-            raise Exception('ERROR (e2converter): Cannot process a particle '
-                            'without filename')
+            raise RuntimeError('ERROR (e2converter): Cannot process a particle '
+                               'without filename')
         imageData = eman.EMData()
         imageData.read_image(filename, index)
 

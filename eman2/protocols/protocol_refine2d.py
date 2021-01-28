@@ -38,7 +38,7 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.utils.path import makePath, cleanPath, createLink
 
-from .. import Plugin, SCRATCHDIR
+from .. import Plugin
 from ..convert import (rowToAlignment, writeSetOfParticles,
                        convertReferences)
 from ..constants import *
@@ -551,7 +551,7 @@ class EmanProtRefine2D(ProtClassify2D):
                   'classiter': self.classIter.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': SCRATCHDIR}
+                  'scratch': Plugin.getVar(EMAN2SCRATCHDIR)}
         args %= params
 
         if self.extraParams.hasValue():

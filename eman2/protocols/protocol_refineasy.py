@@ -36,7 +36,7 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam)
 from pyworkflow.utils.path import cleanPattern, makePath, createLink
 
-from .. import Plugin, SCRATCHDIR
+from .. import Plugin
 from ..convert import rowToAlignment, writeSetOfParticles
 from ..constants import *
 
@@ -409,7 +409,7 @@ Major features of this program:
                   'm3dKeep': self.m3dKeep.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': SCRATCHDIR
+                  'scratch': Plugin.getVar(EMAN2SCRATCHDIR)
                   }
         args %= params
 

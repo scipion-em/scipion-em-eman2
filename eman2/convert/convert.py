@@ -446,7 +446,7 @@ def getLastParticlesParams(directory):
     # JSON files with particles params: path/to/particle_parms_NN.json
     particleParamsPaths = glob.glob(os.path.join(directory, 'particle_parms_*.json'))
     if not particleParamsPaths:
-        raise Exception("Particle params files not found")
+        raise FileNotFoundError("Particle params files not found")
 
     lastParticleParamsPath = sorted(particleParamsPaths)[-1]
     particlesParams = json.load(open(lastParticleParamsPath))

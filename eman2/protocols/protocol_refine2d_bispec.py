@@ -37,7 +37,7 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         LabelParam)
 from pyworkflow.utils import createLink, cleanPath
 
-from .. import Plugin, SCRATCHDIR
+from .. import Plugin
 from ..constants import *
 
 
@@ -349,7 +349,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                   'classiter': self.classIter.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': SCRATCHDIR
+                  'scratch': Plugin.getVar(EMAN2SCRATCHDIR)
                   }
         args %= params
 
