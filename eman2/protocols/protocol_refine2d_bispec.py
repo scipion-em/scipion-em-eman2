@@ -26,7 +26,6 @@
 
 import os
 import re
-from os.path import exists, basename
 from glob import glob
 
 from pwem.objects import SetOfClasses2D
@@ -365,11 +364,11 @@ class EmanProtRefine2DBispec(ProtClassify2D):
     def _getParticlesStack(self):
         protType = self._inputProt().type.get()
         if protType == HIRES:
-            return "sets/" + basename(self._getFileName("partSetFlipLp5"))
+            return "sets/" + os.path.basename(self._getFileName("partSetFlipLp5"))
         elif protType == MIDRES:
-            return "sets/" + basename(self._getFileName("partSetFlipLp7"))
+            return "sets/" + os.path.basename(self._getFileName("partSetFlipLp7"))
         else:
-            return "sets/" + basename(self._getFileName("partSetFlipLp12"))
+            return "sets/" + os.path.basename(self._getFileName("partSetFlipLp12"))
 
     def _iterTextFile(self, iterN):
         with open(self._getFileName('results', iter=iterN)) as f:
@@ -408,7 +407,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
         if clean:
             cleanPath(data_classes)
 
-        if not exists(data_classes):
+        if not os.path.exists(data_classes):
             clsSet = SetOfClasses2D(filename=data_classes)
             clsSet.setImages(self._getInputParticles())
             self._fillClassesFromIter(clsSet, it)

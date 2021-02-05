@@ -87,7 +87,7 @@ def readCTFModel(ctfModel, filename):
             # psdFile = jsonDict['ctf_im2d']['__image__'][0]
             fnBase = pwutils.removeExt(filename) + '_jsonimg'
             psdFile = "1@%s.hdf" % fnBase
-            if pwutils.exists(psdFile):
+            if os.path.exists(psdFile):
                 ctfModel.setPsdFile(psdFile)
     ctfModel.setPhaseShift(float(ctfPhaseShift))
 
@@ -110,7 +110,7 @@ def jsonToCtfModel(ctfJsonFn, ctfModel):
     """ Create a CTFModel from a json file """
     mdFn = str(ctfJsonFn).replace('particles', 'info')
     mdFn = mdFn.split('__ctf_flip')[0] + '_info.json'
-    if pwutils.exists(mdFn):
+    if os.path.exists(mdFn):
         readCTFModel(ctfModel, mdFn)
 
 
@@ -123,16 +123,16 @@ def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=Fals
     """
     if newBoxer:
         # read boxSize from info/project.json
-        jsonFnbase = pwutils.join(workDir, 'info', 'project.json')
+        jsonFnbase = os.path.join(workDir, 'info', 'project.json')
         jsonBoxDict = loadJson(jsonFnbase)
         size = int(jsonBoxDict["global.boxsize"])
     else:
         # read boxSize from e2boxercache/base.json
-        jsonFnbase = pwutils.join(workDir, 'e2boxercache', 'base.json')
+        jsonFnbase = os.path.join(workDir, 'e2boxercache', 'base.json')
         jsonBoxDict = loadJson(jsonFnbase)
         size = int(jsonBoxDict["box_size"])
 
-    jsonFninfo = pwutils.join(workDir, 'info/')
+    jsonFninfo = os.path.join(workDir, 'info/')
 
     for mic in micSet:
         micBase = pwutils.removeBaseExt(mic.getFileName())
@@ -148,7 +148,7 @@ def readCoordinates(mic, fileName, coordsSet, invertY=False):
     :param coordsSet: output set of coords
     :param invertY: flip Y axis
     """
-    if pwutils.exists(fileName):
+    if os.path.exists(fileName):
         jsonPosDict = loadJson(fileName)
 
         if "boxes" in jsonPosDict:
@@ -195,8 +195,8 @@ def readSetOfParticles(lstFile, partSet, copyOrLink, direc):
         # set full path to particles stack file
         abspath = os.path.abspath(lstFile)
         fn = abspath.replace('sets/%s' % os.path.basename(lstFile), '') + fn
-        newFn = pwutils.join(direc, os.path.basename(fn))
-        if not pwutils.exists(newFn):
+        newFn = os.path.join(direc, os.path.basename(fn))
+        if not os.path.exists(newFn):
             copyOrLink(fn, newFn)
 
         item.setLocation(index, newFn)
@@ -213,7 +213,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
         # create links if input has hdf format
         for fn in partSet.getFiles():
             newFn = pwutils.removeBaseExt(fn).split('__ctf')[0] + '.hdf'
-            newFn = pwutils.join(path, newFn)
+            newFn = os.path.join(path, newFn)
             pwutils.createLink(fn, newFn)
             print("   %s -> %s" % (fn, newFn))
     else:
@@ -237,10 +237,10 @@ def writeSetOfParticles(partSet, path, **kwargs):
 
             suffix = kwargs.get('suffix', '')
             if hasMicName and (micName != str(micId)):
-                objDict['hdfFn'] = pwutils.join(path,
+                objDict['hdfFn'] = os.path.join(path,
                                                 "%s%s.hdf" % (micName, suffix))
             else:
-                objDict['hdfFn'] = pwutils.join(path,
+                objDict['hdfFn'] = os.path.join(path,
                                                 "mic_%06d%s.hdf" % (micId, suffix))
 
             alignType = kwargs.get('alignType')

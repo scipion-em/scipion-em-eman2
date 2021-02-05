@@ -26,7 +26,6 @@
 
 import os
 import re
-from os.path import exists
 from glob import glob
 
 from pwem.constants import ALIGN_2D
@@ -625,7 +624,7 @@ class EmanProtRefine2D(ProtClassify2D):
         if clean:
             cleanPath(data_classes)
 
-        if not exists(data_classes):
+        if not os.path.exists(data_classes):
             clsSet = SetOfClasses2D(filename=data_classes)
             clsSet.setImages(self._getInputParticles())
             self._fillClassesFromIter(clsSet, it)
