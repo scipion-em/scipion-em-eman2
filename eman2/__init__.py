@@ -30,10 +30,10 @@ import subprocess
 import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_3, V2_31
+from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_31, V2_9
 
 
-__version__ = '3.2'
+__version__ = '3.3'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
@@ -41,12 +41,12 @@ _references = ['Tang2007']
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_3, V2_31]
+    _supportedVersions = [V2_31, V2_9]
     _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2_HOME, 'eman-' + V2_31)
+        cls._defineEmVar(EMAN2_HOME, 'eman-' + V2_9)
         cls._defineVar(EMAN2SCRATCHDIR, '/tmp')
 
     @classmethod
@@ -63,16 +63,16 @@ class Plugin(pwem.Plugin):
         environ.update({'PATH': cls.getHome('bin')},
                        position=pwutils.Environ.BEGIN)
 
-        environ.update({
-            'LD_LIBRARY_PATH': os.pathsep.join(pathList),
-            'PYTHONPATH': os.pathsep.join(pathList),
-            'SCIPION_MPI_FLAGS': os.environ.get('EMANMPIOPTS', '')
-        })
+        if cls.isVersion('2.31'):
+            environ.update({
+                'LD_LIBRARY_PATH': os.pathsep.join(pathList),
+                'PYTHONPATH': os.pathsep.join(pathList)
+            })
 
         return environ
 
     @classmethod
-    def isVersion(cls, version='2.31'):
+    def isVersion(cls, version='2.9'):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
@@ -125,20 +125,20 @@ class Plugin(pwem.Plugin):
     @classmethod
     def defineBinaries(cls, env):
         SW_EM = env.getEmFolder()
-
         shell = os.environ.get("SHELL", "bash")
-        eman23_commands = [
-            (shell + ' ./eman2.3.linux64.sh -b -p "%s/eman-2.3"' %
-             SW_EM, '%s/eman-2.3/bin/python' % SW_EM)]
         eman231_commands = [
             (shell + ' ./eman2.31_sphire1.3.linux64.sh -b -p "%s/eman-2.31"' %
              SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
 
-        env.addPackage('eman', version=V2_3,
-                       tar='eman2.3.linux64.tgz',
-                       commands=eman23_commands)
+        url = 'https://cryoem.bcm.edu/cryoem/static/software/release-2.9/eman2.9_sphire1.4_sparx.linux64.sh'
+        install_cmd = 'cd %s && wget %s && ' % (SW_EM, url)
+        install_cmd += '%s ./eman2.9_sphire1.4_sparx.linux64.sh -b -f -p "%s/eman-2.9"' % (shell, SW_EM)
+        eman29_commands = [(install_cmd, '%s/eman-2.9/bin/python' % SW_EM)]
 
         env.addPackage('eman', version=V2_31,
                        tar='eman2.31.linux64.tgz',
-                       commands=eman231_commands,
-                       default=True)
+                       commands=eman231_commands)
+
+        env.addPackage('eman', version=V2_9,
+                       tar='void.tgz',
+                       commands=eman29_commands, default=True)
