@@ -36,7 +36,7 @@ This plugin provide wrappers around several programs of `EMAN2 <https://blake.bc
 Installation
 ------------
 
-You will need to use `3.0 <https://github.com/I2PC/scipion/releases/tag/V3.0.0>`_ version of Scipion to be able to run these protocols. To install the plugin, you have two options:
+You will need to use 3.0+ version of Scipion to be able to run these protocols. To install the plugin, you have two options:
 
 a) Stable version
 
@@ -85,7 +85,7 @@ A complete list of tests can also be seen by executing ``scipion test --show --g
 Supported versions
 ------------------
 
-2.31, 2.9
+2.9
 
 Protocols
 ---------

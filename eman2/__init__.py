@@ -30,7 +30,7 @@ import subprocess
 import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_31, V2_9
+from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_9
 
 
 __version__ = '3.3'
@@ -41,7 +41,7 @@ _references = ['Tang2007']
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_31, V2_9]
+    _supportedVersions = [V2_9]
     _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
@@ -53,21 +53,8 @@ class Plugin(pwem.Plugin):
     def getEnviron(cls):
         """ Setup the environment variables needed to launch Eman. """
         environ = pwutils.Environ(os.environ)
-        pathList = [cls.getHome(d) for d in ['lib', 'bin']]
-
-        # This environment variable is used to setup OpenGL (Mesa)
-        # library in remote desktops
-        if 'REMOTE_MESA_LIB' in os.environ:
-            pathList.append(os.environ['REMOTE_MESA_LIB'])
-
         environ.update({'PATH': cls.getHome('bin')},
                        position=pwutils.Environ.BEGIN)
-
-        if cls.isVersion('2.31'):
-            environ.update({
-                'LD_LIBRARY_PATH': os.pathsep.join(pathList),
-                'PYTHONPATH': os.pathsep.join(pathList)
-            })
 
         return environ
 
@@ -103,22 +90,12 @@ class Plugin(pwem.Plugin):
         """
         program = os.path.join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args, python=True)
-
         print("** Running: '%s'" % cmd)
         cmd = cmd.split()
         proc = subprocess.Popen(cmd, env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
-                                cwd=direc,
-                                universal_newlines=True)
-
-        # Python 2 to 3 conversion: iterating over lines in subprocess stdout -> If universal_newlines is False the file
-        # objects stdin, stdout and stderr will be opened as binary streams, and no line ending conversion is done.
-        # If universal_newlines is True, these file objects will be opened as text streams in universal newlines mode
-        # using the encoding returned by locale.getpreferredencoding(False). For stdin, line ending characters '\n' in
-        # the input will be converted to the default line separator os.linesep. For stdout and stderr, all line endings
-        # in the output will be converted to '\n'. For more information see the documentation of the io.TextIOWrapper
-        # class when the newline argument to its constructor is None.
+                                cwd=direc)
 
         return proc
 
@@ -126,18 +103,10 @@ class Plugin(pwem.Plugin):
     def defineBinaries(cls, env):
         SW_EM = env.getEmFolder()
         shell = os.environ.get("SHELL", "bash")
-        eman231_commands = [
-            (shell + ' ./eman2.31_sphire1.3.linux64.sh -b -p "%s/eman-2.31"' %
-             SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
-
         url = 'https://cryoem.bcm.edu/cryoem/static/software/release-2.9/eman2.9_sphire1.4_sparx.linux64.sh'
         install_cmd = 'cd %s && wget %s && ' % (SW_EM, url)
         install_cmd += '%s ./eman2.9_sphire1.4_sparx.linux64.sh -b -f -p "%s/eman-2.9"' % (shell, SW_EM)
         eman29_commands = [(install_cmd, '%s/eman-2.9/bin/python' % SW_EM)]
-
-        env.addPackage('eman', version=V2_31,
-                       tar='eman2.31.linux64.tgz',
-                       commands=eman231_commands)
 
         env.addPackage('eman', version=V2_9,
                        tar='void.tgz',

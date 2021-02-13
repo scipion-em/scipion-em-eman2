@@ -113,7 +113,7 @@ def readParticles(inputParts, inputCls, inputClasses, outputTxt, alitype='3d'):
     shiftYList = {}
     dAlphaList = {}
     flipList = {}
-    with open(outputTxt, 'wb') as f:
+    with open(outputTxt, 'w') as f:
 
         if alitype == '2d':
             # reading 2d refinement results
