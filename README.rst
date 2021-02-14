@@ -85,13 +85,13 @@ A complete list of tests can also be seen by executing ``scipion test --show --g
 Supported versions
 ------------------
 
-2.9
+2.31, 2.9
 
 Protocols
 ---------
 
-* `boxer (old and new interactive e2boxer.py) <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtBoxing>`_
-* boxer auto (fully automated new boxer in >=2.21)
+* boxer (new interactive e2boxer.py)
+* boxer auto (fully automated new boxer in EMAN >= 2.21)
 * ctf auto
 * `initial model <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtInitModel>`_
 * initial model SGD
@@ -99,7 +99,6 @@ Protocols
 * refine 2d
 * refine 2d bispec
 * refine easy
-* `sparx picker <https://github.com/scipion-em/scipion-em-eman2/wiki/SparxGaussianProtPicking>`_
 * tilt validate
 
 References

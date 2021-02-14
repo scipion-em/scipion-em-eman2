@@ -30,7 +30,7 @@ import subprocess
 import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_9
+from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_9, V2_31
 
 
 __version__ = '3.3'
@@ -41,7 +41,7 @@ _references = ['Tang2007']
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_9]
+    _supportedVersions = [V2_31, V2_9]
     _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
@@ -98,11 +98,14 @@ class Plugin(pwem.Plugin):
     def defineBinaries(cls, env):
         SW_EM = env.getEmFolder()
         shell = os.environ.get("SHELL", "bash")
-        url = 'https://cryoem.bcm.edu/cryoem/static/software/release-2.9/eman2.9_sphire1.4_sparx.linux64.sh'
-        install_cmd = 'cd %s && wget %s && ' % (SW_EM, url)
-        install_cmd += '%s ./eman2.9_sphire1.4_sparx.linux64.sh -b -f -p "%s/eman-2.9"' % (shell, SW_EM)
-        eman29_commands = [(install_cmd, '%s/eman-2.9/bin/python' % SW_EM)]
+        urls = ['https://cryoem.bcm.edu/cryoem/static/software/release-2.31/eman2.31_sphire1.3.linux64.sh',
+                'https://cryoem.bcm.edu/cryoem/static/software/release-2.9/eman2.9_sphire1.4_sparx.linux64.sh']
 
-        env.addPackage('eman', version=V2_9,
-                       tar='void.tgz',
-                       commands=eman29_commands, default=True)
+        for ver, url in zip(cls._supportedVersions, urls):
+            install_cmd = 'cd %s && wget %s && ' % (SW_EM, url)
+            install_cmd += '%s ./%s -b -f -p "%s/eman-%s"' % (shell, url.split('/')[-1], SW_EM, ver)
+            eman_commands = [(install_cmd, '%s/eman-%s/bin/python' % (SW_EM, ver))]
+
+            env.addPackage('eman', version=ver,
+                           tar='void.tgz',
+                           commands=eman_commands, default=ver==V2_9)
