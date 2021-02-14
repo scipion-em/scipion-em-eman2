@@ -163,8 +163,8 @@ class EmanProtTiltValidate(ProtAnalysis3D):
         group = form.addGroup('Second stage aligner')
         line = group.addLine('simralign: ')
         line.addParam('simralignType', EnumParam,
-                      choices=['None', 'refine',
-                               'refine_3d', 'refine_3d_grid'],
+                      choices=['None', 'refine', 'refine_3d',
+                               'refine_3d_grid', 'refinecg'],
                       label='type', default=RALN_NONE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simralignParams', StringParam,

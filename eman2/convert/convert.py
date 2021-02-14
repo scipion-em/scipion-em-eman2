@@ -114,24 +114,17 @@ def jsonToCtfModel(ctfJsonFn, ctfModel):
         readCTFModel(ctfModel, mdFn)
 
 
-def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False, newBoxer=False):
+def readSetOfCoordinates(workDir, micSet, coordSet, invertY=False):
     """ Read from Eman .json files.
     :param workDir: where the Eman boxer output files are located.
     :param micSet: the SetOfMicrographs to associate the .json, which
                    name should be the same of the micrographs.
     :param coordSet: the SetOfCoordinates that will be populated.
     """
-    if newBoxer:
-        # read boxSize from info/project.json
-        jsonFnbase = os.path.join(workDir, 'info', 'project.json')
-        jsonBoxDict = loadJson(jsonFnbase)
-        size = int(jsonBoxDict["global.boxsize"])
-    else:
-        # read boxSize from e2boxercache/base.json
-        jsonFnbase = os.path.join(workDir, 'e2boxercache', 'base.json')
-        jsonBoxDict = loadJson(jsonFnbase)
-        size = int(jsonBoxDict["box_size"])
-
+    # read boxSize from info/project.json
+    jsonFnbase = os.path.join(workDir, 'info', 'project.json')
+    jsonBoxDict = loadJson(jsonFnbase)
+    size = int(jsonBoxDict["global.boxsize"])
     jsonFninfo = os.path.join(workDir, 'info/')
 
     for mic in micSet:
@@ -417,8 +410,7 @@ def convertReferences(refSet, outputFn):
         objDict['_index'] = int(objDict['_index'] - a)
 
         # Write the e2converter.py process from where to read the image
-        print(json.dumps(objDict), file=proc.stdin)
-        proc.stdin.flush()
+        print(json.dumps(objDict), file=proc.stdin, flush=True)
         proc.stdout.readline()
     proc.kill()
 

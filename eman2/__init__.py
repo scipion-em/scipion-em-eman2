@@ -78,12 +78,6 @@ class Plugin(pwem.Plugin):
         return cls.getProgram(program, python) + args
 
     @classmethod
-    def getBoxerCommand(cls, boxerVersion='new'):
-        cmd = 'e2boxer.py' if boxerVersion == 'new' else 'e2boxer_old.py'
-
-        return os.path.join(cls.getHome('bin'), cmd)
-
-    @classmethod
     def createEmanProcess(cls, script='e2converter.py', args=None, direc="."):
         """ Open a new Process with all EMAN environment (python...etc)
         that will serve as an adaptor to use EMAN library
@@ -95,7 +89,8 @@ class Plugin(pwem.Plugin):
         proc = subprocess.Popen(cmd, env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
-                                cwd=direc)
+                                cwd=direc,
+                                universal_newlines=True)
 
         return proc
 

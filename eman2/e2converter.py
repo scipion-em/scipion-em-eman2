@@ -47,14 +47,8 @@ def writeParticles():
     fnHdf = ""
     while line:
         objDict = json.loads(line)
-        if '_index' in objDict:
-            index = int(objDict['_index'])
-
-        if '_filename' in objDict:
-            filename = str(objDict['_filename'])
-        else:
-            raise RuntimeError('ERROR (e2converter): Cannot process a particle '
-                               'without filename')
+        index = int(objDict['_index'])
+        filename = str(objDict['_filename'])
         imageData = eman.EMData()
         imageData.read_image(filename, index)
 
