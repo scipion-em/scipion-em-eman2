@@ -373,7 +373,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
     def _iterTextFile(self, iterN):
         with open(self._getFileName('results', iter=iterN)) as f:
             for line in f:
-                if '#' not in line:
+                if '#' not in line and line.strip():
                     yield [float(x) for x in line.split()]
 
     def _getRun(self):

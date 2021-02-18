@@ -27,7 +27,7 @@
 from glob import glob
 
 from pyworkflow.utils.path import cleanPattern
-from pyworkflow.protocol.params import (PointerParam, TextParam, IntParam,
+from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         BooleanParam, StringParam,
                                         EnumParam, FloatParam)
 from pwem.protocols import ProtInitialVolume
@@ -72,7 +72,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
                       label="Input particles", important=True,
                       help='Select the particles to build your '
                            '3D model.')
-        form.addParam('symmetry', TextParam, default='c1',
+        form.addParam('symmetry', StringParam, default='c1',
                       label='Symmetry group',
                       help='Specify the symmetry.\nChoices are: c(n), d(n), '
                            'h(n), tet, oct, icos.\n'

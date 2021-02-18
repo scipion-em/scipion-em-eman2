@@ -29,8 +29,6 @@ from pwem.protocols import (ProtImportMicrographs, ProtImportParticles, ProtImpo
                             ProtImportAverages, ProtImportCoordinatesPairs,
                             ProtImportMicrographsTiltPairs)
 from pwem import Domain
-from pyworkflowtests.protocols import ProtOutputTest
-from pwem.objects.data import Pointer
 from pyworkflow.utils import magentaStr
 
 from ..protocols import *
@@ -117,17 +115,17 @@ class TestEmanBase(BaseTest):
         return cls.protImportAvg
 
 
-class TestEmanInitialModelMda(TestEmanBase):
+class TestEmanInitialModelGroel(TestEmanBase):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
-        cls.dataset = DataSet.getDataSet('mda')
+        cls.dataset = DataSet.getDataSet('groel')
         cls.averages = cls.dataset.getFile('averages')
-        cls.symmetry = 'd6'
-        cls.numberOfIterations = 5
-        cls.numberOfModels = 2
+        cls.symmetry = 'd7'
+        cls.numberOfIterations = 10
+        cls.numberOfModels = 10
         print(magentaStr("\n==> Importing data - class averages:"))
-        cls.protImportAvg = cls.runImportAverages(cls.averages, 3.5)
+        cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
 
     def test_initialmodel(self):
         print(magentaStr("\n==> Testing eman2 - initial model:"))
@@ -140,19 +138,6 @@ class TestEmanInitialModelMda(TestEmanBase):
         self.launchProtocol(protIniModel)
         self.assertIsNotNone(protIniModel.outputVolumes,
                              "There was a problem with eman initial model protocol")
-
-
-class TestEmanInitialModelGroel(TestEmanInitialModelMda):
-    @classmethod
-    def setUpClass(cls):
-        setupTestProject(cls)
-        cls.dataset = DataSet.getDataSet('groel')
-        cls.averages = cls.dataset.getFile('averages')
-        cls.symmetry = 'd7'
-        cls.numberOfIterations = 10
-        cls.numberOfModels = 10
-        print(magentaStr("\n==> Importing data - class averages:"))
-        cls.protImportAvg = cls.runImportAverages(cls.averages, 2.1)
 
 
 class TestEmanInitialModelSGD(TestEmanBase):
@@ -265,7 +250,7 @@ class TestEmanRefine2DBispec(TestEmanBase):
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
                                       inputBispec=protCtf,
                                       numberOfIterations=2, numberOfClassAvg=5,
-                                      classIter=2, nbasisfp=5)
+                                      classIter=2, nbasisfp=4)
         self.launchProtocol(protRefine)
         self.assertIsNotNone(protRefine.outputClasses,
                              "There was a problem with eman refine2d bispec protocol")
@@ -382,38 +367,3 @@ class TestEmanAutopick(TestEmanBase):
         self.launchProtocol(protPick)
         self.assertIsNotNone(protPick.outputCoordinates,
                              "There was a problem with e2boxer auto protocol")
-
-    def test_AutopickSparx(self):
-        print(magentaStr("\n==> Testing eman2 - e2boxer gauss:"))
-        protPick2 = self.newProtocol(SparxGaussianProtPicking,
-                                     boxSize=128,
-                                     lowerThreshold=0.004,
-                                     higherThreshold=0.1,
-                                     gaussWidth=0.525,
-                                     useVarImg=False,
-                                     doInvert=True)
-        protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
-        self.launchProtocol(protPick2)
-        self.assertIsNotNone(protPick2.outputCoordinates,
-                             "There was a problem with e2boxer gauss auto protocol")
-
-    def test_AutopickSparxPointer(self):
-        print(magentaStr("\n==> Running auto boxsize simulator:"))
-        protAutoBoxSize = self.newProtocol(ProtOutputTest,
-                                           iBoxSize=64,  # output is twice
-                                           objLabel='auto boxsize simulator')
-        self.launchProtocol(protAutoBoxSize)
-
-        print(magentaStr("\n==> Testing eman2 - e2boxer gauss:"))
-        protPick2 = self.newProtocol(SparxGaussianProtPicking,
-                                     lowerThreshold=0.004,
-                                     higherThreshold=0.1,
-                                     gaussWidth=0.525,
-                                     useVarImg=False,
-                                     doInvert=True)
-        protPick2.inputMicrographs.set(self.protImportMics.outputMicrographs)
-        protPick2.boxSize.setPointer(Pointer(protAutoBoxSize,
-                                             extended="oBoxSize"))
-        self.launchProtocol(protPick2)
-        self.assertIsNotNone(protPick2.outputCoordinates,
-                             "There was a problem with e2boxer gauss auto protocol")
