@@ -36,7 +36,7 @@ from pyworkflow.protocol.params import BooleanParam, IntParam, StringParam
 from pwem.protocols import ProtParticlePicking
 
 from .. import Plugin
-from ..convert import loadJson, readSetOfCoordinates
+from ..convert import readSetOfCoordinates
 
 
 class EmanProtBoxing(ProtParticlePicking):
@@ -65,22 +65,14 @@ class EmanProtBoxing(ProtParticlePicking):
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
         ProtParticlePicking._defineParams(self, form)
-
-        form.addParam('useNewBoxer', BooleanParam,
-                      default=True,
-                      label='Use new e2boxer?',
-                      help='Requires EMAN version 2.21 or newer')
         form.addParam('boxSize', IntParam, default=-1,
-                      condition='useNewBoxer',
                       label='Box size (px)',
                       help="Box size in pixels.")
         form.addParam('particleSize', IntParam, default=-1,
-                      condition='useNewBoxer',
                       label='Particle size (px)',
                       help="Longest axis of particle in pixels (diameter, "
                            "not radius).")
         form.addParam('device', StringParam, default='cpu',
-                      condition='useNewBoxer',
                       label='Device',
                       help='For Convnet training only.\n'
                            'Pick a device to use. Choose from cpu, '
@@ -110,23 +102,18 @@ class EmanProtBoxing(ProtParticlePicking):
     def launchBoxingGUIStep(self):
         # Print the eman version, useful to report bugs
         self.runJob(Plugin.getProgram('e2version.py'), '')
-        useNewBoxer = self._useNewBoxer()
         # Program to execute and it arguments
-        boxerVersion = 'old' if not useNewBoxer else 'new'
-        boxer = Plugin.getBoxerCommand(boxerVersion=boxerVersion)
-        program = Plugin.getProgram(boxer)
-        arguments = ''
+        program = Plugin.getProgram('e2boxer.py')
+        arguments = " --apix=%(pixSize)f --boxsize=%(boxSize)d"
+        arguments += " --ptclsize=%(ptclSize)d --gui --threads=%(thr)d --no_ctf"
 
-        if useNewBoxer:
-            arguments = " --apix=%(pixSize)f --boxsize=%(boxSize)d"
-            arguments += " --ptclsize=%(ptclSize)d --gui --threads=%(thr)d --no_ctf"
-            self._params.update({
-                'pixSize': self.inputMics.getSamplingRate(),
-                'boxSize': self.boxSize.get(),
-                'ptclSize': self.particleSize.get(),
-                'thr': self.numberOfThreads.get()
-            })
-            arguments += " --device=%s" % self.device.get()
+        self._params.update({
+            'pixSize': self.inputMics.getSamplingRate(),
+            'boxSize': self.boxSize.get(),
+            'ptclSize': self.particleSize.get(),
+            'thr': self.numberOfThreads.get()
+        })
+        arguments += " --device=%s" % self.device.get()
 
         arguments += " %(inputMics)s"
 
@@ -136,51 +123,7 @@ class EmanProtBoxing(ProtParticlePicking):
 
         # Open dialog to request confirmation to create output
         if askYesNo(Message.TITLE_SAVE_OUTPUT, Message.LABEL_SAVE_OUTPUT, None):
-            self.check_gauss()
             self._createOutput(self.getCoordsDir())
-
-    def check_gauss(self):
-        if self._useNewBoxer():
-            # gauss picker is not implemented for new e2boxer
-            pass
-        else:
-            # Function to check if gaussian algorithm was used to pick
-            # and if so ask user if she wants to perform an automatic
-            # picking for the remaining micrographs
-            gaussJsonFile = os.path.join("e2boxercache", "gauss_box_DB.json")
-            # join("e2boxercache", "gauss_box_DB.json")
-            # Check if gauss json file exists and load it
-            if os.path.exists(gaussJsonFile):
-                jsonGaussDict = loadJson(gaussJsonFile)
-                gaussParsDict = None
-                micList = [os.path.relpath(mic.getFileName(),
-                                           self.getCoordsDir()) for mic in self.inputMics]
-                # Go over the list of input micrographs and see if
-                # gaussian was used to pick any of them
-                for mic in micList:
-                    if mic in jsonGaussDict:
-                        gaussParsDict = jsonGaussDict[mic]
-                        break
-                if gaussParsDict is not None:
-                    # If found ask user if she wats to perform an automatic gaussian
-                    # picking for the rest of mics
-                    self._params['boxSize'] = gaussParsDict['boxsize']
-                    # Run sxprocess.py to store parameters
-                    program = Plugin.getProgram("sxprocess.py")
-                    argsList = ["'%s'=%s:" % (key, val) for (key, val) in gaussParsDict.items()]
-                    args = 'demoparms --makedb ' + "".join(argsList)
-                    # Remove last ":" to avoid error
-                    args = args[:-1]
-                    # Run the command with formatted parameters
-                    self._log.info('Launching: ' + program + ' ' + args)
-                    self.runJob(program, args)
-                    # Now run e2boxer.py with stored parameters
-                    arguments = "--gauss_autoboxer=demoparms --write_dbbox "
-                    arguments += " --boxsize=%(boxSize)s " + "%(inputMics)s"
-                    boxer = Plugin.getBoxerCommand(boxerVersion='old')
-                    program = Plugin.getProgram(boxer)
-                    self._log.info('Launching: ' + program + ' ' + arguments % self._params)
-                    self.runJob(program, arguments % self._params, cwd=self.getCoordsDir())
 
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
@@ -214,7 +157,4 @@ class EmanProtBoxing(ProtParticlePicking):
 
     def readSetOfCoordinates(self, workingDir, coordSet):
         readSetOfCoordinates(workingDir, self.inputMics, coordSet,
-                             self.invertY.get(), newBoxer=self._useNewBoxer())
-
-    def _useNewBoxer(self):
-        return True if self.useNewBoxer else False
+                             self.invertY.get())

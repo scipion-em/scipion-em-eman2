@@ -36,7 +36,7 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam)
 from pyworkflow.utils.path import cleanPattern, makePath, createLink
 
-from .. import Plugin, SCRATCHDIR
+from .. import Plugin
 from ..convert import rowToAlignment, writeSetOfParticles
 from ..constants import *
 
@@ -136,7 +136,7 @@ Major features of this program:
                       help='The total number of refinement iterations to '
                            'perform.')
         form.addParam('tophat', EnumParam,
-                      choices=['none', 'local', 'global'],
+                      choices=['none', 'local', 'localwiener', 'global'],
                       label="Tophat filter?", default=TOPHAT_NONE,
                       display=EnumParam.DISPLAY_COMBO,
                       help='Instead of imposing a final '
@@ -206,7 +206,7 @@ Major features of this program:
                       label='Use bispectra? (experimental)',
                       help='Will use bispectra for orientation '
                            'determination (EXPERIMENTAL).')
-        form.addParam('useSetsfref', BooleanParam, default=True,
+        form.addParam('useSetsfref', BooleanParam, default=False,
                       label='Use the setsfref option in class averaging?',
                       help='This matches the filtration of the class-averages '
                            'to the projections for easier comparison. May '
@@ -409,7 +409,7 @@ Major features of this program:
                   'm3dKeep': self.m3dKeep.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': SCRATCHDIR
+                  'scratch': Plugin.getVar(EMAN2SCRATCHDIR)
                   }
         args %= params
 
@@ -466,7 +466,7 @@ Major features of this program:
     def _iterTextFile(self, iterN):
         with open(self._getFileName('angles', iter=iterN)) as f:
             for line in f:
-                if '#' not in line:
+                if '#' not in line and line.strip():
                     yield [float(x) for x in line.split()]
 
     def _createItemMatrix(self, item, rowList):

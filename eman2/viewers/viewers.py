@@ -569,7 +569,7 @@ Examples:
     def _showHtmlReport(self, paramName=None):
         reportPath = self.protocol._getFileName('reportHtml',
                                                 run=self.protocol._getRun())
-        if pwutils.exists(reportPath):
+        if os.path.exists(reportPath):
             text._open_cmd(reportPath, self.getTkRoot())
         else:
             self.showInfo('Your html report is not ready yet. Please try again in a minute.')
@@ -741,7 +741,7 @@ class TiltValidateViewer(ProtocolViewer):
             views.append(self._createScatterPlot(rmax, colorzaxis=color))
         elif self.displayPlot == TILT_CONTOUR:
             plotFn = self.protocol._getFileName('outputContourPlot')
-            if pwutils.exists(plotFn):
+            if os.path.exists(plotFn):
                 views.append(DataView(plotFn))
             else:
                 showError("File not found", "Contour plot file not found: %s" % plotFn,
@@ -801,7 +801,7 @@ class TiltValidateViewer(ProtocolViewer):
         datap = []
         zaxis = []
 
-        if pwutils.exists(fileName):
+        if os.path.exists(fileName):
             jsonPosDict = loadJson(fileName)
             if "particletilt_list" in jsonPosDict:
                 tiltpairs = jsonPosDict["particletilt_list"]

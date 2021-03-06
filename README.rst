@@ -36,7 +36,7 @@ This plugin provide wrappers around several programs of `EMAN2 <https://blake.bc
 Installation
 ------------
 
-You will need to use `3.0 <https://github.com/I2PC/scipion/releases/tag/V3.0.0>`_ version of Scipion to be able to run these protocols. To install the plugin, you have two options:
+You will need to use 3.0+ version of Scipion to be able to run these protocols. To install the plugin, you have two options:
 
 a) Stable version
 
@@ -62,9 +62,8 @@ b) Developer's version
 
 EMAN2 binaries will be installed automatically with the plugin, but you can also link an existing installation.
 
-    * Default installation path assumed is ``software/em/eman-2.31``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
-    * If you need to pass special options to mpirun (like a hostfile), you can use the *EMANMPIOPTS* shell variable, but most users should not need this. A typical usage would be ``export EMANMPIOPTS="-hostfile myhosts.txt"``. You should only do this if necessary, though (note that then when supplying the parameter **--parallel=mpi:n:scratch_directory**, 'n' is no longer the number of cpus to use, but rather the number of nodes listed in myhosts.txt).
-    * The default scratch directory is assumed */tmp/*. You can change it by setting *EMAN2SCRATCHDIR* in your shell environment.
+    * Default installation path assumed is ``software/em/eman-2.9``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
+    * The default scratch directory is assumed */tmp/*. You can change it by setting *EMAN2SCRATCHDIR* in ``scipion.conf`` or your shell environment.
 
 To check the installation, simply run one of the following Scipion tests:
 
@@ -86,13 +85,13 @@ A complete list of tests can also be seen by executing ``scipion test --show --g
 Supported versions
 ------------------
 
-2.3, 2.31
+2.31, 2.9
 
 Protocols
 ---------
 
-* `boxer (old and new interactive e2boxer.py) <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtBoxing>`_
-* boxer auto (fully automated new boxer in >=2.21)
+* boxer (new interactive e2boxer.py)
+* boxer auto (fully automated new boxer in EMAN >= 2.21)
 * ctf auto
 * `initial model <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtInitModel>`_
 * initial model SGD
@@ -100,7 +99,6 @@ Protocols
 * refine 2d
 * refine 2d bispec
 * refine easy
-* `sparx picker <https://github.com/scipion-em/scipion-em-eman2/wiki/SparxGaussianProtPicking>`_
 * tilt validate
 
 References

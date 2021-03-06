@@ -30,51 +30,36 @@ import subprocess
 import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, V2_3, V2_31
+from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_9, V2_31
 
 
-__version__ = '3.2'
+__version__ = '3.3'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
-
-
-SCRATCHDIR = pwutils.getEnvVariable('EMAN2SCRATCHDIR', default='/tmp/')
 
 
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_3, V2_31]
+    _supportedVersions = [V2_31, V2_9]
     _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2_HOME, 'eman-' + V2_31)
+        cls._defineEmVar(EMAN2_HOME, 'eman-' + V2_9)
+        cls._defineVar(EMAN2SCRATCHDIR, '/tmp')
 
     @classmethod
     def getEnviron(cls):
         """ Setup the environment variables needed to launch Eman. """
         environ = pwutils.Environ(os.environ)
-        pathList = [cls.getHome(d) for d in ['lib', 'bin']]
-
-        # This environment variable is used to setup OpenGL (Mesa)
-        # library in remote desktops
-        if 'REMOTE_MESA_LIB' in os.environ:
-            pathList.append(os.environ['REMOTE_MESA_LIB'])
-
         environ.update({'PATH': cls.getHome('bin')},
                        position=pwutils.Environ.BEGIN)
-
-        environ.update({
-            'LD_LIBRARY_PATH': os.pathsep.join(pathList),
-            'PYTHONPATH': os.pathsep.join(pathList),
-            'SCIPION_MPI_FLAGS': os.environ.get('EMANMPIOPTS', '')
-        })
 
         return environ
 
     @classmethod
-    def isVersion(cls, version='2.31'):
+    def isVersion(cls, version='2.9'):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
@@ -93,19 +78,12 @@ class Plugin(pwem.Plugin):
         return cls.getProgram(program, python) + args
 
     @classmethod
-    def getBoxerCommand(cls, boxerVersion='new'):
-        cmd = 'e2boxer.py' if boxerVersion == 'new' else 'e2boxer_old.py'
-
-        return os.path.join(cls.getHome('bin'), cmd)
-
-    @classmethod
     def createEmanProcess(cls, script='e2converter.py', args=None, direc="."):
         """ Open a new Process with all EMAN environment (python...etc)
         that will serve as an adaptor to use EMAN library
         """
         program = os.path.join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args, python=True)
-
         print("** Running: '%s'" % cmd)
         cmd = cmd.split()
         proc = subprocess.Popen(cmd, env=cls.getEnviron(),
@@ -114,33 +92,20 @@ class Plugin(pwem.Plugin):
                                 cwd=direc,
                                 universal_newlines=True)
 
-        # Python 2 to 3 conversion: iterating over lines in subprocess stdout -> If universal_newlines is False the file
-        # objects stdin, stdout and stderr will be opened as binary streams, and no line ending conversion is done.
-        # If universal_newlines is True, these file objects will be opened as text streams in universal newlines mode
-        # using the encoding returned by locale.getpreferredencoding(False). For stdin, line ending characters '\n' in
-        # the input will be converted to the default line separator os.linesep. For stdout and stderr, all line endings
-        # in the output will be converted to '\n'. For more information see the documentation of the io.TextIOWrapper
-        # class when the newline argument to its constructor is None.
-
         return proc
 
     @classmethod
     def defineBinaries(cls, env):
         SW_EM = env.getEmFolder()
-
         shell = os.environ.get("SHELL", "bash")
-        eman23_commands = [
-            (shell + ' ./eman2.3.linux64.sh -b -p "%s/eman-2.3"' %
-             SW_EM, '%s/eman-2.3/bin/python' % SW_EM)]
-        eman231_commands = [
-            (shell + ' ./eman2.31_sphire1.3.linux64.sh -b -p "%s/eman-2.31"' %
-             SW_EM, '%s/eman-2.31/bin/python' % SW_EM)]
+        urls = ['https://cryoem.bcm.edu/cryoem/static/software/release-2.31/eman2.31_sphire1.3.linux64.sh',
+                'https://cryoem.bcm.edu/cryoem/static/software/release-2.9/eman2.9_sphire1.4_sparx.linux64.sh']
 
-        env.addPackage('eman', version=V2_3,
-                       tar='eman2.3.linux64.tgz',
-                       commands=eman23_commands)
+        for ver, url in zip(cls._supportedVersions, urls):
+            install_cmd = 'cd %s && wget %s && ' % (SW_EM, url)
+            install_cmd += '%s ./%s -b -f -p "%s/eman-%s"' % (shell, url.split('/')[-1], SW_EM, ver)
+            eman_commands = [(install_cmd, '%s/eman-%s/bin/python' % (SW_EM, ver))]
 
-        env.addPackage('eman', version=V2_31,
-                       tar='eman2.31.linux64.tgz',
-                       commands=eman231_commands,
-                       default=True)
+            env.addPackage('eman', version=ver,
+                           tar='void.tgz',
+                           commands=eman_commands, default=ver==V2_9)

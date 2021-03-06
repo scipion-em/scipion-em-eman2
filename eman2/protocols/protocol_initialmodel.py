@@ -28,13 +28,14 @@ import os
 from glob import glob
 
 from pyworkflow.utils.path import cleanPattern
-from pyworkflow.protocol.params import (PointerParam, TextParam, IntParam,
+from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         BooleanParam, LEVEL_ADVANCED,
                                         StringParam)
 from pwem.protocols import ProtInitialVolume
 from pwem.objects.data import SetOfClasses2D, Volume
 
-from .. import Plugin, SCRATCHDIR
+from .. import Plugin
+from ..constants import EMAN2SCRATCHDIR
 
 
 class EmanProtInitModel(ProtInitialVolume):
@@ -64,7 +65,7 @@ class EmanProtInitModel(ProtInitialVolume):
                       help='Select the your class averages to build your '
                            '3D model.\nYou can select SetOfAverages or '
                            'SetOfClasses2D as input.')
-        form.addParam('symmetry', TextParam, default='c1',
+        form.addParam('symmetry', StringParam, default='c1',
                       label='Symmetry group',
                       help='Specify the symmetry.\nChoices are: c(n), d(n), '
                            'h(n), tet, oct, icos.\n'
@@ -216,7 +217,7 @@ class EmanProtInitModel(ProtInitialVolume):
                         'symmetry': self.symmetry.get(),
                         'threads': self.numberOfThreads.get(),
                         'mpis': self.numberOfMpi.get(),
-                        'scratch': SCRATCHDIR}
+                        'scratch': Plugin.getVar(EMAN2SCRATCHDIR)}
 
     def _isHighSym(self):
         return self.symmetry.get() in ["oct", "tet", "icos"]

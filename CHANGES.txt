@@ -1,3 +1,7 @@
+3.3:
+    - eman 2.9 added, 2.3 version removed
+    - old boxer and gauss protocol removed
+    - updated default values and constants
 3.2:
     - tomo protocols removed, since we have a separate eman tomo plugin
     - add eman 3D viewer for volumes

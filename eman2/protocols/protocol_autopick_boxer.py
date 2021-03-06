@@ -80,8 +80,8 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                       help="Longest axis of particle in pixels (diameter, "
                            "not radius).")
         form.addParam('boxerMode', EnumParam,
-                      choices=['local search', 'by ref', 'neural net'],
-                      label="Autopicker mode:", default=AUTO_LOCAL,
+                      choices=['local search', 'by ref', 'neural net', 'gauss'],
+                      label="Autopicker mode:", default=AUTO_CONVNET,
                       display=EnumParam.DISPLAY_COMBO,
                       help="Choose autopicker mode:\n\n"
                            " _local search_ - Reference based search by "
@@ -90,12 +90,24 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                            "cross-correlation picker with exhaustive "
                            "rotational search.\n"
                            " _neural net_ - convolutional neural network "
-                           "boxer.")
+                           "boxer.\n"
+                           " _gauss_ - simple reference-free picker.")
         form.addParam('threshold', FloatParam, default='5.0',
-                      label='Threshold')
+                      label='Threshold',
+                      condition='boxerMode!=%d' % AUTO_GAUSS)
         form.addParam('threshold2', FloatParam, default='-5.0',
                       condition='boxerMode==%d' % AUTO_CONVNET,
                       label='Threshold2')
+        form.addParam('gaussLow', FloatParam, default=1.,
+                      condition='boxerMode==%d' % AUTO_GAUSS,
+                      label='Threshold low')
+        form.addParam('gaussHigh', FloatParam, default=2.,
+                      condition='boxerMode==%d' % AUTO_GAUSS,
+                      label='Threshold high')
+        form.addParam('gaussWidth', FloatParam, default=1.,
+                      condition='boxerMode==%d' % AUTO_GAUSS,
+                      label='Gaussian width')
+
         form.addSection('References')
         form.addParam('boxerProt', PointerParam,
                       pointerClass='EmanProtBoxing',
@@ -106,7 +118,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                            'pre-trained neural network.')
         form.addParam('goodRefs', PointerParam,
                       pointerClass='SetOfAverages',
-                      condition='boxerMode!=%d' % AUTO_CONVNET,
+                      condition='boxerMode<%d' % AUTO_CONVNET,
                       allowsNull=True,
                       label="Good references",
                       help="Good particle references.")
@@ -147,9 +159,15 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         params += " --ptclsize=%d" % self.particleSize.get()
         params += " --threads=%d" % self.numberOfThreads.get()
 
-        modes = ['auto_local', 'auto_ref', 'auto_convnet']
-        params += " --autopick=%s:threshold=%0.2f" % (
-            modes[self.boxerMode.get()], self.threshold.get())
+        modes = ['auto_local', 'auto_ref', 'auto_convnet', 'auto_gauss']
+        params += " --autopick=%s" % modes[self.boxerMode.get()]
+
+        if self.boxerMode.get() == AUTO_GAUSS:
+            params += ":width=%0.3f:low=%0.3f:high=%0.3f:boxsize=%d" % (
+                self.gaussWidth.get(), self.gaussLow.get(),
+                self.gaussHigh.get(), self.boxSize.get())
+        else:
+            params += ":threshold=%0.2f" % self.threshold.get()
 
         if self.boxerMode.get() == AUTO_CONVNET:
             params += ":threshold2=%0.2f" % self.threshold2.get()
@@ -160,7 +178,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                 params += " --device=cpu"
 
         params += ' %s' % micFile
-        program = Plugin.getBoxerCommand()
+        program = Plugin.getProgram('e2boxer.py')
 
         self.runJob(program, params, cwd=self.getCoordsDir())
 
@@ -186,4 +204,4 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
     def readCoordsFromMics(self, workingDir, micList, coordSet):
         coordSet.setBoxSize(self.boxSize.get())
-        readSetOfCoordinates(workingDir, micList, coordSet, newBoxer=True)
+        readSetOfCoordinates(workingDir, micList, coordSet)

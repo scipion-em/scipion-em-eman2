@@ -35,4 +35,3 @@ from .protocol_refine2d_bispec import EmanProtRefine2DBispec
 from .protocol_refineasy import EmanProtRefine
 from .protocol_tiltvalidate import EmanProtTiltValidate
 from .protocol_autopick_boxer import EmanProtAutopick
-from .protocol_autopick_sparx import SparxGaussianProtPicking

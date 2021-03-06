@@ -127,7 +127,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
                       choices=['back_projection', 'fourier', 'fourier_iter',
                                'fouriersimple2D', 'nn4', 'nn4_ctf',
                                'nn4_ctf_rect', 'nn4_ctfw', 'nn4_ctfws', 'nn4_rect',
-                               'nnSSNR', 'nnSSNR_ctf', 'wiener_fourier'],
+                               'nnSSNR', 'nnSSNR_ctf', 'real_median', 'wiener_fourier'],
                       label="Reconstruction Method:", default=RECON_FOURIER,
                       display=EnumParam.DISPLAY_COMBO,
                       help='Reconstructor to use. See e2help.py reconstructors '

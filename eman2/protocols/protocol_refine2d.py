@@ -26,7 +26,6 @@
 
 import os
 import re
-from os.path import exists
 from glob import glob
 
 from pwem.constants import ALIGN_2D
@@ -38,7 +37,7 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
 from pyworkflow.utils.path import makePath, cleanPath, createLink
 
-from .. import Plugin, SCRATCHDIR
+from .. import Plugin
 from ..convert import (rowToAlignment, writeSetOfParticles,
                        convertReferences)
 from ..constants import *
@@ -140,7 +139,7 @@ class EmanProtRefine2D(ProtClassify2D):
                            'that these averages are not used for final 3-D '
                            'refinement, so generating a very large number is not '
                            'useful in most situations.')
-        form.addParam('numberOfIterations', IntParam, default=3,
+        form.addParam('numberOfIterations', IntParam, default=8,
                       label='Number of iterations',
                       help='Number of iterations of the overall 2-D refinement '
                            'process to run. For high contrast data, 4-5 iterations '
@@ -148,7 +147,7 @@ class EmanProtRefine2D(ProtClassify2D):
                            'it could take 10-12 iterations to converge well.\n'
                            'If running in Continue mode, provide here a number '
                            'of additional iterations to run.')
-        form.addParam('nbasisfp', IntParam, default=8,
+        form.addParam('nbasisfp', IntParam, default=12,
                       label='Number of MSA vectors to use',
                       help='Number of MSa basis vectors to use when '
                            'classifying particles.')
@@ -303,9 +302,9 @@ class EmanProtRefine2D(ProtClassify2D):
                       help='Use setsfref option in class averaging to '
                            'produce better class averages')
         form.addParam('classAveragerType', EnumParam,
-                      choices=['absmaxmin', 'ctf.auto', 'ctf.weight',
-                               'ctf.weight.autofilt', 'ctfw.auto', 'iteration',
-                               'localweight', 'mean', 'mean.tomo',
+                      choices=['ctf.auto', 'ctf.weight', 'ctf.weight.autofilt',
+                               'ctfw.auto', 'iterative',
+                               'localweight', 'mean', 'mean.tomo', 'median',
                                'minmax', 'sigma', 'weightedfourier'],
                       label='Class averager: ',
                       default=AVG_CTF_WEIGHT_AUTOFILT,
@@ -317,6 +316,7 @@ class EmanProtRefine2D(ProtClassify2D):
         line.addParam('classnormprocType', EnumParam,
                       choices=['normalize', 'normalize.bymass',
                                'normalize.circlemean', 'normalize.edgemean',
+                               'normalize.histpeak',
                                'normalize.local', 'normalize.lredge',
                                'normalize.mask', 'normalize.maxmin',
                                'normalize.ramp.normvar', 'normalize.rows',
@@ -551,7 +551,7 @@ class EmanProtRefine2D(ProtClassify2D):
                   'classiter': self.classIter.get(),
                   'threads': self.numberOfThreads.get(),
                   'mpis': self.numberOfMpi.get(),
-                  'scratch': SCRATCHDIR}
+                  'scratch': Plugin.getVar(EMAN2SCRATCHDIR)}
         args %= params
 
         if self.extraParams.hasValue():
@@ -594,7 +594,7 @@ class EmanProtRefine2D(ProtClassify2D):
     def _iterTextFile(self, iterN):
         with open(self._getFileName('results', iter=iterN)) as f:
             for line in f:
-                if '#' not in line:
+                if '#' not in line and line.strip():
                     yield [float(x) for x in line.split()]
 
     def _getIterNumber(self, index):
@@ -625,7 +625,7 @@ class EmanProtRefine2D(ProtClassify2D):
         if clean:
             cleanPath(data_classes)
 
-        if not exists(data_classes):
+        if not os.path.exists(data_classes):
             clsSet = SetOfClasses2D(filename=data_classes)
             clsSet.setImages(self._getInputParticles())
             self._fillClassesFromIter(clsSet, it)

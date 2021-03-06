@@ -44,7 +44,7 @@ class EmanImport:
         self.copyOrLink = protocol.getCopyOrLink()
 
     def importAngles(self, fileName, addAngles):
-        if pwutils.exists(fileName):
+        if os.path.exists(fileName):
             ext = pwutils.getExt(fileName)
 
             if ext == ".json":
@@ -59,10 +59,10 @@ class EmanImport:
                     ang.setAngles(y, y2, tilt)
                     addAngles(ang)
             else:
-                raise Exception('Unknown extension "%s" to import Eman tilt pair angles' % ext)
+                raise TypeError('Unknown extension "%s" to import Eman tilt pair angles' % ext)
 
     def importCoordinates(self, fileName, addCoordinate):
-        if pwutils.exists(fileName):
+        if os.path.exists(fileName):
             ext = pwutils.getExt(fileName)
 
             if ext == ".json":
@@ -96,7 +96,7 @@ class EmanImport:
                         coord.setPosition(x + half, y + half)
                         addCoordinate(coord)
             else:
-                raise Exception('Unknown extension "%s" to import Eman coordinates' % ext)
+                raise TypeError('Unknown extension "%s" to import Eman coordinates' % ext)
 
     def getBoxSize(self, coordFile):
         """ Try to infer the box size from the given coordinate file.
@@ -112,13 +112,13 @@ class EmanImport:
         elif coordFile.endswith('.json'):
             infoDir = os.path.dirname(coordFile)
             # Still go one level up of info dir
-            jsonBase = pwutils.join(os.path.dirname(infoDir), 'e2boxercache', 'base.json')
-            jsonBase2 = pwutils.join(infoDir, 'project.json')
-            if pwutils.exists(jsonBase):
+            jsonBase = os.path.join(os.path.dirname(infoDir), 'e2boxercache', 'base.json')
+            jsonBase2 = os.path.join(infoDir, 'project.json')
+            if os.path.exists(jsonBase):
                 jsonDict = loadJson(jsonBase)
                 if 'box_size' in jsonDict:
                     return int(jsonDict["box_size"])
-            elif pwutils.exists(jsonBase2):
+            elif os.path.exists(jsonBase2):
                 jsonDict = loadJson(jsonBase2)
                 if 'global.boxsize' in jsonDict:
                     return int(jsonDict["global.boxsize"])
