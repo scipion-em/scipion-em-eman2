@@ -30,10 +30,10 @@ import subprocess
 import pwem
 import pyworkflow.utils as pwutils
 
-from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_9, V2_31
+from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_9, V2_31, V2_91
 
 
-__version__ = '3.3'
+__version__ = '3.3.1'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
@@ -41,12 +41,12 @@ _references = ['Tang2007']
 class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
-    _supportedVersions = [V2_31, V2_9]
+    _supportedVersions = [V2_31, V2_9, V2_91]
     _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2_HOME, 'eman-' + V2_9)
+        cls._defineEmVar(EMAN2_HOME, 'eman-' + V2_91)
         cls._defineVar(EMAN2SCRATCHDIR, '/tmp')
 
     @classmethod
@@ -59,7 +59,7 @@ class Plugin(pwem.Plugin):
         return environ
 
     @classmethod
-    def isVersion(cls, version='2.9'):
+    def isVersion(cls, version='2.91'):
         return cls.getActiveVersion().startswith(version)
 
     @classmethod
@@ -99,7 +99,8 @@ class Plugin(pwem.Plugin):
         SW_EM = env.getEmFolder()
         shell = os.environ.get("SHELL", "bash")
         urls = ['https://cryoem.bcm.edu/cryoem/static/software/release-2.31/eman2.31_sphire1.3.linux64.sh',
-                'https://cryoem.bcm.edu/cryoem/static/software/release-2.9/eman2.9_sphire1.4_sparx.linux64.sh']
+                'https://cryoem.bcm.edu/cryoem/static/software/release-2.9/eman2.9_sphire1.4_sparx.linux64.sh',
+                'https://cryoem.bcm.edu/cryoem/static/software/release-2.91/eman2.91_sphire1.4_sparx.linux64.sh']
 
         for ver, url in zip(cls._supportedVersions, urls):
             install_cmd = 'cd %s && wget %s && ' % (SW_EM, url)
@@ -108,4 +109,4 @@ class Plugin(pwem.Plugin):
 
             env.addPackage('eman', version=ver,
                            tar='void.tgz',
-                           commands=eman_commands, default=ver==V2_9)
+                           commands=eman_commands, default=ver==V2_91)
