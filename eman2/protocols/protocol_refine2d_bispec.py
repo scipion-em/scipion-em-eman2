@@ -377,7 +377,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                     yield [float(x) for x in line.split()]
 
     def _getRun(self):
-        return 1
+        return 0 if Plugin.isVersion('2.91') else 1
 
     def _getIterNumber(self, index):
         """ Return the list of iteration files, give the iterTemplate. """
