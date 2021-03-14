@@ -60,7 +60,18 @@ class Plugin(pwem.Plugin):
 
     @classmethod
     def isVersion(cls, version='2.91'):
-        return cls.getActiveVersion().startswith(version)
+        return cls.getActiveVersion() == version
+
+    @classmethod
+    def getActiveVersion(cls, home=None, versions=None):
+        """ Reimplemented here, assumes EMAN2_HOME = eman-xxx """
+        ver = os.path.basename(cls.getHome()).split("-")[-1]
+        versions = cls.getSupportedVersions()
+        for v in versions:
+            if v == ver:
+                return v
+
+        return ''
 
     @classmethod
     def getProgram(cls, program, python=False):
@@ -109,4 +120,4 @@ class Plugin(pwem.Plugin):
 
             env.addPackage('eman', version=ver,
                            tar='void.tgz',
-                           commands=eman_commands, default=ver==V2_91)
+                           commands=eman_commands, default=ver == V2_91)
