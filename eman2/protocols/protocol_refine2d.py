@@ -507,8 +507,9 @@ class EmanProtRefine2D(ProtClassify2D):
 
     def _prepareContinueParams(self):
         args = " --input=%s" % self._getParticlesStack()
+        runN = self._getRun() - 1 if not Plugin.isVersion('2.91') else self._getRun()
         args += " --initial=r2d_%02d/classes_%02d.hdf" % \
-                (self._getRun() - 1, self._getIt())
+                (runN, self._getIt())
         args += self._commonParams()
 
         return args
@@ -561,7 +562,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
     def _getRun(self):
         if not self.doContinue:
-            return 1
+            return 0 if Plugin.isVersion('2.91') else 1
         else:
             contRun = self.continueRun.get()
             files = sorted(glob(contRun._getExtraPath("r2d_??")))
@@ -572,8 +573,8 @@ class EmanProtRefine2D(ProtClassify2D):
 
     def _getIt(self):
         contRun = self.continueRun.get()
-        files = sorted(glob(contRun._getExtraPath("r2d_%02d/classes_??.hdf" %
-                                                  (self._getRun() - 1))))
+        runN = self._getRun() - 1 if not Plugin.isVersion('2.91') else self._getRun()
+        files = sorted(glob(contRun._getExtraPath("r2d_%02d/classes_??.hdf" % runN)))
         if files:
             i = files[-1]
             iterNumber = int(i.split("_")[-1].replace('.hdf', ''))

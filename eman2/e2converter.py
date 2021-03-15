@@ -38,6 +38,7 @@ import sys
 
 import EMAN2 as eman
 
+
 MODE_WRITE = 'write'
 MODE_READ = 'read'
 

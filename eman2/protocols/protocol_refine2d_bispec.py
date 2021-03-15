@@ -255,7 +255,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
-        self._createIterTemplates(currRun=1)
+        self._createIterTemplates(currRun=self._getRun())
         self._insertFunctionStep('createLinksStep')
         args = self._prepareParams()
         self._insertFunctionStep('refineStep', args)
@@ -377,7 +377,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                     yield [float(x) for x in line.split()]
 
     def _getRun(self):
-        return 1
+        return 0 if Plugin.isVersion('2.91') else 1
 
     def _getIterNumber(self, index):
         """ Return the list of iteration files, give the iterTemplate. """
@@ -435,8 +435,9 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                              iterParams=params)
 
     def _execEmanProcess(self, iterN):
-        clsFn = self._getFileName("cls", run=1, iter=iterN)
-        classesFn = self._getFileName("classes", run=1, iter=iterN)
+        runN = self._getRun()
+        clsFn = self._getFileName("cls", run=runN, iter=iterN)
+        classesFn = self._getFileName("classes", run=runN, iter=iterN)
 
         proc = Plugin.createEmanProcess(args='read %s %s %s %s 2d'
                                              % (self._getParticlesStack(), clsFn, classesFn,
