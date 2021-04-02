@@ -31,6 +31,7 @@ from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         StringParam, USE_GPU,
                                         GPU_LIST, BooleanParam)
 from pyworkflow.utils import makePath, createLink
+from pyworkflow.constants import PROD
 from pwem.protocols import ProtParticlePickingAuto
 
 from .. import Plugin
@@ -42,6 +43,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     """ Automated particle picker for SPA. Uses EMAN2 (versions 2.2+) e2boxer.py
     """
     _label = 'boxer auto'
+    _devStatus = PROD
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """

@@ -27,6 +27,7 @@
 from glob import glob
 
 from pyworkflow.utils.path import cleanPattern
+from pyworkflow.constants import PROD
 from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         BooleanParam, StringParam,
                                         EnumParam, FloatParam)
@@ -47,6 +48,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
     """
 
     _label = 'initial model SGD'
+    _devStatus = PROD
 
     # --------------------------- DEFINE param functions ----------------------
 

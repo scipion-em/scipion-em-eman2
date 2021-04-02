@@ -31,6 +31,7 @@ from glob import glob
 from pwem.objects import SetOfClasses2D
 from pwem.protocols import ProtClassify2D
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
+from pyworkflow.constants import PROD
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam,
                                         LabelParam)
@@ -58,6 +59,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
     invariants derived from the bispectrum of each particle.
 """
     _label = 'refine 2D bispec'
+    _devStatus = PROD
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
