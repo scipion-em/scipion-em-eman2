@@ -31,6 +31,7 @@ from glob import glob
 from pwem.constants import ALIGN_2D
 from pwem.objects import SetOfClasses2D
 from pwem.protocols import ProtClassify2D
+from pyworkflow.constants import PROD
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam,
                                         BooleanParam, LabelParam)
@@ -69,6 +70,7 @@ class EmanProtRefine2D(ProtClassify2D):
     multiple cores are not always active.
 """
     _label = 'refine 2D'
+    _devStatus = PROD
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """

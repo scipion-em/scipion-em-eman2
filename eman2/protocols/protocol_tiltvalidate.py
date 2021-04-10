@@ -30,6 +30,7 @@ from pyworkflow.protocol.params import (PointerParam, FloatParam,
                                         LabelParam, EnumParam, StringParam,
                                         BooleanParam, IntParam, LEVEL_ADVANCED)
 import pyworkflow.utils as pwutils
+from pyworkflow.constants import PROD
 from pwem.protocols import ProtAnalysis3D
 
 from .. import Plugin
@@ -45,6 +46,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
     """
 
     _label = 'tilt validate'
+    _devStatus = PROD
 
     def __init__(self, **kwargs):
         ProtAnalysis3D.__init__(self, **kwargs)

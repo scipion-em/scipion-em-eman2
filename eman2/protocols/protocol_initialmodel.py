@@ -28,6 +28,7 @@ import os
 from glob import glob
 
 from pyworkflow.utils.path import cleanPattern
+from pyworkflow.constants import PROD
 from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         BooleanParam, LEVEL_ADVANCED,
                                         StringParam)
@@ -53,6 +54,7 @@ class EmanProtInitModel(ProtInitialVolume):
     """
 
     _label = 'initial model'
+    _devStatus = PROD
 
     # --------------------------- DEFINE param functions ----------------------
 

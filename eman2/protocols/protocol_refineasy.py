@@ -32,6 +32,7 @@ from pwem.constants import ALIGN_PROJ
 from pwem.protocols import ProtRefine3D
 from pwem.objects.data import Volume, SetOfParticles
 from pyworkflow.protocol.constants import LEVEL_ADVANCED
+from pyworkflow.constants import PROD
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam)
 from pyworkflow.utils.path import cleanPattern, makePath, createLink
@@ -64,6 +65,7 @@ Major features of this program:
  a target, NOT the filter resolution.
     """
     _label = 'refine easy'
+    _devStatus = PROD
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """

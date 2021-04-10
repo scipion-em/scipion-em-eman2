@@ -29,6 +29,7 @@ import os
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam,
                                         LEVEL_ADVANCED)
+from pyworkflow.constants import PROD
 from pyworkflow.utils.path import cleanPattern, makePath
 from pwem.objects.data import Volume
 from pwem.protocols import ProtReconstruct3D
@@ -50,6 +51,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
     """
 
     _label = 'reconstruct'
+    _devStatus = PROD
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """

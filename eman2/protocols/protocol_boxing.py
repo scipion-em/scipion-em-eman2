@@ -29,6 +29,7 @@
 import os
 
 from pyworkflow.object import String
+from pyworkflow.constants import PROD
 from pyworkflow.utils.properties import Message
 from pyworkflow.utils.path import getExt
 from pyworkflow.gui.dialog import askYesNo
@@ -43,6 +44,7 @@ class EmanProtBoxing(ProtParticlePicking):
     """ Semi-automated particle picker for SPA. Uses EMAN2 e2boxer.py.
     """
     _label = 'boxer'
+    _devStatus = PROD
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """

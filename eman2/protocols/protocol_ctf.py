@@ -26,6 +26,7 @@
 
 from pyworkflow.protocol.params import (FloatParam, EnumParam,
                                         BooleanParam)
+from pyworkflow.constants import PROD
 import pyworkflow.utils as pwutils
 from pwem.objects.data import CTFModel, SetOfParticles
 from pwem.protocols import ProtProcessParticles
@@ -43,6 +44,7 @@ class EmanProtCTFAuto(ProtProcessParticles):
     """
 
     _label = 'ctf auto'
+    _devStatus = PROD
 
     def __init__(self, **kwargs):
         ProtProcessParticles.__init__(self, **kwargs)
