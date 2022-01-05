@@ -75,6 +75,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                             " First core index is 0, second 1 and so on.\n"
                             "Eman boxer can use only one GPU.")
         form.addParam('boxSize', IntParam, default=128,
+                      allowsPointers=True,
                       label='Box size (px)',
                       help="Box size in pixels.")
         form.addParam('particleSize', IntParam, default=100,
