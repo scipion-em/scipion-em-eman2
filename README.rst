@@ -2,7 +2,7 @@
 EMAN2 plugin
 ============
 
-This plugin provide wrappers around several programs of `EMAN2 <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
+This plugin provides wrappers around several programs of `EMAN2 <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
 
 .. image:: https://img.shields.io/pypi/v/scipion-em-eman2.svg
         :target: https://pypi.python.org/pypi/scipion-em-eman2
@@ -23,14 +23,6 @@ This plugin provide wrappers around several programs of `EMAN2 <https://blake.bc
 .. image:: https://img.shields.io/pypi/dm/scipion-em-eman2
         :target: https://pypi.python.org/pypi/scipion-em-eman2
         :alt: Downloads
-
-
-+------------------+------------------+
-| stable: |stable| | devel: | |devel| |
-+------------------+------------------+
-
-.. |stable| image:: http://scipion-test.cnb.csic.es:9980/badges/eman2_prod.svg
-.. |devel| image:: http://scipion-test.cnb.csic.es:9980/badges/eman2_sdevel.svg
 
 
 Installation
@@ -56,7 +48,7 @@ b) Developer's version
 
     .. code-block::
 
-        scipion installp -p path_to_scipion-em-eman2 --devel
+        scipion installp -p /path/to/scipion-em-eman2 --devel
 
 **Important: starting from the plugin v3.2 all tomo protocols have been removed, they are now in https://github.com/scipion-em/scipion-em-emantomo**
 
