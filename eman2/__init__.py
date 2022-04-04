@@ -33,7 +33,7 @@ import pyworkflow.utils as pwutils
 from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, V2_9, V2_31, V2_91
 
 
-__version__ = '3.3.2'
+__version__ = '3.3.3'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 

@@ -69,6 +69,7 @@ class EmanProtBoxing(ProtParticlePicking):
         ProtParticlePicking._defineParams(self, form)
         form.addParam('boxSize', IntParam, default=-1,
                       label='Box size (px)',
+                      allowsPointers=True,
                       help="Box size in pixels.")
         form.addParam('particleSize', IntParam, default=-1,
                       label='Particle size (px)',
