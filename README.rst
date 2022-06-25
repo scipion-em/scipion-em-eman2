@@ -83,7 +83,7 @@ Protocols
 * boxer
 * boxer auto
 * ctf auto
-* `initial model <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtInitModel>`_
+* initial model
 * initial model SGD
 * reconstruct
 * refine 2d
