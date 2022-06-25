@@ -266,7 +266,7 @@ Major features of this program:
         continueRun = self.continueRun.get()
         prevPartDir = continueRun._getExtraPath("particles")
         currPartDir = self._getExtraPath("particles")
-        runN = self._getRun() - 1 if not Plugin.isVersion('2.91') else self._getRun()
+        runN = self._getRun() - 1 if not Plugin.versionGE('2.91') else self._getRun()
         prevRefDir = continueRun._getExtraPath("refine_%02d" % runN)
         currRefDir = self._getExtraPath("refine_%02d" % runN)
         prevSetsDir = continueRun._getExtraPath("sets")
@@ -385,7 +385,7 @@ Major features of this program:
         return args
 
     def _prepareContinueParams(self):
-        runN = self._getRun() - 1 if not Plugin.isVersion('2.91') else self._getRun()
+        runN = self._getRun() - 1 if not Plugin.versionGE('2.91') else self._getRun()
         args1 = "--startfrom=refine_%02d" % runN
         args2 = self._commonParams()
         args = args1 + args2
@@ -448,7 +448,7 @@ Major features of this program:
 
     def _getRun(self):
         if not self.doContinue:
-            return 0 if Plugin.isVersion('2.91') else 1
+            return 0 if Plugin.versionGE('2.91') else 1
         else:
             files = sorted(glob(self.continueRun.get()._getExtraPath("refine*")))
             if files:

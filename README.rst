@@ -50,11 +50,9 @@ b) Developer's version
 
         scipion installp -p /path/to/scipion-em-eman2 --devel
 
-**Important: starting from the plugin v3.2 all tomo protocols have been removed, they are now in https://github.com/scipion-em/scipion-em-emantomo**
-
 EMAN2 binaries will be installed automatically with the plugin, but you can also link an existing installation.
 
-    * Default installation path assumed is ``software/em/eman-2.91``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
+    * Default installation path assumed is ``software/em/eman-2.99``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
     * The default scratch directory is assumed */tmp/*. You can change it by setting *EMAN2SCRATCHDIR* in ``scipion.conf`` or your shell environment.
 
 To check the installation, simply run one of the following Scipion tests:
@@ -77,13 +75,13 @@ A complete list of tests can also be seen by executing ``scipion test --show --g
 Supported versions
 ------------------
 
-2.31, 2.9, 2.91
+2.9, 2.91, 2.99 (continuous build)
 
 Protocols
 ---------
 
-* boxer (new interactive e2boxer.py)
-* boxer auto (fully automated new boxer in EMAN >= 2.21)
+* boxer
+* boxer auto
 * ctf auto
 * `initial model <https://github.com/scipion-em/scipion-em-eman2/wiki/EmanProtInitModel>`_
 * initial model SGD

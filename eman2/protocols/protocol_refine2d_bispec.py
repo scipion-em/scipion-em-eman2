@@ -164,9 +164,9 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                       help='Change the *keep* criterion from fraction-based '
                            'to sigma-based')
         form.addParam('classAveragerType', EnumParam,
-                      choices=['absmaxmin', 'ctf.auto', 'ctf.weight',
-                               'ctf.weight.autofilt', 'ctfw.auto', 'iteration',
-                               'localweight', 'mean', 'mean.tomo',
+                      choices=['ctf.auto', 'ctf.weight',
+                               'ctf.weight.autofilt', 'ctfw.auto', 'iterative',
+                               'localweight', 'mean', 'mean.tomo', 'median',
                                'minmax', 'sigma', 'weightedfourier'],
                       label='Class averager: ',
                       default=AVG_CTF_WEIGHT_AUTOFILT,
@@ -379,7 +379,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                     yield [float(x) for x in line.split()]
 
     def _getRun(self):
-        return 0 if Plugin.isVersion('2.91') else 1
+        return 0 if Plugin.versionGE('2.91') else 1
 
     def _getIterNumber(self, index):
         """ Return the list of iteration files, give the iterTemplate. """

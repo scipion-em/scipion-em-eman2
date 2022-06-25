@@ -28,9 +28,7 @@ EMAN2_HOME = 'EMAN2_HOME'
 EMAN2SCRATCHDIR = 'EMAN2SCRATCHDIR'
 
 # Supported versions
-V2_31 = '2.31'
-V2_9 = '2.9'
-V2_91 = '2.91'
+VERSIONS = ['2.9', '2.91', '2.99']
 
 # ------------------ Constants values -----------------------------------------
 
@@ -55,14 +53,15 @@ XFORM_CENTER_NONE = 4
 CMP_CCC = 0
 CMP_DOT = 1
 CMP_FRC = 2
-CMP_LOD = 3
-CMP_OPTSUB = 4
-CMP_OPTVARIANCE = 5
-CMP_PHASE = 6
-CMP_QUADMINDOT = 7
-CMP_SQEUCLIDEAN = 8
-CMP_VERTICAL = 9
-CMP_NONE = 10
+CMP_FRC_FREQ = 3
+CMP_LOD = 4
+CMP_OPTSUB = 5
+CMP_OPTVARIANCE = 6
+CMP_PHASE = 7
+CMP_QUADMINDOT = 8
+CMP_SQEUCLIDEAN = 9
+CMP_VERTICAL = 10
+CMP_NONE = 11
 
 # aligners
 ALN_FRM2D = 0
