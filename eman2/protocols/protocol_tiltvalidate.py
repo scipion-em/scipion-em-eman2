@@ -148,7 +148,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                                'rtf_exhaustive',
                                'rtf_slow_exhaustive', 'scale', 'symalign',
                                'symalignquat', 'translational', 'None'],
-                      label='type', default=ALN_ROTATE_TRANSLATE_TREE,
+                      label='type', default=ALN_ROTATE_TRANSLATE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simalignParams', StringParam,
                       default='', label='params')
