@@ -25,6 +25,7 @@
 # **************************************************************************
 
 import os
+from enum import Enum
 
 from pyworkflow.protocol.params import (PointerParam, FloatParam, IntParam,
                                         EnumParam, StringParam, BooleanParam,
@@ -37,6 +38,10 @@ from pwem.protocols import ProtReconstruct3D
 from .. import Plugin
 from ..convert import writeSetOfParticles
 from ..constants import *
+
+
+class outputs(Enum):
+    outputVolume = Volume
 
 
 class EmanProtReconstruct(ProtReconstruct3D):
@@ -52,6 +57,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
 
     _label = 'reconstruct'
     _devStatus = PROD
+    _possibleOutputs = outputs
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
@@ -229,7 +235,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
         vol = Volume()
         vol.setFileName(self._getFileName("volume"))
         vol.copyInfo(partSet)
-        self._defineOutputs(outputVolume=vol)
+        self._defineOutputs(**{outputs.outputVolume.name: vol})
         self._defineSourceRelation(self.inputParticles, vol)
 
     # --------------------------- INFO functions ------------------------------

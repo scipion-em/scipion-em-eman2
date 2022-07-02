@@ -45,6 +45,14 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
     _label = 'ctf auto'
     _devStatus = PROD
+    _possibleOutputs = {
+        'outputParticles_flip_fullRes': SetOfParticles,
+        'outputParticles_flip_invar': SetOfParticles,
+        'outputParticles_flip_lp5': SetOfParticles,
+        'outputParticles_flip_lp7': SetOfParticles,
+        'outputParticles_flip_lp12': SetOfParticles,
+        'outputParticles_flip_lp20': SetOfParticles
+    }
 
     def __init__(self, **kwargs):
         ProtProcessParticles.__init__(self, **kwargs)

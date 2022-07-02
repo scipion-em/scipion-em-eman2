@@ -110,6 +110,11 @@ class EmanProtBoxing(ProtParticlePicking):
         arguments = " --apix=%(pixSize)f --boxsize=%(boxSize)d"
         arguments += " --ptclsize=%(ptclSize)d --gui --threads=%(thr)d --no_ctf"
 
+        acq = self.inputMics.getAcquisition()
+        arguments += " --voltage %d" % acq.getVoltage()
+        arguments += " --cs %0.2f" % acq.getSphericalAberration()
+        arguments += " --ac %0.2f" % acq.getAmplitudeContrast()
+
         self._params.update({
             'pixSize': self.inputMics.getSamplingRate(),
             'boxSize': self.boxSize.get(),
