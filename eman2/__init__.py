@@ -26,6 +26,8 @@
 
 import os
 import subprocess
+import logging
+logger = logging.getLogger(__name__)
 
 import pwem
 import pyworkflow.utils as pwutils
@@ -110,7 +112,7 @@ class Plugin(pwem.Plugin):
         """
         program = os.path.join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args, python=True)
-        print("** Running: '%s'" % cmd)
+        logger.info(f"\tRunning: {cmd}")
         cmd = cmd.split()
         proc = subprocess.Popen(cmd, env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
