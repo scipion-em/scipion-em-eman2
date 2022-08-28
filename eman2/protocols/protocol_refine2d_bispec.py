@@ -27,6 +27,7 @@
 import os
 import re
 from glob import glob
+from enum import Enum
 
 from pwem.objects import SetOfClasses2D
 from pwem.protocols import ProtClassify2D
@@ -39,6 +40,10 @@ from pyworkflow.utils import createLink, cleanPath
 
 from .. import Plugin
 from ..constants import *
+
+
+class outputs(Enum):
+    outputClasses = SetOfClasses2D
 
 
 class EmanProtRefine2DBispec(ProtClassify2D):
@@ -60,6 +65,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
 """
     _label = 'refine 2D bispec'
     _devStatus = PROD
+    _possibleOutputs = outputs
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
@@ -286,7 +292,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
         classes2D = self._createSetOfClasses2D(partSet)
         self._fillClassesFromIter(classes2D, self._lastIter())
 
-        self._defineOutputs(outputClasses=classes2D)
+        self._defineOutputs(**{outputs.outputClasses.name: classes2D})
         self._defineSourceRelation(partSet, classes2D)
 
     # --------------------------- INFO functions ------------------------------

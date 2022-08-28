@@ -25,6 +25,7 @@
 # **************************************************************************
 
 from glob import glob
+from enum import Enum
 
 from pyworkflow.utils.path import cleanPattern
 from pyworkflow.constants import PROD
@@ -32,10 +33,14 @@ from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         BooleanParam, StringParam,
                                         EnumParam, FloatParam)
 from pwem.protocols import ProtInitialVolume
-from pwem.objects.data import SetOfClasses2D, SetOfAverages, Volume
+from pwem.objects.data import SetOfClasses2D, SetOfAverages, Volume, SetOfVolumes
 
 from .. import Plugin
 from ..constants import *
+
+
+class outputs(Enum):
+    outputVolumes = SetOfVolumes
 
 
 class EmanProtInitModelSGD(ProtInitialVolume):
@@ -49,6 +54,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
 
     _label = 'initial model SGD'
     _devStatus = PROD
+    _possibleOutputs = outputs
 
     # --------------------------- DEFINE param functions ----------------------
 
@@ -209,7 +215,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
             vol.setObjComment('eman initial model %02d' % (k + 1))
             volumes.append(vol)
 
-        self._defineOutputs(outputVolumes=volumes)
+        self._defineOutputs(**{outputs.outputVolumes.name: volumes})
         self._defineSourceRelation(inputSet, volumes)
 
     # --------------------------- INFO functions ------------------------------

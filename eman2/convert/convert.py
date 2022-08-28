@@ -32,6 +32,8 @@ import glob
 import json
 import numpy
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 
 import pyworkflow.utils as pwutils
@@ -208,7 +210,7 @@ def writeSetOfParticles(partSet, path, **kwargs):
             newFn = pwutils.removeBaseExt(fn).split('__ctf')[0] + '.hdf'
             newFn = os.path.join(path, newFn)
             pwutils.createLink(fn, newFn)
-            print("   %s -> %s" % (fn, newFn))
+            logger.info(f"\t{fn} -> {newFn}")
     else:
         firstCoord = partSet.getFirstItem().getCoordinate() or None
         hasMicName = False

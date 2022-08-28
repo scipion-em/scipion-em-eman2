@@ -2,7 +2,7 @@
 EMAN2 plugin
 ============
 
-This plugin provides wrappers around several programs of `EMAN2 <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
+This plugin provides wrappers around several programs of `EMAN <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
 
 .. image:: https://img.shields.io/pypi/v/scipion-em-eman2.svg
         :target: https://pypi.python.org/pypi/scipion-em-eman2
@@ -42,7 +42,7 @@ b) Developer's version
 
     .. code-block::
 
-        git clone https://github.com/scipion-em/scipion-em-eman2.git
+        git clone -b devel https://github.com/scipion-em/scipion-em-eman2.git
 
     * install
 

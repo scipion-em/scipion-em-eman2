@@ -27,6 +27,8 @@
 # **************************************************************************
 
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 import pyworkflow.utils as pwutils
 from pwem.objects.data import Coordinate, CTFModel
@@ -85,8 +87,8 @@ class EmanImport:
                 md.readPlain(fileName, "xcoor ycoor particleSize")
                 size = md.getValue(MDL_PICKING_PARTICLE_SIZE, md.firstObject())
                 if size is None:
-                    print(">>> WARNING: Error parsing coordinate file: %s" % fileName)
-                    print("             Skipping this file.")
+                    logger.warning(f">>> WARNING: Error parsing coordinate file: {fileName}\n"
+                                   f"Skipping this file.")
                 else:
                     half = size / 2
                     for objId in md:

@@ -26,6 +26,8 @@
 
 import os
 import subprocess
+import logging
+logger = logging.getLogger(__name__)
 
 import pwem
 import pyworkflow.utils as pwutils
@@ -33,7 +35,7 @@ import pyworkflow.utils as pwutils
 from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, VERSIONS
 
 
-__version__ = '3.4'
+__version__ = '3.4.1'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
@@ -110,7 +112,7 @@ class Plugin(pwem.Plugin):
         """
         program = os.path.join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args, python=True)
-        print("** Running: '%s'" % cmd)
+        logger.info(f"\tRunning: {cmd}")
         cmd = cmd.split()
         proc = subprocess.Popen(cmd, env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
@@ -129,7 +131,7 @@ class Plugin(pwem.Plugin):
                 'https://cryoem.bcm.edu/cryoem/static/software/continuous_build/eman2_sphire_sparx.linux.unstable.sh']
 
         for ver, url in zip(VERSIONS, urls):
-            install_cmd = 'cd %s && wget %s && ' % (SW_EM, url)
+            install_cmd = 'cd %s && wget --no-check-certificate %s && ' % (SW_EM, url)
             install_cmd += '%s ./%s -b -f -p "%s/eman-%s"' % (shell, url.split('/')[-1], SW_EM, ver)
             eman_commands = [(install_cmd, '%s/eman-%s/bin/python' % (SW_EM, ver))]
 

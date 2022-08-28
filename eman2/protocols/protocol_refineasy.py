@@ -27,6 +27,7 @@
 import os
 import re
 from glob import glob
+from enum import Enum
 
 from pwem.constants import ALIGN_PROJ
 from pwem.protocols import ProtRefine3D
@@ -40,6 +41,11 @@ from pyworkflow.utils.path import cleanPattern, makePath, createLink
 from .. import Plugin
 from ..convert import rowToAlignment, writeSetOfParticles
 from ..constants import *
+
+
+class outputs(Enum):
+    outputVolume = Volume
+    outputParticles = SetOfParticles
 
 
 class EmanProtRefine(ProtRefine3D):
@@ -66,6 +72,7 @@ Major features of this program:
     """
     _label = 'refine easy'
     _devStatus = PROD
+    _possibleOutputs = outputs
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
@@ -327,9 +334,9 @@ Major features of this program:
         newPartSet.copyInfo(partSet)
         self._fillDataFromIter(newPartSet, iterN)
 
-        self._defineOutputs(outputVolume=vol)
+        self._defineOutputs(**{outputs.outputVolume.name: vol,
+                               outputs.outputParticles.name: newPartSet})
         self._defineSourceRelation(self._getInputParticlesPointer(), vol)
-        self._defineOutputs(outputParticles=newPartSet)
         self._defineTransformRelation(self._getInputParticlesPointer(), newPartSet)
 
     # --------------------------- INFO functions ------------------------------

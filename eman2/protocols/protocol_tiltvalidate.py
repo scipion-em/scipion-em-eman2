@@ -198,7 +198,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
         partTilt = part.getTilted()
         storePath = self._getExtraPath("particles")
         pwutils.makePath(storePath)
-        print("Converting input particle set..")
+        self.info("Converting input particle set..")
 
         for partSet, suffix in zip([partUnt, partTilt],
                                    ['_untilted_ptcls', '_tilted_ptcls']):

@@ -26,6 +26,7 @@
 
 import os
 from glob import glob
+from enum import Enum
 
 from pyworkflow.utils.path import cleanPattern
 from pyworkflow.constants import PROD
@@ -33,10 +34,14 @@ from pyworkflow.protocol.params import (PointerParam, IntParam,
                                         BooleanParam, LEVEL_ADVANCED,
                                         StringParam)
 from pwem.protocols import ProtInitialVolume
-from pwem.objects.data import SetOfClasses2D, Volume
+from pwem.objects.data import SetOfClasses2D, Volume, SetOfVolumes
 
 from .. import Plugin
 from ..constants import EMAN2SCRATCHDIR
+
+
+class outputs(Enum):
+    outputVolumes = SetOfVolumes
 
 
 class EmanProtInitModel(ProtInitialVolume):
@@ -55,6 +60,7 @@ class EmanProtInitModel(ProtInitialVolume):
 
     _label = 'initial model'
     _devStatus = PROD
+    _possibleOutputs = outputs
 
     # --------------------------- DEFINE param functions ----------------------
 
@@ -189,7 +195,7 @@ class EmanProtInitModel(ProtInitialVolume):
             vol.setObjComment('eman initial model %02d' % (k + 1))
             volumes.append(vol)
 
-        self._defineOutputs(outputVolumes=volumes)
+        self._defineOutputs(**{outputs.outputVolumes.name: volumes})
         self._defineSourceRelation(self.inputSet, volumes)
 
     # --------------------------- INFO functions ------------------------------

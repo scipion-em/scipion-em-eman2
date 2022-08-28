@@ -27,6 +27,7 @@
 import os
 import re
 from glob import glob
+from enum import Enum
 
 from pwem.constants import ALIGN_2D
 from pwem.objects import SetOfClasses2D
@@ -42,6 +43,10 @@ from .. import Plugin
 from ..convert import (rowToAlignment, writeSetOfParticles,
                        convertReferences)
 from ..constants import *
+
+
+class outputs(Enum):
+    outputClasses = SetOfClasses2D
 
 
 class EmanProtRefine2D(ProtClassify2D):
@@ -71,6 +76,7 @@ class EmanProtRefine2D(ProtClassify2D):
 """
     _label = 'refine 2D'
     _devStatus = PROD
+    _possibleOutputs = outputs
 
     def _createFilenameTemplates(self):
         """ Centralize the names of the files. """
@@ -468,7 +474,7 @@ class EmanProtRefine2D(ProtClassify2D):
         classes2D = self._createSetOfClasses2D(partSet)
         self._fillClassesFromIter(classes2D, self._lastIter())
 
-        self._defineOutputs(outputClasses=classes2D)
+        self._defineOutputs(**{outputs.outputClasses.name: classes2D})
         self._defineSourceRelation(self.inputParticles, classes2D)
 
     # --------------------------- INFO functions ------------------------------
