@@ -130,7 +130,7 @@ class Plugin(pwem.Plugin):
                 'https://cryoem.bcm.edu/cryoem/static/software/continuous_build/eman2_sphire_sparx.linux.unstable.sh']
 
         for ver, url in zip(VERSIONS, urls):
-            install_cmd = 'cd %s && wget --no-check-certificate %s && ' % (SW_EM, url)
+            install_cmd = 'cd %s && wget --no-check-certificate -q --show-progress %s && ' % (SW_EM, url)
             install_cmd += '%s ./%s -b -f -p "%s/eman-%s"' % (shell, url.split('/')[-1], SW_EM, ver)
             eman_commands = [(install_cmd, '%s/eman-%s/bin/python' % (SW_EM, ver))]
 
