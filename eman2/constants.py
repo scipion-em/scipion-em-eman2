@@ -28,7 +28,7 @@ EMAN2_HOME = 'EMAN2_HOME'
 EMAN2SCRATCHDIR = 'EMAN2SCRATCHDIR'
 
 # Supported versions
-VERSIONS = ['2.9', '2.91', '2.99']
+VERSIONS = ['2.91', '2.99']
 
 # ------------------ Constants values -----------------------------------------
 
