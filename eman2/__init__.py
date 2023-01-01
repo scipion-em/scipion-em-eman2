@@ -80,7 +80,7 @@ class Plugin(pwem.Plugin):
         return True
 
     @classmethod
-    def getActiveVersion(cls, home=None, versions=None):
+    def getActiveVersion(cls, *args):
         """ Reimplemented here, assumes EMAN2_HOME = eman-xxx """
         ver = os.path.basename(cls.getHome()).split("-")[-1]
         versions = cls.getSupportedVersions()
