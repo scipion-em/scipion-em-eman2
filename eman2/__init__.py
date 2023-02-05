@@ -35,7 +35,7 @@ import pyworkflow.utils as pwutils
 from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, VERSIONS
 
 
-__version__ = '3.4.1'
+__version__ = '3.4.2'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
@@ -44,7 +44,7 @@ class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
     _supportedVersions = VERSIONS
-    _url = "https://github.com/scipion-em/scipion-em-eman2"
+    _url = "https://blake.bcm.edu/emanwiki/EMAN2"
 
     @classmethod
     def _defineVariables(cls):
@@ -80,7 +80,7 @@ class Plugin(pwem.Plugin):
         return True
 
     @classmethod
-    def getActiveVersion(cls, home=None, versions=None):
+    def getActiveVersion(cls, *args):
         """ Reimplemented here, assumes EMAN2_HOME = eman-xxx """
         ver = os.path.basename(cls.getHome()).split("-")[-1]
         versions = cls.getSupportedVersions()
@@ -126,12 +126,11 @@ class Plugin(pwem.Plugin):
     def defineBinaries(cls, env):
         SW_EM = env.getEmFolder()
         shell = os.environ.get("SHELL", "bash")
-        urls = ['https://cryoem.bcm.edu/cryoem/static/software/release-2.9/eman2.9_sphire1.4_sparx.linux64.sh',
-                'https://cryoem.bcm.edu/cryoem/static/software/release-2.91/eman2.91_sphire1.4_sparx.linux64.sh',
+        urls = ['https://cryoem.bcm.edu/cryoem/static/software/release-2.91/eman2.91_sphire1.4_sparx.linux64.sh',
                 'https://cryoem.bcm.edu/cryoem/static/software/continuous_build/eman2_sphire_sparx.linux.unstable.sh']
 
         for ver, url in zip(VERSIONS, urls):
-            install_cmd = 'cd %s && wget --no-check-certificate %s && ' % (SW_EM, url)
+            install_cmd = 'cd %s && wget --no-check-certificate -q --show-progress %s && ' % (SW_EM, url)
             install_cmd += '%s ./%s -b -f -p "%s/eman-%s"' % (shell, url.split('/')[-1], SW_EM, ver)
             eman_commands = [(install_cmd, '%s/eman-%s/bin/python' % (SW_EM, ver))]
 

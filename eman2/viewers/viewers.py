@@ -242,7 +242,7 @@ Examples:
         elif self.iterToShow.get() == ALL_ITERS:
             self._iterations = range(1, self.lastIter + 1)
         elif self.iterToShow.get() == SELECTED_ITERS:
-            self._iterations = self._getListFromRangeString(
+            self._iterations = pwutils.getListFromRangeString(
                 self.iterSelection.get())
 
     def _protocolIsNotBispec(self):
@@ -589,7 +589,7 @@ Examples:
         elif self.iterToShow.get() == ALL_ITERS:
             self._iterations = range(1, self.lastIter + 1)
         elif self.iterToShow.get() == SELECTED_ITERS:
-            self._iterations = self._getListFromRangeString(
+            self._iterations = pwutils.getListFromRangeString(
                 self.iterSelection.get())
 
         from matplotlib.ticker import FuncFormatter
