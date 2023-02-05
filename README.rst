@@ -75,7 +75,7 @@ A complete list of tests can also be seen by executing ``scipion test --show --g
 Supported versions
 ------------------
 
-2.9, 2.91, 2.99 (continuous build)
+2.91, 2.99 (continuous build)
 
 Protocols
 ---------
