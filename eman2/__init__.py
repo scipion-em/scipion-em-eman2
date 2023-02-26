@@ -44,7 +44,7 @@ class Plugin(pwem.Plugin):
     _homeVar = EMAN2_HOME
     _pathVars = [EMAN2_HOME]
     _supportedVersions = VERSIONS
-    _url = "https://blake.bcm.edu/emanwiki/EMAN2"
+    _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
     def _defineVariables(cls):
