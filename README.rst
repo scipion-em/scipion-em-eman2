@@ -1,6 +1,6 @@
-============
-EMAN2 plugin
-============
+===========
+EMAN plugin
+===========
 
 This plugin provides wrappers around several programs of `EMAN <https://blake.bcm.edu/emanwiki/EMAN2>`_ software suite.
 
@@ -50,10 +50,22 @@ b) Developer's version
 
         scipion installp -p /path/to/scipion-em-eman2 --devel
 
-EMAN2 binaries will be installed automatically with the plugin, but you can also link an existing installation.
+EMAN software will be installed automatically with the plugin but you can also use an existing installation by providing *EMAN_ENV_ACTIVATION* (see below).
 
-    * Default installation path assumed is ``software/em/eman-2.99``, if you want to change it, set *EMAN2_HOME* in ``scipion.conf`` file pointing to the folder where the EMAN2 is installed.
-    * The default scratch directory is assumed */tmp/*. You can change it by setting *EMAN2SCRATCHDIR* in ``scipion.conf`` or your shell environment.
+**Important:** you need to have conda (miniconda3 or anaconda3) pre-installed to use this program.
+
+Configuration variables
+-----------------------
+*CONDA_ACTIVATION_CMD*: If undefined, it will rely on conda command being in the
+PATH (not recommended), which can lead to execution problems mixing scipion
+python with conda ones. One example of this could can be seen below but
+depending on your conda version and shell you will need something different:
+CONDA_ACTIVATION_CMD = eval "$(/extra/miniconda3/bin/conda shell.bash hook)"
+
+*EMAN_ENV_ACTIVATION* (default = conda activate eman-2.99.46):
+Command to activate the cryoDRGN environment.
+
+The default scratch directory is assumed */tmp/*. You can change it by setting *EMAN2SCRATCHDIR* in ``scipion.conf`` or your shell environment.
 
 To check the installation, simply run one of the following Scipion tests:
 
@@ -75,7 +87,7 @@ A complete list of tests can also be seen by executing ``scipion test --show --g
 Supported versions
 ------------------
 
-2.91, 2.99 (continuous build)
+2.99.46
 
 Protocols
 ---------
