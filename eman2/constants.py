@@ -24,11 +24,15 @@
 # *
 # **************************************************************************
 
-EMAN2_HOME = 'EMAN2_HOME'
 EMAN2SCRATCHDIR = 'EMAN2SCRATCHDIR'
 
 # Supported versions
-VERSIONS = ['2.91', '2.99']
+VERSIONS = ['2.99.47']
+EMAN_DEFAULT_VER_NUM = VERSIONS[-1]
+
+DEFAULT_ENV_NAME = f"eman-{EMAN_DEFAULT_VER_NUM}"
+DEFAULT_ACTIVATION_CMD = 'conda activate ' + DEFAULT_ENV_NAME
+EMAN_ENV_ACTIVATION = 'EMAN_ENV_ACTIVATION'
 
 # ------------------ Constants values -----------------------------------------
 
