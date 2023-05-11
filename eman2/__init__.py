@@ -31,38 +31,46 @@ logger = logging.getLogger(__name__)
 
 import pwem
 import pyworkflow.utils as pwutils
+from pyworkflow import Config
 
-from .constants import EMAN2_HOME, EMAN2SCRATCHDIR, VERSIONS
+from .constants import (EMAN2SCRATCHDIR, VERSIONS, EMAN_ENV_ACTIVATION,
+                        DEFAULT_ACTIVATION_CMD, EMAN_DEFAULT_VER_NUM)
 
 
-__version__ = '3.4.2'
+__version__ = '3.5'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
 
 class Plugin(pwem.Plugin):
-    _homeVar = EMAN2_HOME
-    _pathVars = [EMAN2_HOME]
     _supportedVersions = VERSIONS
-    _url = "https://blake.bcm.edu/emanwiki/EMAN2"
+    _url = "https://github.com/scipion-em/scipion-em-eman2"
 
     @classmethod
     def _defineVariables(cls):
-        cls._defineEmVar(EMAN2_HOME, 'eman-' + VERSIONS[-1])
+        cls._defineVar(EMAN_ENV_ACTIVATION, DEFAULT_ACTIVATION_CMD)
         cls._defineVar(EMAN2SCRATCHDIR, '/tmp')
 
     @classmethod
     def getEnviron(cls):
         """ Setup the environment variables needed to launch Eman. """
         environ = pwutils.Environ(os.environ)
-        environ.update({'PATH': cls.getHome('bin')},
-                       position=pwutils.Environ.BEGIN)
-
         for v in ['PYTHONPATH', 'PYTHONHOME']:
             if v in environ:
                 del environ[v]
 
         return environ
+
+    @classmethod
+    def getDependencies(cls):
+        """ Return a list of dependencies. Include conda if
+        activation command was not found. """
+        condaActivationCmd = cls.getCondaActivationCmd()
+        neededProgs = []
+        if not condaActivationCmd:
+            neededProgs.append('conda')
+
+        return neededProgs
 
     @classmethod
     def versionGE(cls, version):
@@ -81,25 +89,29 @@ class Plugin(pwem.Plugin):
 
     @classmethod
     def getActiveVersion(cls, *args):
-        """ Reimplemented here, assumes EMAN2_HOME = eman-xxx """
-        ver = os.path.basename(cls.getHome()).split("-")[-1]
-        versions = cls.getSupportedVersions()
-        for v in versions:
-            if v == ver:
-                return v
+        """ Return the env name that is currently active. """
+        envVar = cls.getVar(EMAN_ENV_ACTIVATION)
+        return envVar.split()[-1].split("-")[-1]
 
-        return ''
+    @classmethod
+    def getEmanEnvActivation(cls):
+        """ Remove the scipion home and activate the conda environment. """
+        activation = cls.getVar(EMAN_ENV_ACTIVATION)
+        scipionHome = Config.SCIPION_HOME + os.path.sep
+
+        return activation.replace(scipionHome, "", 1)
+
+    @classmethod
+    def getActivationCmd(cls):
+        """ Return the activation command. """
+        return '%s %s' % (cls.getCondaActivationCmd(),
+                          cls.getEmanEnvActivation())
 
     @classmethod
     def getProgram(cls, program, python=False):
-        """ Return the program binary that will be used. """
-        program = os.path.join(cls.getHome('bin'), program)
-
-        if python:
-            python = cls.getHome('bin/python')
-            return '%(python)s %(program)s ' % locals()
-        else:
-            return '%(program)s ' % locals()
+        """ Create EMAN command line. """
+        cmd = "python" if python else ""
+        return f"{cls.getActivationCmd()} && {cmd} {program} "
 
     @classmethod
     def getEmanCommand(cls, program, args, python=False):
@@ -113,8 +125,8 @@ class Plugin(pwem.Plugin):
         program = os.path.join(__path__[0], script)
         cmd = cls.getEmanCommand(program, args, python=True)
         logger.info(f"\tRunning: {cmd}")
-        cmd = cmd.split()
-        proc = subprocess.Popen(cmd, env=cls.getEnviron(),
+        proc = subprocess.Popen(cmd, shell=True,  # required for "eval" to work
+                                env=cls.getEnviron(),
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 cwd=direc,
@@ -124,16 +136,29 @@ class Plugin(pwem.Plugin):
 
     @classmethod
     def defineBinaries(cls, env):
-        SW_EM = env.getEmFolder()
-        shell = os.environ.get("SHELL", "bash")
-        urls = ['https://cryoem.bcm.edu/cryoem/static/software/release-2.91/eman2.91_sphire1.4_sparx.linux64.sh',
-                'https://cryoem.bcm.edu/cryoem/static/software/continuous_build/eman2_sphire_sparx.linux.unstable.sh']
+        for ver in VERSIONS:
+            cls.addEmanPackage(env, ver,
+                               default=ver == EMAN_DEFAULT_VER_NUM)
 
-        for ver, url in zip(VERSIONS, urls):
-            install_cmd = 'cd %s && wget --no-check-certificate -q --show-progress %s && ' % (SW_EM, url)
-            install_cmd += '%s ./%s -b -f -p "%s/eman-%s"' % (shell, url.split('/')[-1], SW_EM, ver)
-            eman_commands = [(install_cmd, '%s/eman-%s/bin/python' % (SW_EM, ver))]
+    @classmethod
+    def addEmanPackage(cls, env, version, default=False):
+        ENV_NAME = f"eman-{version}"
+        FLAG = f"eman_{version}_installed"
 
-            env.addPackage('eman', version=ver,
-                           tar='void.tgz',
-                           commands=eman_commands, default=ver == VERSIONS[-1])
+        # try to get CONDA activation command
+        installCmds = [
+            cls.getCondaActivationCmd(),
+            f'conda create -y -n {ENV_NAME} eman-dev={version} -c cryoem -c conda-forge &&',
+            f'touch {FLAG}'  # Flag installation finished
+        ]
+        emanCmds = [(" ".join(installCmds), FLAG)]
+
+        envPath = os.environ.get('PATH', "")
+        # keep path since conda likely in there
+        installEnvVars = {'PATH': envPath} if envPath else None
+        env.addPackage('eman', version=version,
+                       tar='void.tgz',
+                       commands=emanCmds,
+                       neededProgs=cls.getDependencies(),
+                       default=default,
+                       vars=installEnvVars)

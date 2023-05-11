@@ -1,3 +1,4 @@
+3.5 - use conda for installation, older versions not supported
 3.4.2 - eman 2.9 binary dropped
 3.4.1 - add possible outputs dict
 3.4: eman 2.99 (continuous build) added

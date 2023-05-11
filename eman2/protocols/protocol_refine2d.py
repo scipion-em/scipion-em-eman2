@@ -101,7 +101,7 @@ class EmanProtRefine2D(ProtClassify2D):
         self._iterTemplate = clsFn.replace('classes_01', 'classes_??')
         # Iterations will be identify by classes_XX_ where XX is the iteration
         #  number and is restricted to only 2 digits.
-        self._iterRegex = re.compile('classes_(\d{2})')
+        self._iterRegex = re.compile(r'classes_(\d{2})')
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -515,7 +515,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
     def _prepareContinueParams(self):
         args = " --input=%s" % self._getParticlesStack()
-        runN = self._getRun() - 1 if not Plugin.versionGE('2.91') else self._getRun()
+        runN = self._getRun()
         args += " --initial=r2d_%02d/classes_%02d.hdf" % \
                 (runN, self._getIt())
         args += self._commonParams()
@@ -570,7 +570,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
     def _getRun(self):
         if not self.doContinue:
-            return 0 if Plugin.versionGE('2.91') else 1
+            return 0
         else:
             contRun = self.continueRun.get()
             files = sorted(glob(contRun._getExtraPath("r2d_??")))
@@ -581,7 +581,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
     def _getIt(self):
         contRun = self.continueRun.get()
-        runN = self._getRun() - 1 if not Plugin.versionGE('2.91') else self._getRun()
+        runN = self._getRun()
         files = sorted(glob(contRun._getExtraPath("r2d_%02d/classes_??.hdf" % runN)))
         if files:
             i = files[-1]

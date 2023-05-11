@@ -92,7 +92,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
         self._iterTemplate = clsFn.replace('classes_01', 'classes_??')
         # Iterations will be identify by classes_XX_ where XX is the iteration
         #  number and is restricted to only 2 digits.
-        self._iterRegex = re.compile('classes_(\d{2})')
+        self._iterRegex = re.compile(r'classes_(\d{2})')
 
     # --------------------------- DEFINE param functions ----------------------
     def _defineParams(self, form):
@@ -385,7 +385,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                     yield [float(x) for x in line.split()]
 
     def _getRun(self):
-        return 0 if Plugin.versionGE('2.91') else 1
+        return 0
 
     def _getIterNumber(self, index):
         """ Return the list of iteration files, give the iterTemplate. """
