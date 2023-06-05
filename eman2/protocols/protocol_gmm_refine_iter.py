@@ -56,6 +56,8 @@ class EmanProtGmmRefineIter(EMProtocol):
     _possibleOutputs = outputs
 
     # --------------------------- DEFINE param functions ----------------------
+    # DEV TUTORIALS
+    # https://scipion-em.github.io/docs/release-3.0.0/docs/developer/tutorials/dev-tutorials.html
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -82,7 +84,7 @@ class EmanProtGmmRefineIter(EMProtocol):
                            'Choices are: *i, c, d, tet, icos, or oct* \n'
                            'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
                            'for a detailed description of symmetry in Eman.')
-        # TODO 1 (Muyuan): finish the form with the required params
+        # TODO 1 (Muyuan): finish the form with the required params. See https://docs.google.com/presentation/d/1sACaNZFgH0qWeXE6BLUWEDW3cjYTS4kbojrKvvRp78s/present?slide=id.g9f7805ad80_0_538
 
     # --------------------------- INSERT steps functions ----------------------
 
@@ -106,7 +108,7 @@ class EmanProtGmmRefineIter(EMProtocol):
             self.runJob(program, args, cwd=self._getExtraPath())
         self.refFile = outFileName
 
-        # TODO 3 (Jorge): convert Scipion set to starfile
+        # TODO 3 (Jorge): convert Scipion set to star file. Same as here --> https://raw.githubusercontent.com/scipion-em/scipion-em-cryosparc2/devel/cryosparc2/convert/convert.py#:~:text=logger.info(%27Trying%20to%20generate%20the%20star%20file%20with%20Relion,fileName%2C%20**args)%0A%20%20%20%20%20%20%20%20logger.info(%27The%20star%20file%20was%20generate%20successfully%20...%27)
         # TODO 4 (Muyuan / Jorge): call e2convertrelion.py to get the Eman format (check relion SPA plugin)
 
     def runGmmRefineIterStep(self):
