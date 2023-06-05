@@ -70,6 +70,7 @@ class EmanProtGmmRefineIter(EMProtocol):
                       important=True)
         form.addParam('pdbObj', PointerParam,
                       pointerClass=AtomStruct,
+                      allowsNull=True,
                       label='Initial points (opt.)')
         form.addParam('startres', FloatParam,
                       default=4,
@@ -81,14 +82,13 @@ class EmanProtGmmRefineIter(EMProtocol):
                            'Choices are: *i, c, d, tet, icos, or oct* \n'
                            'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
                            'for a detailed description of symmetry in Eman.')
-        # TODO: finish the form
+        # TODO 1 (Muyuan): finish the form with the required params
 
     # --------------------------- INSERT steps functions ----------------------
 
     def _insertAllSteps(self):
         self._insertFunctionStep(self.convertInputStep)
         self._insertFunctionStep(self.runGmmRefineIterStep)
-        self._insertFunctionStep(self.convertOutputStep)
         self._insertFunctionStep(self.createOutputStep)
 
     # --------------------------- STEPS functions -----------------------------
@@ -106,16 +106,18 @@ class EmanProtGmmRefineIter(EMProtocol):
             self.runJob(program, args, cwd=self._getExtraPath())
         self.refFile = outFileName
 
+        # TODO 3 (Jorge): convert Scipion set to starfile
+        # TODO 4 (Muyuan / Jorge): call e2convertrelion.py to get the Eman format (check relion SPA plugin)
+
     def runGmmRefineIterStep(self):
+        # TODO 2 (Muyuan): finish the arguments generation for the calling command to EMAN (method _getGmmRefineArgs)
         program = Plugin.getProgram('e2gmm_refine_iter.py')
         args = self._getGmmRefineArgs()
         self.runJob(program, args, cwd=self._getExtraPath())
 
-    def convertOutputStep(self):
-        # TODO: Convert the resulting gmm_00/threed_xx.hdf into mrc
-        pass
-
     def createOutputStep(self):
+        # TODO 5 (Jorge): Convert the resulting gmm_00/threed_xx.hdf into mrc
+
         # Create output object
         vol = Volume()
         vol.copyInfo(self.initRef.get())
