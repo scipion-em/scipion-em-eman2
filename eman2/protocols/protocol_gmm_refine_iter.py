@@ -151,5 +151,5 @@ class EmanProtGmmRefineIter(EMProtocol):
             f'--sym {self.symmetry.get()}'
         ]
         if atomStruct:
-            args.append(f'--initpts {atomStruct}')
+            args.append(f'--initpts {atomStruct.getFileName()}')
         return ' '.join(args)
