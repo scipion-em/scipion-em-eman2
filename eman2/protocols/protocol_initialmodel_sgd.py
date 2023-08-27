@@ -98,7 +98,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
                       label='Number of different initial models',
                       help='The number of different initial models to '
                            'generate in search of a good one.')
-        form.addParam('targetRes', FloatParam, default='20.0',
+        form.addParam('targetRes', FloatParam, default=20.0,
                       label='Target resolution (A)',
                       help='Target resolution in A of the model.')
         form.addParam('shrink', IntParam, default=1,
@@ -109,15 +109,15 @@ class EmanProtInitModelSGD(ProtInitialVolume):
                            'prior to reconstruction. Default = 1, no shrinking')
 
         form.addSection('Advanced')
-        form.addParam('learnRate', FloatParam, default='0.3',
+        form.addParam('learnRate', FloatParam, default=0.3,
                       label='Learning rate',
                       help='Learning rate is how much the initial model changes '
                            'toward the gradient direction in each iteration. '
                            'Ranges from 0.0 to 1.0. Default is 0.3')
-        form.addParam('lrDecay', FloatParam, default='1.0',
+        form.addParam('lrDecay', FloatParam, default=1.0,
                       label='Learning decay',
                       help='Learning rate multiplier after each iteration.')
-        form.addParam('addNoise', FloatParam, default='3.0',
+        form.addParam('addNoise', FloatParam, default=3.0,
                       label='Add noise',
                       help='Add noise on particles at each iteration. '
                            'Stablize convergence for some reason.')
@@ -203,8 +203,6 @@ class EmanProtInitModelSGD(ProtInitialVolume):
         inputSet = self._getInputSet()
         if isinstance(inputSet, SetOfClasses2D):
             volumes.setSamplingRate(inputSet.getImages().getSamplingRate() * shrink)
-        elif isinstance(inputSet, SetOfAverages):
-            volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
         else:
             volumes.setSamplingRate(inputSet.getSamplingRate() * shrink)
 

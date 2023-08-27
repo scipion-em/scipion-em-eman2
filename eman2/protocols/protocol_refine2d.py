@@ -259,7 +259,7 @@ class EmanProtRefine2D(ProtClassify2D):
                       default='', label='params')
         line = group.addLine('simaligncmp: ')
         line.addParam('simaligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='', default=CMP_CCC,
@@ -277,7 +277,7 @@ class EmanProtRefine2D(ProtClassify2D):
                       default='', label='params')
         line = group.addLine('simraligncmp: ')
         line.addParam('simraligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='', default=CMP_DOT,
@@ -338,7 +338,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
         line = form.addLine('classcmp: ')
         line.addParam('classcmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='', default=CMP_CCC,
@@ -373,7 +373,7 @@ class EmanProtRefine2D(ProtClassify2D):
                       default='', label='params')
         line = group.addLine('classaligncmp: ')
         line.addParam('classaligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='', default=CMP_CCC,
@@ -391,7 +391,7 @@ class EmanProtRefine2D(ProtClassify2D):
                       default='', label='params')
         line = group.addLine('classraligncmp: ')
         line.addParam('classraligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc',  'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='', default=CMP_CCC,
@@ -453,7 +453,7 @@ class EmanProtRefine2D(ProtClassify2D):
                         numberOfMpi=1, numberOfThreads=1)
 
         program = Plugin.getProgram('e2buildsets.py')
-        args = " --setname=inputSet --allparticles --minhisnr=-1"
+        args = " --setname=inputSet --allparticles"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
@@ -470,12 +470,12 @@ class EmanProtRefine2D(ProtClassify2D):
                     numberOfMpi=1, numberOfThreads=1)
 
     def createOutputStep(self):
-        partSet = self._getInputParticles()
+        partSet = self._getInputParticles(pointer=True)
         classes2D = self._createSetOfClasses2D(partSet)
         self._fillClassesFromIter(classes2D, self._lastIter())
 
         self._defineOutputs(**{outputs.outputClasses.name: classes2D})
-        self._defineSourceRelation(self.inputParticles, classes2D)
+        self._defineSourceRelation(partSet, classes2D)
 
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
@@ -636,20 +636,20 @@ class EmanProtRefine2D(ProtClassify2D):
 
         if not os.path.exists(data_classes):
             clsSet = SetOfClasses2D(filename=data_classes)
-            clsSet.setImages(self._getInputParticles())
+            clsSet.setImages(self._getInputParticles(pointer=True))
             self._fillClassesFromIter(clsSet, it)
             clsSet.write()
             clsSet.close()
 
         return data_classes
 
-    def _getInputParticlesPointer(self):
+    def _getInputParticles(self, pointer=False):
         if self.doContinue:
             self.inputParticles.set(self.continueRun.get().inputParticles.get())
-        return self.inputParticles
-
-    def _getInputParticles(self):
-        return self._getInputParticlesPointer().get()
+        if pointer:
+            return self.inputParticles
+        else:
+            return self.inputParticles.get()
 
     def _fillClassesFromIter(self, clsSet, iterN):
         self._execEmanProcess(self._getRun(), iterN)

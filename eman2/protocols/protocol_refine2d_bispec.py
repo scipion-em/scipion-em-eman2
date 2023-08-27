@@ -112,16 +112,17 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                            'that these averages are not used for final 3-D '
                            'refinement, so generating a very large number is not '
                            'useful in most situations.')
-        form.addParam('numberOfIterations', IntParam, default=3,
-                      label='Number of iterations',
-                      help='Number of iterations of the overall 2-D refinement '
-                           'process to run. For high contrast data, 4-5 iterations '
-                           'may be more than enough, but for low contrast data '
-                           'it could take 10-12 iterations to converge well.')
         form.addParam('nbasisfp', IntParam, default=8,
                       label='Number of MSA vectors to use',
                       help='Number of MSa basis vectors to use when '
                            'classifying particles.')
+        form.addParam('doNormProj', BooleanParam, default=True,
+                      expertLevel=LEVEL_ADVANCED,
+                      label='Normalize projected vectors?',
+                      help='Normalizes each projected vector into the MSA '
+                           'subspace. Note that this is different from normalizing '
+                           'the input images since the subspace is not expected to '
+                           'fully span the image')
         form.addParam('alignSort', BooleanParam, default=True,
                       label='Align and sort?',
                       help='This will align and sort the final class-averages '
@@ -197,7 +198,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
 
         line = form.addLine('classcmp: ')
         line.addParam('classcmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='', default=CMP_CCC,
@@ -232,7 +233,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                       default='flip=1', label='params')
         line = group.addLine('classaligncmp: ')
         line.addParam('classaligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='', default=CMP_CCC,
@@ -250,7 +251,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
                       default='', label='params')
         line = group.addLine('classraligncmp: ')
         line.addParam('classraligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='', default=CMP_CCC,
@@ -330,9 +331,12 @@ class EmanProtRefine2DBispec(ProtClassify2D):
         return args
 
     def _commonParams(self):
-        args = " --ncls=%(ncls)d --iter=%(numberOfIterations)d --nbasisfp=%(nbasisfp)d"
+        args = " --ncls=%(ncls)d --nbasisfp=%(nbasisfp)d"
         args += " --classkeep=%(classKeep)f --classiter=%(classiter)d "
         args += " --classaverager=%s" % self.getEnumText('classAveragerType')
+
+        if self.doNormProj:
+            args += " --normproj"
 
         if self.alignSort:
             args += " --alignsort"
@@ -350,7 +354,6 @@ class EmanProtRefine2DBispec(ProtClassify2D):
             args += " --parallel=thread:%(threads)d --threads=%(threads)d"
 
         params = {'ncls': self.numberOfClassAvg.get(),
-                  'numberOfIterations': self.numberOfIterations.get(),
                   'nbasisfp': self.nbasisfp.get(),
                   'classKeep': self.classKeep.get(),
                   'classiter': self.classIter.get(),
@@ -407,7 +410,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
 
     def _getIterClasses(self, it, clean=False):
         """ Return a classes .sqlite file for this iteration.
-        If the file doesn't exists, it will be created by
+        If the file doesn't exist, it will be created by
         converting from this iteration data.star file.
         """
         data_classes = self._getFileName('classes_scipion', iter=it)
@@ -425,13 +428,16 @@ class EmanProtRefine2DBispec(ProtClassify2D):
         return data_classes
 
     def _getInputParticles(self):
-        protType = self._inputProt().type.get()
+        prot = self._inputProt()
+        protType = prot.type.get()
         if protType == HIRES:
-            return self._inputProt().outputParticles_flip_lp5
+            output = getattr(prot, "outputParticles_flip_lp5")
         elif protType == MIDRES:
-            return self._inputProt().outputParticles_flip_lp7
+            output = getattr(prot, "outputParticles_flip_lp7")
         else:
-            return self._inputProt().outputParticles_flip_lp12
+            output = getattr(prot, "outputParticles_flip_lp12")
+
+        return output
 
     def _fillClassesFromIter(self, clsSet, iterN):
         self._execEmanProcess(iterN)

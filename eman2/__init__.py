@@ -37,7 +37,7 @@ from .constants import (EMAN2SCRATCHDIR, VERSIONS, EMAN_ENV_ACTIVATION,
                         DEFAULT_ACTIVATION_CMD, EMAN_DEFAULT_VER_NUM)
 
 
-__version__ = '3.5'
+__version__ = '3.6'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 

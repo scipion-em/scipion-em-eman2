@@ -166,14 +166,14 @@ Major features of this program:
                       help='If set True, reconstruction will be asymmetric '
                            'with *Symmetry group* parameter specifying a '
                            'known pseudosymmetry, not an imposed symmetry.')
-        form.addParam('resol', FloatParam, default='25.0',
+        form.addParam('resol', FloatParam, default=25.0,
                       label='Target resolution (A)',
                       help='Target resolution in A of this refinement run. '
                            'Usually works best in at least two steps '
                            '(low/medium) resolution, then final resolution) '
                            'when starting with a poor starting model. '
                            'Usually 3-4 iterations is sufficient.')
-        form.addParam('molMass', FloatParam, default='500.0',
+        form.addParam('molMass', FloatParam, default=500.0,
                       label='Molecular mass (kDa)',
                       help='Approximate molecular mass of the particle, in kDa. '
                            'This is used to run normalize.bymass. Due to '
@@ -204,11 +204,11 @@ Major features of this program:
                            'resolution for significant speed increases. Set '
                            'to 1 when really pushing resolution. Set to 7 for '
                            'initial refinements.')
-        form.addParam('classKeep', FloatParam, default='0.9',
+        form.addParam('classKeep', FloatParam, default=0.9,
                       label='Fraction of particles to use in final average',
                       help='The fraction of particles to keep in each class,'
                            'based on the similarity score.')
-        form.addParam('m3dKeep', FloatParam, default='0.8',
+        form.addParam('m3dKeep', FloatParam, default=0.8,
                       label='Fraction of class-averages to use in 3-D map',
                       help='The fraction of slices to keep in reconstruction.')
         form.addParam('useBispec', BooleanParam, default=False,
@@ -305,7 +305,7 @@ Major features of this program:
                         numberOfMpi=1, numberOfThreads=1)
 
         program = Plugin.getProgram('e2buildsets.py')
-        args = " --setname=inputSet --allparticles --minhisnr=-1"
+        args = " --setname=inputSet --allparticles"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
@@ -320,7 +320,7 @@ Major features of this program:
 
     def createOutputStep(self):
         iterN = self.numberOfIterations.get()
-        partSet = self._getInputParticles()
+        partSet = self._getInputParticles(pointer=True)
         numRun = self._getRun()
 
         vol = Volume()
@@ -328,16 +328,16 @@ Major features of this program:
         halfMap1 = self._getFileName("mapEvenUnmasked", run=numRun)
         halfMap2 = self._getFileName("mapOddUnmasked", run=numRun)
         vol.setHalfMaps([halfMap1, halfMap2])
-        vol.copyInfo(partSet)
+        vol.copyInfo(partSet.get())
 
         newPartSet = self._createSetOfParticles()
-        newPartSet.copyInfo(partSet)
+        newPartSet.copyInfo(partSet.get())
         self._fillDataFromIter(newPartSet, iterN)
 
         self._defineOutputs(**{outputs.outputVolume.name: vol,
                                outputs.outputParticles.name: newPartSet})
-        self._defineSourceRelation(self._getInputParticlesPointer(), vol)
-        self._defineTransformRelation(self._getInputParticlesPointer(), newPartSet)
+        self._defineSourceRelation(partSet, vol)
+        self._defineTransformRelation(partSet, newPartSet)
 
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
@@ -515,13 +515,13 @@ Major features of this program:
 
         return data_sqlite
 
-    def _getInputParticlesPointer(self):
+    def _getInputParticles(self, pointer=False):
         if self.doContinue:
             self.inputParticles.set(self.continueRun.get().inputParticles.get())
-        return self.inputParticles
-
-    def _getInputParticles(self):
-        return self._getInputParticlesPointer().get()
+        if pointer:
+            return self.inputParticles
+        else:
+            return self.inputParticles.get()
 
     def _fillDataFromIter(self, imgSet, iterN):
         numRun = self._getRun()

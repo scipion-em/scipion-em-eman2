@@ -119,7 +119,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                             help='The name of a cmp to be used in comparing '
                                  'the aligned images (default=ccc)')
         line.addParam('simcmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='type', default=CMP_CCC,
@@ -154,7 +154,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                       default='', label='params')
         line = group.addLine('simaligncmp: ')
         line.addParam('simaligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='type', default=CMP_CCC,
@@ -173,7 +173,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                       default='', label='params')
         line = group.addLine('simraligncmp: ')
         line.addParam('simraligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
+                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
                                'optvariance', 'phase', 'quadmindot',
                                'sqeuclidean', 'vertical', 'None'],
                       label='type', default=CMP_DOT,
@@ -208,7 +208,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
 
             setName = suffix.split('_')[1]
             program = Plugin.getProgram('e2buildsets.py')
-            args = " particles/*%s.hdf --setname=%s --minhisnr=-1" % (
+            args = " particles/*%s.hdf --setname=%s" % (
                 suffix, setName)
             self.runJob(program, args, cwd=self._getExtraPath(),
                         numberOfMpi=1, numberOfThreads=1)

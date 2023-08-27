@@ -170,7 +170,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
                       help='The fraction of slices to keep, in fraction,'
                            ' based on quality scores (1.0 = use all slices).')
         form.addParam('doNotAutoWt', BooleanParam, default=False,
-                      label='Do not automatic weighting?',
+                      label='Disable automatic weighting?',
                       help='This argument turns automatic weighting off '
                            'causing all images to be weighted by 1. If this '
                            'argument is False images inserted into the '
@@ -218,7 +218,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
                         numberOfThreads=1)
 
         program = Plugin.getProgram('e2buildsets.py')
-        args = " --setname=inputSet --allparticles --minhisnr=-1"
+        args = " --setname=inputSet --allparticles"
         self.runJob(program, args, cwd=self._getExtraPath(), numberOfThreads=1)
 
     def reconstructVolumeStep(self, args):

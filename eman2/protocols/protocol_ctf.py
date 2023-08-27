@@ -150,16 +150,16 @@ class EmanProtCTFAuto(ProtProcessParticles):
                     numberOfThreads=1)
 
     def createOutputStep(self):
-        inputSet = self._getInputParticles()
+        inputSet = self._getInputParticles(pointer=True)
         outputSets = self._getOutputSets()
         outputs = {}
 
         for key, fn in outputSets.items():
             outputSet = self._createSetOfParticles(suffix='_%s' % key)
-            outputSet.copyInfo(inputSet)
+            outputSet.copyInfo(inputSet.get())
             outputSet.setIsPhaseFlipped(True)
             outputSet.setHasCTF(True)
-            outputSet.copyItems(inputSet,
+            outputSet.copyItems(inputSet.get(),
                                 updateItemCallback=self._updateCTF,
                                 itemDataIterator=iterLstFile(self._getFileName(fn)))
             newPix = self._getNewPixSize(outputSet.getDimensions()[0])
@@ -251,8 +251,8 @@ class EmanProtCTFAuto(ProtProcessParticles):
 
         return args
 
-    def _getInputParticles(self):
-        return self.inputParticles.get()
+    def _getInputParticles(self, pointer=False):
+        return self.inputParticles if pointer else self.inputParticles.get()
 
     def _updateCTF(self, item, row):
         fileName = self._getExtraPath(row[1])
