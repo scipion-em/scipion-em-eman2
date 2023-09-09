@@ -62,7 +62,7 @@ python with conda ones. One example of this could can be seen below but
 depending on your conda version and shell you will need something different:
 CONDA_ACTIVATION_CMD = eval "$(/extra/miniconda3/bin/conda shell.bash hook)"
 
-*EMAN_ENV_ACTIVATION* (default = conda activate eman-2.99.47):
+*EMAN_ENV_ACTIVATION* (default = conda activate eman-2.99.52):
 Command to activate the EMAN environment.
 
 The default scratch directory is assumed */tmp/*. You can change it by setting *EMAN2SCRATCHDIR* in ``scipion.conf`` or your shell environment.
@@ -87,7 +87,7 @@ A complete list of tests can also be seen by executing ``scipion test --show --g
 Supported versions
 ------------------
 
-2.99.47
+2.99.47, 2.99.52
 
 Protocols
 ---------

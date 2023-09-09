@@ -1,3 +1,7 @@
+3.6:
+    - add 2.99.52
+    - removing direct pointers where I can
+    - update parameters for protocols
 3.5 - use conda for installation, older versions not supported
 3.4.2 - eman 2.9 binary dropped
 3.4.1 - add possible outputs dict

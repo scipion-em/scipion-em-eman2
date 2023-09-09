@@ -77,7 +77,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         form.addParam('boxSize', IntParam, default=128,
                       allowsPointers=True,
                       label='Box size (px)',
-                      help="Box size in pixels.")
+                      help="Box size in pixels. See http://eman2.org/BoxSize")
         form.addParam('particleSize', IntParam, default=100,
                       label='Particle size (px)',
                       help="Longest axis of particle in pixels (diameter, "
@@ -95,10 +95,10 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                            " _neural net_ - convolutional neural network "
                            "boxer.\n"
                            " _gauss_ - simple reference-free picker.")
-        form.addParam('threshold', FloatParam, default='5.0',
+        form.addParam('threshold', FloatParam, default=5.0,
                       label='Threshold',
                       condition='boxerMode!=%d' % AUTO_GAUSS)
-        form.addParam('threshold2', FloatParam, default='-5.0',
+        form.addParam('threshold2', FloatParam, default=-5.0,
                       condition='boxerMode==%d' % AUTO_CONVNET,
                       label='Threshold2')
         form.addParam('gaussLow', FloatParam, default=1.,
@@ -122,7 +122,6 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         form.addParam('goodRefs', PointerParam,
                       pointerClass='SetOfAverages',
                       condition='boxerMode<%d' % AUTO_CONVNET,
-                      allowsNull=True,
                       label="Good references",
                       help="Good particle references.")
 
@@ -166,7 +165,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         params += " --autopick=%s" % modes[self.boxerMode.get()]
 
         if self.boxerMode.get() == AUTO_GAUSS:
-            params += ":width=%0.3f:low=%0.3f:high=%0.3f:boxsize=%d" % (
+            params += ":gauss_width=%0.3f:thr_low=%0.3f:thr_high=%0.3f:boxsize=%d" % (
                 self.gaussWidth.get(), self.gaussLow.get(),
                 self.gaussHigh.get(), self.boxSize.get())
         else:

@@ -194,8 +194,7 @@ class EmanProtRefine2D(ProtClassify2D):
                                  "you can specify one of the others "
                                  "here (e2help.py processor center)")
         line.addParam('centerType', EnumParam,
-                      choices=['nocenter', 'xform.center',
-                               'xform.centeracf', 'xform.centerofmass', 'None'],
+                      choices=list(CENTER_CHOICES.values()),
                       label="", default=XFORM_CENTER,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('centerParams', StringParam, default='',
@@ -226,9 +225,7 @@ class EmanProtRefine2D(ProtClassify2D):
                             help='The name of a cmp to be used in comparing '
                                  'the aligned images (default=ccc)')
         line.addParam('simcmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simcmpParams', StringParam,
@@ -237,31 +234,14 @@ class EmanProtRefine2D(ProtClassify2D):
         group = form.addGroup('First stage aligner')
         line = group.addLine('simalign: ')
         line.addParam('simalignType', EnumParam,
-                      choices=['frm2d', 'rotate_flip',
-                               'rotate_flip_iterative', 'rotate_precenter',
-                               'rotate_trans_flip_scale',
-                               'rotate_trans_flip_scale_iter',
-                               'rotate_trans_scale_iter',
-                               'rotate_translate', 'rotate_translate_bispec',
-                               'rotate_translate_flip',
-                               'rotate_translate_flip_iterative',
-                               'rotate_translate_flip_resample',
-                               'rotate_translate_iterative',
-                               'rotate_translate_resample',
-                               'rotate_translate_scale', 'rotate_translate_tree',
-                               'rotational', 'rotational_bispec',
-                               'rotational_iterative', 'rtf_exhaustive',
-                               'rtf_slow_exhaustive', 'scale', 'symalign',
-                               'symalignquat', 'translational', 'None'],
+                      choices=list(SIMALIGN_CHOICES.values()),
                       label='', default=ALN_ROTATE_TRANSLATE_TREE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simalignParams', StringParam,
                       default='', label='params')
         line = group.addLine('simaligncmp: ')
         line.addParam('simaligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simaligncmpParams', StringParam,
@@ -277,9 +257,7 @@ class EmanProtRefine2D(ProtClassify2D):
                       default='', label='params')
         line = group.addLine('simraligncmp: ')
         line.addParam('simraligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='', default=CMP_DOT,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simraligncmpParams', StringParam,
@@ -310,10 +288,7 @@ class EmanProtRefine2D(ProtClassify2D):
                       help='Use setsfref option in class averaging to '
                            'produce better class averages')
         form.addParam('classAveragerType', EnumParam,
-                      choices=['ctf.auto', 'ctf.weight', 'ctf.weight.autofilt',
-                               'ctfw.auto', 'iterative',
-                               'localweight', 'mean', 'mean.tomo', 'median',
-                               'minmax', 'sigma', 'weightedfourier'],
+                      choices=list(AVG_CHOICES.values()),
                       label='Class averager: ',
                       default=AVG_CTF_WEIGHT_AUTOFILT,
                       display=EnumParam.DISPLAY_COMBO,
@@ -322,14 +297,7 @@ class EmanProtRefine2D(ProtClassify2D):
         line = form.addLine('classnormproc: ',
                             help='Normalization applied during class-averaging')
         line.addParam('classnormprocType', EnumParam,
-                      choices=['normalize', 'normalize.bymass',
-                               'normalize.circlemean', 'normalize.edgemean',
-                               'normalize.histpeak',
-                               'normalize.local', 'normalize.lredge',
-                               'normalize.mask', 'normalize.maxmin',
-                               'normalize.ramp.normvar', 'normalize.rows',
-                               'normalize.toimage', 'normalize.unitlen',
-                               'normalize.unitsum', 'None'],
+                      choices=list(NORM_CHOICES.values()),
                       label='',
                       default=PROC_NORMALIZE_EDGEMEAN,
                       display=EnumParam.DISPLAY_COMBO)
@@ -338,9 +306,7 @@ class EmanProtRefine2D(ProtClassify2D):
 
         line = form.addLine('classcmp: ')
         line.addParam('classcmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classcmpParams', StringParam,
@@ -351,31 +317,14 @@ class EmanProtRefine2D(ProtClassify2D):
         group = form.addGroup('First stage aligner (clsavg)')
         line = group.addLine('classalign: ')
         line.addParam('classalignType', EnumParam,
-                      choices=['frm2d', 'rotate_flip',
-                               'rotate_flip_iterative', 'rotate_precenter',
-                               'rotate_trans_flip_scale',
-                               'rotate_trans_flip_scale_iter',
-                               'rotate_trans_scale_iter',
-                               'rotate_translate', 'rotate_translate_bispec',
-                               'rotate_translate_flip',
-                               'rotate_translate_flip_iterative',
-                               'rotate_translate_flip_resample',
-                               'rotate_translate_iterative',
-                               'rotate_translate_resample',
-                               'rotate_translate_scale', 'rotate_translate_tree',
-                               'rotational', 'rotational_bispec',
-                               'rotational_iterative', 'rtf_exhaustive',
-                               'rtf_slow_exhaustive', 'scale', 'symalign',
-                               'symalignquat', 'translational', 'None'],
+                      choices=list(SIMALIGN_CHOICES.values()),
                       label='', default=ALN_ROTATE_TRANSLATE_TREE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classalignParams', StringParam,
                       default='', label='params')
         line = group.addLine('classaligncmp: ')
         line.addParam('classaligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classaligncmpParams', StringParam,
@@ -391,9 +340,7 @@ class EmanProtRefine2D(ProtClassify2D):
                       default='', label='params')
         line = group.addLine('classraligncmp: ')
         line.addParam('classraligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('classraligncmpParams', StringParam,
@@ -453,7 +400,7 @@ class EmanProtRefine2D(ProtClassify2D):
                         numberOfMpi=1, numberOfThreads=1)
 
         program = Plugin.getProgram('e2buildsets.py')
-        args = " --setname=inputSet --allparticles --minhisnr=-1"
+        args = " --setname=inputSet --allparticles"
         self.runJob(program, args, cwd=self._getExtraPath(),
                     numberOfMpi=1, numberOfThreads=1)
 
@@ -470,12 +417,12 @@ class EmanProtRefine2D(ProtClassify2D):
                     numberOfMpi=1, numberOfThreads=1)
 
     def createOutputStep(self):
-        partSet = self._getInputParticles()
+        partSet = self._getInputParticles(pointer=True)
         classes2D = self._createSetOfClasses2D(partSet)
         self._fillClassesFromIter(classes2D, self._lastIter())
 
         self._defineOutputs(**{outputs.outputClasses.name: classes2D})
-        self._defineSourceRelation(self.inputParticles, classes2D)
+        self._defineSourceRelation(partSet, classes2D)
 
     # --------------------------- INFO functions ------------------------------
     def _validate(self):
@@ -636,20 +583,20 @@ class EmanProtRefine2D(ProtClassify2D):
 
         if not os.path.exists(data_classes):
             clsSet = SetOfClasses2D(filename=data_classes)
-            clsSet.setImages(self._getInputParticles())
+            clsSet.setImages(self._getInputParticles(pointer=True))
             self._fillClassesFromIter(clsSet, it)
             clsSet.write()
             clsSet.close()
 
         return data_classes
 
-    def _getInputParticlesPointer(self):
+    def _getInputParticles(self, pointer=False):
         if self.doContinue:
             self.inputParticles.set(self.continueRun.get().inputParticles.get())
-        return self.inputParticles
-
-    def _getInputParticles(self):
-        return self._getInputParticlesPointer().get()
+        if pointer:
+            return self.inputParticles
+        else:
+            return self.inputParticles.get()
 
     def _fillClassesFromIter(self, clsSet, iterN):
         self._execEmanProcess(self._getRun(), iterN)

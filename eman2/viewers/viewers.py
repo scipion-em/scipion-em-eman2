@@ -707,10 +707,10 @@ class TiltValidateViewer(ProtocolViewer):
                       help='Truncate the polar plt at this radius value. '
                            '-1 means no limit.')
         form.addParam('planethres', FloatParam,
-                      default=360.0,
-                      label='Max out of plane threshold (deg.)',
+                      default=1.0,
+                      label='Max out of plane threshold (0-1)',
                       help='Maximum out of plane threshold for the tilt axis. '
-                           '0 = perfectly in plane, 360 = normal to plane.')
+                           '0 = perfectly in plane, 1 = normal to plane.')
         form.addParam('displayPlot', EnumParam,
                       choices=['scatter plot', 'contour plot'],
                       default=TILT_SCATTER, display=EnumParam.DISPLAY_HLIST,

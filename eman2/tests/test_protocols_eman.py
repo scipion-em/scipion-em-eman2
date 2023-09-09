@@ -32,6 +32,7 @@ from pwem import Domain
 from pyworkflow.utils import magentaStr
 
 from ..protocols import *
+from ..constants import CMP_FRC, ALN_ROTATE_TRANSLATE, RALN_REFINE, AUTO_REF
 
 
 class TestEmanBase(BaseTest):
@@ -88,7 +89,7 @@ class TestEmanBase(BaseTest):
     def runImportParticlesSqlite(cls, pattern, samplingRate):
         """ Run an Import particles protocol. """
         cls.protImport = cls.newProtocol(ProtImportParticles,
-                                         importFrom=4,
+                                         importFrom=4,  # from scipion
                                          sqliteFile=pattern, samplingRate=samplingRate)
         cls.launchProtocol(cls.protImport)
         cls.assertIsNotNone(cls.protImport.outputParticles,
@@ -248,8 +249,7 @@ class TestEmanRefine2DBispec(TestEmanBase):
 
         print(magentaStr("\n==> Testing eman2 - refine 2d bispec:"))
         protRefine = self.newProtocol(EmanProtRefine2DBispec,
-                                      inputBispec=protCtf,
-                                      numberOfIterations=2, numberOfClassAvg=5,
+                                      inputBispec=protCtf, numberOfClassAvg=5,
                                       classIter=2, nbasisfp=4)
         self.launchProtocol(protRefine)
         self.assertIsNotNone(protRefine.outputClasses,
@@ -307,10 +307,10 @@ class TestEmanTiltValidate(TestEmanBase):
         protValidate = self.newProtocol(EmanProtTiltValidate, symmetry="c4",
                                         maxtilt=60.0, delta=2.0, shrink=2,
                                         quaternion=True,
-                                        simcmpType=2,  # frc
+                                        simcmpType=CMP_FRC,
                                         simcmpParams='maxres=60',
-                                        simalignType=7,  # rotate_translate
-                                        simralignType=1,  # refine
+                                        simalignType=ALN_ROTATE_TRANSLATE,
+                                        simralignType=RALN_REFINE,
                                         numberOfThreads=4)
         protValidate.inputTiltPair.set(protExtractPairs.outputParticlesTiltPair)
         protValidate.inputVolume.set(self.protImportVol.outputVolume)
@@ -359,7 +359,7 @@ class TestEmanAutopick(TestEmanBase):
     def test_AutopickEman(self):
         print(magentaStr("\n==> Testing eman2 - e2boxer auto:"))
         protPick = self.newProtocol(EmanProtAutopick,
-                                    boxerMode=1,  # by_ref
+                                    boxerMode=AUTO_REF,
                                     goodRefs=self.protImportAvg.outputAverages,
                                     threshold=12.0,
                                     numberOfThreads=2)
