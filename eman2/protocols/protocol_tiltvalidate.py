@@ -119,9 +119,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                             help='The name of a cmp to be used in comparing '
                                  'the aligned images (default=ccc)')
         line.addParam('simcmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='type', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simcmpParams', StringParam,
@@ -130,33 +128,14 @@ class EmanProtTiltValidate(ProtAnalysis3D):
         group = form.addGroup('First stage aligner')
         line = group.addLine('simalign: ')
         line.addParam('simalignType', EnumParam,
-                      choices=['frm2d', 'rotate_flip',
-                               'rotate_flip_iterative', 'rotate_precenter',
-                               'rotate_trans_flip_scale',
-                               'rotate_trans_flip_scale_iter',
-                               'rotate_trans_scale_iter',
-                               'rotate_translate', 'rotate_translate_bispec',
-                               'rotate_translate_flip',
-                               'rotate_translate_flip_iterative',
-                               'rotate_translate_flip_resample',
-                               'rotate_translate_iterative',
-                               'rotate_translate_resample',
-                               'rotate_translate_scale',
-                               'rotate_translate_tree',
-                               'rotational', 'rotational_bispec',
-                               'rotational_iterative',
-                               'rtf_exhaustive',
-                               'rtf_slow_exhaustive', 'scale', 'symalign',
-                               'symalignquat', 'translational', 'None'],
+                      choices=list(SIMALIGN_CHOICES.values()),
                       label='type', default=ALN_ROTATE_TRANSLATE,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simalignParams', StringParam,
                       default='', label='params')
         line = group.addLine('simaligncmp: ')
         line.addParam('simaligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='type', default=CMP_CCC,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simaligncmpParams', StringParam,
@@ -173,9 +152,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                       default='', label='params')
         line = group.addLine('simraligncmp: ')
         line.addParam('simraligncmpType', EnumParam,
-                      choices=['ccc', 'dot', 'frc', 'frc.freq', 'lod', 'optsub',
-                               'optvariance', 'phase', 'quadmindot',
-                               'sqeuclidean', 'vertical', 'None'],
+                      choices=list(SIMCMP_CHOICES.values()),
                       label='type', default=CMP_DOT,
                       display=EnumParam.DISPLAY_COMBO)
         line.addParam('simraligncmpParams', StringParam,
