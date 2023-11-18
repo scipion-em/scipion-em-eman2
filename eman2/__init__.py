@@ -81,7 +81,7 @@ class Plugin(pwem.Plugin):
         """
         v1 = cls.getActiveVersion()
         if v1 not in VERSIONS:
-            raise Exception("This version of EMAN is not supported: ", v1)
+            raise ValueError("This version of EMAN is not supported: ", v1)
 
         if VERSIONS.index(v1) < VERSIONS.index(version):
             return False

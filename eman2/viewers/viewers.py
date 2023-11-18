@@ -757,7 +757,7 @@ class TiltValidateViewer(ProtocolViewer):
         a = xplotter.createSubPlot(plot_title, 'Tilt axis', 'Tilt angle',
                                    projection='polar')
 
-        datap, r, theta, zaxis = self._getValues()
+        _, r, theta, zaxis = self._getValues()
 
         if colorzaxis:
             a.scatter(theta, r, c=zaxis)

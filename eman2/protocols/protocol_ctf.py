@@ -32,7 +32,7 @@ from pwem.objects.data import CTFModel, SetOfParticles
 from pwem.protocols import ProtProcessParticles
 
 from .. import Plugin
-from ..constants import *
+from ..constants import HIRES, INVAR_AUTO
 from ..convert import writeSetOfParticles, iterLstFile, jsonToCtfModel
 
 

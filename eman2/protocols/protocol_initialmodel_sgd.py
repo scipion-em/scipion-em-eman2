@@ -36,7 +36,7 @@ from pwem.protocols import ProtInitialVolume
 from pwem.objects.data import SetOfClasses2D, SetOfAverages, Volume, SetOfVolumes
 
 from .. import Plugin
-from ..constants import *
+from ..constants import SGD_INPUT_AVG, SGD_INPUT_PTCLS
 
 
 class outputs(Enum):
@@ -69,7 +69,6 @@ class EmanProtInitModelSGD(ProtInitialVolume):
         form.addParam('inputAvg', PointerParam,
                       pointerClass='SetOfClasses2D, SetOfAverages',
                       condition='inputType==%d' % SGD_INPUT_AVG,
-                      # pointerCondition='hasRepresentatives',
                       label="Input averages", important=True,
                       help='Select the class averages to build your '
                            '3D model.\nYou can select SetOfAverages or '
@@ -84,7 +83,7 @@ class EmanProtInitModelSGD(ProtInitialVolume):
                       label='Symmetry group',
                       help='Specify the symmetry.\nChoices are: c(n), d(n), '
                            'h(n), tet, oct, icos.\n'
-                           'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
+                           'See https://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
                            'for a detailed description of symmetry in Eman.')
         form.addParam('batchSize', IntParam, default=10,
                       label='Batch size',

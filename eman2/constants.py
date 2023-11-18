@@ -274,7 +274,7 @@ AUTO_REF = 1
 AUTO_CONVNET = 2
 AUTO_GAUSS = 3
 
-WIKI_URL = "[[http://blake.bcm.edu/emanwiki/EMAN2][Wiki]]"
+WIKI_URL = "[[https://blake.bcm.edu/emanwiki/EMAN2][Wiki]]"
 
 # viewer.py constants
 LAST_ITER = 0

@@ -36,7 +36,7 @@ from pwem.protocols import ProtParticlePickingAuto
 
 from .. import Plugin
 from ..convert import readSetOfCoordinates, convertReferences
-from ..constants import *
+from ..constants import AUTO_CONVNET, AUTO_GAUSS
 
 
 class EmanProtAutopick(ProtParticlePickingAuto):
@@ -77,7 +77,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         form.addParam('boxSize', IntParam, default=128,
                       allowsPointers=True,
                       label='Box size (px)',
-                      help="Box size in pixels. See http://eman2.org/BoxSize")
+                      help="Box size in pixels. See https://eman2.org/BoxSize")
         form.addParam('particleSize', IntParam, default=100,
                       label='Particle size (px)',
                       help="Longest axis of particle in pixels (diameter, "
