@@ -557,7 +557,6 @@ Examples:
                     fscSet.append(fscT)
 
         fscViewer.visualize(fscSet)
-        return [fscViewer]
 
     def _plotFSC(self, fscFn, label):
         res_inv, frc = self._getFscValues(fscFn)
