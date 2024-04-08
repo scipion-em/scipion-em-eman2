@@ -31,8 +31,8 @@ from pwem.protocols import (ProtImportMicrographs, ProtImportParticles, ProtImpo
 from pwem import Domain
 from pyworkflow.utils import magentaStr
 
-from ..protocols import *
-from ..constants import CMP_FRC, ALN_ROTATE_TRANSLATE, RALN_REFINE, AUTO_REF
+from eman2.protocols import *
+from eman2.constants import CMP_FRC, ALN_ROTATE_TRANSLATE, RALN_REFINE, AUTO_REF
 
 
 class TestEmanBase(BaseTest):
@@ -51,34 +51,25 @@ class TestEmanBase(BaseTest):
 
     @classmethod
     def runImportMicrograph(cls, pattern, samplingRate, voltage,
-                            scannedPixelSize, magnification, sphericalAberration):
+                            sphericalAberration):
         """ Run an Import micrograph protocol. """
-        # We have two options: pass the SamplingRate or
-        # the ScannedPixelSize + microscope magnification
-        if samplingRate is not None:
-            cls.protImport = cls.newProtocol(ProtImportMicrographs,
-                                             samplingRateMode=0, filesPath=pattern,
-                                             samplingRate=samplingRate, magnification=magnification,
-                                             voltage=voltage, sphericalAberration=sphericalAberration)
-        else:
-            cls.protImport = cls.newProtocol(ProtImportMicrographs,
-                                             samplingRateMode=1, filesPath=pattern,
-                                             scannedPixelSize=scannedPixelSize,
-                                             voltage=voltage, magnification=magnification,
-                                             sphericalAberration=sphericalAberration)
-
-        cls.proj.launchProtocol(cls.protImport, wait=True)
+        cls.protImport = cls.newProtocol(ProtImportMicrographs,
+                                         filesPath=pattern,
+                                         samplingRate=samplingRate,
+                                         voltage=voltage,
+                                         sphericalAberration=sphericalAberration)
+        cls.launchProtocol(cls.protImport, wait=True)
         cls.assertIsNotNone(cls.protImport.outputMicrographs,
                             "SetOfMicrographs has not been produced.")
 
         return cls.protImport
 
     @classmethod
-    def runImportParticles(cls, pattern, samplingRate, checkStack=False):
+    def runImportParticles(cls, pattern, samplingRate):
         """ Run an Import particles protocol. """
         cls.protImport = cls.newProtocol(ProtImportParticles,
-                                         filesPath=pattern, samplingRate=samplingRate,
-                                         checkStack=checkStack)
+                                         filesPath=pattern,
+                                         samplingRate=samplingRate)
         cls.launchProtocol(cls.protImport)
         cls.assertIsNotNone(cls.protImport.outputParticles,
                             "SetOfParticles has not been produced.")
@@ -90,7 +81,8 @@ class TestEmanBase(BaseTest):
         """ Run an Import particles protocol. """
         cls.protImport = cls.newProtocol(ProtImportParticles,
                                          importFrom=4,  # from scipion
-                                         sqliteFile=pattern, samplingRate=samplingRate)
+                                         sqliteFile=pattern,
+                                         samplingRate=samplingRate)
         cls.launchProtocol(cls.protImport)
         cls.assertIsNotNone(cls.protImport.outputParticles,
                             "SetOfParticles has not been produced.")
@@ -101,7 +93,8 @@ class TestEmanBase(BaseTest):
     def runImportVolumes(cls, pattern, samplingRate):
         """ Run an Import particles protocol. """
         protImport = cls.newProtocol(ProtImportVolumes,
-                                     filesPath=pattern, samplingRate=samplingRate)
+                                     filesPath=pattern,
+                                     samplingRate=samplingRate)
         cls.launchProtocol(protImport)
         return protImport
 
@@ -110,8 +103,7 @@ class TestEmanBase(BaseTest):
         """ Run an Import averages protocol. """
         cls.protImportAvg = cls.newProtocol(ProtImportAverages,
                                             filesPath=pattern,
-                                            samplingRate=samplingRate,
-                                            checkStack=True)
+                                            samplingRate=samplingRate)
         cls.launchProtocol(cls.protImportAvg)
         return cls.protImportAvg
 
@@ -175,8 +167,7 @@ class TestEmanReconstruct(TestEmanBase):
                                  importFrom=ProtImportParticles.IMPORT_FROM_SCIPION,
                                  sqliteFile=self.dsRelion.getFile('import/case2/particles.sqlite'),
                                  magnification=10000,
-                                 samplingRate=7.08
-                                 )
+                                 samplingRate=7.08)
         self.launchProtocol(prot1)
 
         print(magentaStr("\n==> Testing eman2 - recostruct:"))
@@ -327,7 +318,7 @@ class TestEmanCtfAuto(TestEmanBase):
         TestEmanBase.setData('relion_tutorial')
         cls.partsFn = cls.dataset.getFile('import/case2/particles.sqlite')
         print(magentaStr("\n==> Importing data - particles:"))
-        cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 3.5)
+        cls.protImport = cls.runImportParticlesSqlite(cls.partsFn, 7.08)
 
     def test_CtfAutoEman(self):
         print(magentaStr("\n==> Testing eman2 - ctf auto:"))
@@ -350,9 +341,7 @@ class TestEmanAutopick(TestEmanBase):
         cls.protImportMics = cls.runImportMicrograph(cls.micsFn,
                                                      samplingRate=4.4,
                                                      voltage=120,
-                                                     sphericalAberration=2.0,
-                                                     scannedPixelSize=None,
-                                                     magnification=60000)
+                                                     sphericalAberration=2.0)
         print(magentaStr("\n==> Importing data - class averages:"))
         cls.protImportAvg = cls.runImportAverages(cls.avgFn, 4.4)
 
