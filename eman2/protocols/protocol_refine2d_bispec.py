@@ -455,7 +455,7 @@ class EmanProtRefine2DBispec(ProtClassify2D):
     def _updateClass(self, item):
         classId = item.getObjId()
         if classId in self._classesInfo:
-            index, fn = self._classesInfo[classId]
+            _, fn = self._classesInfo[classId]
             item.getRepresentative().setLocation(classId, fn)
 
     def _inputProt(self):

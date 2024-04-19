@@ -27,7 +27,7 @@
 EMAN2SCRATCHDIR = 'EMAN2SCRATCHDIR'
 
 # Supported versions
-VERSIONS = ['2.99.47', '2.99.52']
+VERSIONS = ['2.99.47', '2.99.52', '2.99.55']
 EMAN_DEFAULT_VER_NUM = VERSIONS[-1]
 
 DEFAULT_ENV_NAME = f"eman-{EMAN_DEFAULT_VER_NUM}"
@@ -274,7 +274,7 @@ AUTO_REF = 1
 AUTO_CONVNET = 2
 AUTO_GAUSS = 3
 
-WIKI_URL = "[[http://blake.bcm.edu/emanwiki/EMAN2][Wiki]]"
+WIKI_URL = "[[https://blake.bcm.edu/emanwiki/EMAN2][Wiki]]"
 
 # viewer.py constants
 LAST_ITER = 0

@@ -55,7 +55,7 @@ class EmanProtInitModel(ProtInitialVolume):
     to look at the other answers as well.
 
     See more details in:
-    http://blake.bcm.edu/emanwiki/EMAN2/Programs/e2initialmodel
+    https://blake.bcm.edu/emanwiki/EMAN2/Programs/e2initialmodel
     """
 
     _label = 'initial model'
@@ -68,7 +68,6 @@ class EmanProtInitModel(ProtInitialVolume):
         form.addSection(label='Input')
         form.addParam('inputSet', PointerParam,
                       pointerClass='SetOfClasses2D, SetOfAverages',
-                      # pointerCondition='hasRepresentatives',
                       label="Input averages", important=True,
                       help='Select the your class averages to build your '
                            '3D model.\nYou can select SetOfAverages or '
@@ -77,7 +76,7 @@ class EmanProtInitModel(ProtInitialVolume):
                       label='Symmetry group',
                       help='Specify the symmetry.\nChoices are: c(n), d(n), '
                            'h(n), tet, oct, icos.\n'
-                           'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
+                           'See https://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
                            'for a detailed description of symmetry in Eman.')
         form.addParam('numberOfIterations', IntParam, default=8,
                       label='Number of iterations to perform',

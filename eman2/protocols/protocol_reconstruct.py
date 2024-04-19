@@ -37,7 +37,8 @@ from pwem.protocols import ProtReconstruct3D
 
 from .. import Plugin
 from ..convert import writeSetOfParticles
-from ..constants import *
+from ..constants import (RECON_FOURIER, FOURIER_GAUSS2, KEEP_PERCENTAGE,
+                         KEEP_STDDEV, KEEP_ABSQUAL)
 
 
 class outputs(Enum):
@@ -102,7 +103,7 @@ class EmanProtReconstruct(ProtReconstruct3D):
                       help='Set the symmetry; if no value is given then the '
                            'model is assumed to have no symmetry. \n'
                            'Choices are: *i, c, d, tet, icos, or oct* \n'
-                           'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry \n'
+                           'See https://blake.bcm.edu/emanwiki/EMAN2/Symmetry \n'
                            'for a detailed description of symmetry in Eman.')
         line = form.addLine('Padding to Reconstruct: ',
                             expertLevel=LEVEL_ADVANCED,

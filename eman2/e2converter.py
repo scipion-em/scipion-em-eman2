@@ -234,6 +234,6 @@ if __name__ == '__main__':
             alitype = sys.argv[6]
             readParticles(inputParts, inputCls, inputClasses, outputTxt, alitype)
         else:
-            raise Exception("e2converter: Unknown mode '%s'" % mode)
+            raise ValueError("e2converter: Unknown mode '%s'" % mode)
     else:
         print("usage: %s outputFile" % os.path.basename(sys.argv[0]))

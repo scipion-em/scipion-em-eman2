@@ -34,7 +34,8 @@ from pyworkflow.constants import PROD
 from pwem.protocols import ProtAnalysis3D
 
 from .. import Plugin
-from ..constants import *
+from ..constants import (WIKI_URL, SIMCMP_CHOICES, CMP_CCC, SIMALIGN_CHOICES,
+                         ALN_ROTATE_TRANSLATE, RALN_NONE, CMP_DOT)
 from ..convert import writeSetOfParticles
 
 
@@ -76,7 +77,7 @@ class EmanProtTiltValidate(ProtAnalysis3D):
                       help='Set the symmetry; if no value is given then '
                            'the model is assumed to have no symmetry. \n'
                            'Choices are: *i, c, d, tet, icos, or oct* \n'
-                           'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
+                           'See https://blake.bcm.edu/emanwiki/EMAN2/Symmetry\n'
                            'for a detailed description of symmetry in Eman.')
         form.addParam('maxtilt', FloatParam, default=180.0,
                       label='Max tilt angle',

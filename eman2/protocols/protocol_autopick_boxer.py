@@ -36,7 +36,7 @@ from pwem.protocols import ProtParticlePickingAuto
 
 from .. import Plugin
 from ..convert import readSetOfCoordinates, convertReferences
-from ..constants import *
+from ..constants import AUTO_CONVNET, AUTO_GAUSS
 
 
 class EmanProtAutopick(ProtParticlePickingAuto):
@@ -77,7 +77,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         form.addParam('boxSize', IntParam, default=128,
                       allowsPointers=True,
                       label='Box size (px)',
-                      help="Box size in pixels. See http://eman2.org/BoxSize")
+                      help="Box size in pixels. See https://eman2.org/BoxSize")
         form.addParam('particleSize', IntParam, default=100,
                       label='Particle size (px)',
                       help="Longest axis of particle in pixels (diameter, "
@@ -87,14 +87,41 @@ class EmanProtAutopick(ProtParticlePickingAuto):
                       label="Autopicker mode:", default=AUTO_CONVNET,
                       display=EnumParam.DISPLAY_COMBO,
                       help="Choose autopicker mode:\n\n"
-                           " _local search_ - Reference based search by "
-                           "downsampling and 2-D alignment to references.\n"
-                           " _by ref_ - simple reference-based "
-                           "cross-correlation picker with exhaustive "
-                           "rotational search.\n"
-                           " _neural net_ - convolutional neural network "
-                           "boxer.\n"
-                           " _gauss_ - simple reference-free picker.")
+                           " _local search_ - Heavily downsamples the "
+                           "particles and references, and actually performs "
+                           "a 2-D alignment of each putative particle to each "
+                           "reference to identify the best particles in the "
+                           "image. In theory this should produce fewer "
+                           "false positives. Reference requirements are "
+                           "similar to By Ref, though a smaller number of "
+                           "references may be fine.\n"
+                           " _by ref_ - This is a classic reference based "
+                           "particle picker. To use it, you need to have "
+                           "high quality good references in all possible "
+                           "3-D orientations. The algorithm will do in-plane "
+                           "rotation of the references and cross-correlate "
+                           "to look for peaks. It is recommended that you "
+                           "use projections of a 3-D map (low resolution) "
+                           "as references.\n"
+                           " _neural net_ - This is the most accurate boxer "
+                           "by far, both in terms of false positives and "
+                           "false negatives, when trained properly. It is "
+                           "based on a pair of neural networks, one to "
+                           "discriminate between putative particles and "
+                           "the background, and a second to discriminate "
+                           "between real particles and contamination or "
+                           "other high contrast non-particles, which is "
+                           "why it has two thresholds.\n"
+                           " _gauss_ - This is a simple and fast "
+                           "reference-free picker, which provides a simple "
+                           "solution for easy particle picking cases, "
+                           "where the particles have good contrast and are "
+                           "monodisperse. This may work well for things "
+                           "like viruses or ribosomes. It is very fast "
+                           "and since it requires no references, it's "
+                           "easy to try. It likely won't work well for "
+                           "most projects. It was ported from the old "
+                           "boxer program by a volunteer (Vadim Kotov).")
         form.addParam('threshold', FloatParam, default=5.0,
                       label='Threshold',
                       condition='boxerMode!=%d' % AUTO_GAUSS)

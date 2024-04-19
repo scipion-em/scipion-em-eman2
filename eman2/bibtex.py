@@ -34,8 +34,8 @@ pages = "38 - 46",
 year = "2007",
 note = "Software tools for macromolecular microscopy ",
 issn = "1047-8477",
-doi = "http://dx.doi.org/10.1016/j.jsb.2006.05.009",
-url = "http://www.sciencedirect.com/science/article/pii/S1047847706001894",
+doi = "https://dx.doi.org/10.1016/j.jsb.2006.05.009",
+url = "https://www.sciencedirect.com/science/article/pii/S1047847706001894",
 author = "Guang Tang and Liwei Peng and Philip R. Baldwin and Deepinder S. Mann and Wen Jiang and Ian Rees and Steven J. Ludtke",
 keywords = "EMAN, Single particle analysis , cryoEM, TEM, Software, Image processing, Electron microscopy"}
 
@@ -45,8 +45,8 @@ journal = "Methods",
 volume = "100",
 pages = "25 - 34",
 year = "2016",
-doi = "http://dx.doi.org/10.1016/j.ymeth.2016.02.018",
-url = "http://www.sciencedirect.com/science/article/pii/S1046202316300342",
+doi = "https://dx.doi.org/10.1016/j.ymeth.2016.02.018",
+url = "https://www.sciencedirect.com/science/article/pii/S1046202316300342",
 author = "James M. Bell and Muyuan Chen and Philip R. Baldwin and Steven J. Ludtke",
 keywords = "CryoEM, Single particle analysis, Image processing, 3-D reconstruction, Structural biology"}
 

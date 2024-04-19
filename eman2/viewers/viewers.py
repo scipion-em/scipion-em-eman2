@@ -309,10 +309,8 @@ Examples:
                        help='')
 
         group = form.addGroup('Resolution')
-        group.addParam('figure', EnumParam, default=0,
-                       choices=['new', 'active'],
-                       label='Figure',
-                       display=EnumParam.DISPLAY_HLIST)
+        group.addHidden('figure', EnumParam, default=0,
+                       choices=['new', 'active'])
         group.addParam('resolutionPlotsFSC', EnumParam,
                        choices=['unmasked', 'masked', 'masked tight', 'all'],
                        default=FSC_UNMASK, display=EnumParam.DISPLAY_COMBO,
@@ -514,9 +512,6 @@ Examples:
     # =========================================================================
     # plotFSC
     # =========================================================================
-    def _getFigure(self):
-        return None if self.figure == 0 else 'active'
-
     def _showFSC(self, paramName=None):
         threshold = self.resolutionThresholdFSC.get()
         fscPlot = self.resolutionPlotsFSC.get()
@@ -524,7 +519,7 @@ Examples:
         fscViewer = FscViewer(project=self.protocol.getProject(),
                               threshold=threshold,
                               protocol=self.protocol,
-                              figure=self._getFigure(),
+                              figure=None,
                               addButton=True)
         fscSet = self.protocol._createSetOfFSCs()
 
@@ -557,7 +552,6 @@ Examples:
                     fscSet.append(fscT)
 
         fscViewer.visualize(fscSet)
-        return [fscViewer]
 
     def _plotFSC(self, fscFn, label):
         res_inv, frc = self._getFscValues(fscFn)
@@ -647,7 +641,7 @@ Examples:
         elif n == 2:
             gridsize = [2, 1]
         else:
-            gridsize = [(n + 1) / 2, 2]
+            gridsize = [(n + 1) // 2, 2]
 
         return gridsize
 
@@ -757,7 +751,7 @@ class TiltValidateViewer(ProtocolViewer):
         a = xplotter.createSubPlot(plot_title, 'Tilt axis', 'Tilt angle',
                                    projection='polar')
 
-        datap, r, theta, zaxis = self._getValues()
+        _, r, theta, zaxis = self._getValues()
 
         if colorzaxis:
             a.scatter(theta, r, c=zaxis)

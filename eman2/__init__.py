@@ -37,7 +37,7 @@ from .constants import (EMAN2SCRATCHDIR, VERSIONS, EMAN_ENV_ACTIVATION,
                         DEFAULT_ACTIVATION_CMD, EMAN_DEFAULT_VER_NUM)
 
 
-__version__ = '3.6'
+__version__ = '3.6.1'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
@@ -81,7 +81,7 @@ class Plugin(pwem.Plugin):
         """
         v1 = cls.getActiveVersion()
         if v1 not in VERSIONS:
-            raise Exception("This version of EMAN is not supported: ", v1)
+            raise ValueError("This version of EMAN is not supported: ", v1)
 
         if VERSIONS.index(v1) < VERSIONS.index(version):
             return False

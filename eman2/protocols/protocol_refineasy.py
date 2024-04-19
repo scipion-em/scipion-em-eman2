@@ -40,7 +40,7 @@ from pyworkflow.utils.path import cleanPattern, makePath, createLink
 
 from .. import Plugin
 from ..convert import rowToAlignment, writeSetOfParticles
-from ..constants import *
+from ..constants import TOPHAT_NONE, SPEED_5, AMP_AUTO, EMAN2SCRATCHDIR
 
 
 class outputs(Enum):
@@ -159,7 +159,7 @@ Major features of this program:
                       help='Set the symmetry; if no value is given then the '
                            'model is assumed to have no symmetry. \n'
                            'Choices are: c(n), d(n), tet, icos, or oct.\n'
-                           'See http://blake.bcm.edu/emanwiki/EMAN2/Symmetry '
+                           'See https://blake.bcm.edu/emanwiki/EMAN2/Symmetry '
                            'for a detailed description of symmetry in Eman.')
         form.addParam('doBreaksym', BooleanParam, default=False,
                       label='Break symmetry?',
