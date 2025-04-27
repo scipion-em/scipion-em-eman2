@@ -130,10 +130,10 @@ class EmanProtCTFAuto(ProtProcessParticles):
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
-        self._insertFunctionStep('convertImagesStep')
+        self._insertFunctionStep('convertImagesStep', needsGPU=False)
         args = self._prepareParams()
-        self._insertFunctionStep('runCTFStep', args)
-        self._insertFunctionStep('createOutputStep')
+        self._insertFunctionStep('runCTFStep', args, needsGPU=False)
+        self._insertFunctionStep('createOutputStep', needsGPU=False)
 
     # --------------------------- STEPS functions -----------------------------
     def convertImagesStep(self):

@@ -260,13 +260,13 @@ Major features of this program:
         if self.doContinue:
             self.input3DReference.set(None)
             self.inputParticles.set(None)
-            self._insertFunctionStep('createLinkSteps')
+            self._insertFunctionStep('createLinkSteps', needsGPU=False)
             args = self._prepareContinueParams()
         else:
-            self._insertFunctionStep('convertImagesStep')
+            self._insertFunctionStep('convertImagesStep', needsGPU=False)
             args = self._prepareParams()
-        self._insertFunctionStep('refineStep', args)
-        self._insertFunctionStep('createOutputStep')
+        self._insertFunctionStep('refineStep', args, needsGPU=False)
+        self._insertFunctionStep('createOutputStep', needsGPU=False)
 
     # --------------------------- STEPS functions -----------------------------
     def createLinkSteps(self):

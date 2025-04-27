@@ -164,10 +164,10 @@ class EmanProtTiltValidate(ProtAnalysis3D):
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
-        self._insertFunctionStep('convertImagesStep')
+        self._insertFunctionStep('convertImagesStep', needsGPU=False)
         args = self._prepareParams()
-        self._insertFunctionStep('runValidateStep', args)
-        self._insertFunctionStep('createOutputStep')
+        self._insertFunctionStep('runValidateStep', args, needsGPU=False)
+        self._insertFunctionStep('createOutputStep', needsGPU=False)
 
     # --------------------------- STEPS functions -----------------------------
     def convertImagesStep(self):

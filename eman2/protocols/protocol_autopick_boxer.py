@@ -157,7 +157,7 @@ class EmanProtAutopick(ProtParticlePickingAuto):
     # --------------------------- INSERT steps functions ----------------------
     def _insertInitialSteps(self):
         self._createFilenameTemplates()
-        initId = self._insertFunctionStep('convertInputStep')
+        initId = self._insertFunctionStep('convertInputStep', needsGPU=False)
         return [initId]
 
     # --------------------------- STEPS functions -----------------------------

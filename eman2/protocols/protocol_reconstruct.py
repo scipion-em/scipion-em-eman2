@@ -192,9 +192,10 @@ class EmanProtReconstruct(ProtReconstruct3D):
     # --------------------------- INSERT steps functions ----------------------
     def _insertAllSteps(self):
         self._createFilenameTemplates()
-        self._insertFunctionStep('convertImagesStep')
-        self._insertFunctionStep('reconstructVolumeStep', self._prepareParams())
-        self._insertFunctionStep('createOutputStep')
+        self._insertFunctionStep('convertImagesStep', needsGPU=False)
+        self._insertFunctionStep('reconstructVolumeStep',
+                                 self._prepareParams(), needsGPU=False)
+        self._insertFunctionStep('createOutputStep', needsGPU=False)
 
     # --------------------------- STEPS functions -----------------------------
     def convertImagesStep(self):

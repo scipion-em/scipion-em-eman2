@@ -234,10 +234,10 @@ class EmanProtRefine2DBispec(ProtClassify2D):
     def _insertAllSteps(self):
         self._createFilenameTemplates()
         self._createIterTemplates(currRun=self._getRun())
-        self._insertFunctionStep('createLinksStep')
+        self._insertFunctionStep('createLinksStep', needsGPU=False)
         args = self._prepareParams()
-        self._insertFunctionStep('refineStep', args)
-        self._insertFunctionStep('createOutputStep')
+        self._insertFunctionStep('refineStep', args, needsGPU=False)
+        self._insertFunctionStep('createOutputStep', needsGPU=False)
 
     # --------------------------- STEPS functions -----------------------------
     def createLinksStep(self):
