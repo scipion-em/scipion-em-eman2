@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 import pwem
 import pyworkflow.utils as pwutils
-from pyworkflow import Config
+from pyworkflow import Config, SPA, TOMO
 
 from .constants import (EMAN2SCRATCHDIR, VERSIONS, EMAN_ENV_ACTIVATION,
                         DEFAULT_ACTIVATION_CMD, EMAN_DEFAULT_VER_NUM)
@@ -45,6 +45,7 @@ _references = ['Tang2007']
 class Plugin(pwem.Plugin):
     _supportedVersions = VERSIONS
     _url = "https://github.com/scipion-em/scipion-em-eman2"
+    _processingField = [SPA, TOMO]
 
     @classmethod
     def _defineVariables(cls):
