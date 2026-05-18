@@ -40,7 +40,174 @@ from ..constants import AUTO_CONVNET, AUTO_GAUSS
 
 
 class EmanProtAutopick(ProtParticlePickingAuto):
-    """ Automated particle picker for SPA. Uses EMAN2 (versions 2.2+) e2boxer.py
+    """
+    Provides automated particle picking for single particle analysis workflows
+    using the EMAN2 Boxer framework. The protocol supports several automated
+    detection strategies, including reference-based searching, neural-network
+    classification, local alignment approaches, and simple reference-free
+    Gaussian picking for rapid exploratory analyses.
+
+    AI Generated:
+
+    EMAN Automatic Particle Picking (EmanProtAutopick) - User Manual
+        Overview
+
+        The EMAN automatic particle picking protocol is designed to identify
+        particle coordinates directly from cryo-EM micrographs with minimal
+        manual intervention. In single particle analysis workflows, automated
+        picking is essential for processing large datasets efficiently while
+        maintaining consistency across thousands of micrographs.
+
+        The protocol offers several picking strategies adapted to different
+        biological situations and data qualities. These methods range from
+        simple reference-free approaches suitable for highly contrasted samples
+        to advanced neural-network-based detection systems capable of handling
+        heterogeneous and noisy datasets.
+
+        For most cryo-EM projects, automated picking represents the transition
+        from exploratory manual inspection to large-scale data production. The
+        quality of the selected particles strongly influences downstream
+        classification, refinement, and final reconstruction quality.
+
+        Inputs and General Workflow
+
+        The protocol requires a set of input micrographs together with particle
+        size and box size estimates. Depending on the selected strategy, the
+        workflow may also require reference averages or a previously trained
+        particle picking model obtained from an earlier interactive boxing
+        session.
+
+        During execution, the protocol processes each micrograph individually
+        and generates particle coordinates automatically. The resulting
+        coordinates can later be inspected, cleaned, and used for particle
+        extraction and downstream reconstruction workflows.
+
+        In practical biological applications, users commonly perform an initial
+        manual or semi-automated picking session to establish representative
+        particles and then apply this automated protocol to process the complete
+        dataset consistently.
+
+        Choice of Picking Strategy
+
+        The protocol provides multiple particle detection approaches, each with
+        distinct biological advantages and limitations.
+
+        The local search strategy performs reference-guided matching using
+        strongly downsampled particles and references. This method is often
+        useful when particles exhibit moderate heterogeneity but still maintain
+        recognizable structural features. It generally produces fewer false
+        positives than simpler correlation-based approaches, although it may be
+        computationally slower.
+
+        The reference-based strategy relies on high-quality reference images
+        representing the expected particle projections. This approach performs
+        well when reliable references are available and the particles display
+        limited structural variability. It is especially useful for symmetric
+        or structurally stable complexes. However, biologically important rare
+        conformations may be missed if they are poorly represented in the
+        references.
+
+        The neural-network strategy is the most advanced and generally the most
+        accurate option when properly trained. It is particularly effective for
+        difficult datasets containing contamination, low contrast, preferred
+        orientations, or substantial heterogeneity. By combining multiple neural
+        discrimination stages, the protocol attempts to distinguish true
+        particles from both background noise and non-particle contaminants.
+
+        The Gaussian strategy provides a rapid reference-free alternative for
+        simple datasets with strong contrast and highly homogeneous particles.
+        It may perform adequately for large symmetric particles such as viruses
+        or ribosomes, but it is usually less reliable for small, flexible, or
+        heterogeneous molecular assemblies.
+
+        Particle Size and Box Size Considerations
+
+        Accurate particle sizing is one of the most biologically important
+        aspects of automated picking. The particle size parameter should reflect
+        the approximate largest visible dimension of the molecular complex in
+        the micrographs. If the value is too small, peripheral structural
+        information may be excluded. If it is too large, contamination and
+        background noise may interfere with particle discrimination.
+
+        The box size determines the extraction region surrounding each detected
+        particle. A biologically appropriate box should contain the complete
+        particle together with sufficient surrounding solvent to support later
+        alignment and classification procedures.
+
+        Users should visually verify the resulting picks carefully, particularly
+        when processing datasets with flexible conformations, aggregation, or
+        crowded particle distributions.
+
+        Neural-Network-Based Picking
+
+        The neural-network mode is especially valuable for challenging cryo-EM
+        datasets where classical template matching methods may fail. In these
+        situations, training data generated from a previous supervised boxing
+        session can significantly improve particle detection accuracy.
+
+        The protocol allows reuse of previously trained particle selection
+        models together with curated examples of valid particles, contaminants,
+        and background regions. This enables biologically consistent particle
+        selection across multiple datasets or acquisition sessions.
+
+        GPU acceleration can optionally be used in neural-network mode to
+        accelerate particle detection. This becomes increasingly important for
+        large cryo-EM projects involving thousands of micrographs.
+
+        Threshold Selection and Particle Quality
+
+        Detection thresholds strongly influence the balance between sensitivity
+        and specificity. Lower thresholds generally increase particle recovery
+        but may introduce more false positives. Higher thresholds improve purity
+        at the risk of discarding rare or low-contrast particles.
+
+        Biological interpretation should guide threshold optimization. In many
+        projects, retaining a broader particle population during initial picking
+        is preferable because downstream two-dimensional classification can
+        remove contaminants later. However, excessively permissive thresholds
+        may overwhelm classification procedures with noise and artifacts.
+
+        Outputs and Their Interpretation
+
+        The protocol produces particle coordinate sets associated with the input
+        micrographs. These coordinates define the particle centers that will be
+        used during extraction and subsequent cryo-EM analysis stages.
+
+        The biological quality of the output should always be validated through
+        visual inspection. Automated methods can mistakenly identify ice,
+        carbon edges, aggregation artifacts, or contamination as particles,
+        especially in low-contrast datasets.
+
+        Careful evaluation of coordinate distributions and extracted particle
+        images is therefore essential before proceeding to classification and
+        refinement.
+
+        Practical Recommendations
+
+        In routine cryo-EM workflows, it is often advisable to begin with the
+        neural-network strategy if representative training data are available.
+        This approach generally provides the best balance between particle
+        recovery and contamination rejection.
+
+        For simple, high-contrast datasets, the Gaussian or reference-based
+        methods may provide sufficiently accurate results with lower
+        computational cost. Users working with heterogeneous or flexible
+        complexes should inspect particle diversity carefully to avoid losing
+        biologically meaningful conformational states.
+
+        Thresholds should be adjusted iteratively while visually inspecting
+        representative micrographs. It is generally safer to tolerate moderate
+        levels of false positives during initial picking than to exclude rare
+        structural states irreversibly.
+
+        Final Perspective
+
+        Automated particle picking is a biologically critical selection step
+        that determines which molecular observations contribute to the final
+        cryo-EM reconstruction. Appropriate choice of picking strategy,
+        realistic particle sizing, careful threshold tuning, and continuous
+        visual validation are essential for generating reliable datasets suitable
+        for high-quality structural interpretation.
     """
     _label = 'boxer auto'
     _devStatus = PROD

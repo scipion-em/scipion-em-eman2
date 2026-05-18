@@ -51,29 +51,212 @@ class outputs(Enum):
 
 class EmanProtRefine2D(ProtClassify2D):
     """
-    This protocol wraps *e2refine2d.py* EMAN2 program.
+    Produces reference-free 2D class averages from single-particle cryo-EM images
+    using iterative alignment, multivariate statistical analysis, and classification
+    strategies implemented in EMAN2. The protocol is designed to organize large
+    collections of heterogeneous particle projections into structurally meaningful
+    groups that can be used for data inspection, conformational analysis, particle
+    cleaning, or generation of initial 3D models.
 
-    This program is used to produce reference-free class averages
-    from a population of mixed, unaligned particle images. These averages
-    can be used to generate initial models or assess the structural
-    variability of the data. They are not normally themselves used as part
-    of the single particle reconstruction refinement process, which
-    uses the raw particles in a reference-based classification
-    approach. However, with a good structure, projections of the
-    final 3-D model should be consistent with the results of
-    this reference-free analysis.
+    AI Generated:
 
-    This program uses a fully automated iterative alignment/MSA approach.
-    You should normally target a minimum of 10-20 particles per
-    class-average, though more is fine.
+    Refine 2D (EmanProtRefine2D) — User Manual
+        Overview
 
-    Default parameters should give a good start, but are likely not
-    optimal for any given system.
+        The Refine 2D protocol performs reference-free two-dimensional classification
+        of cryo-EM particle images. Its main goal is to identify structurally similar
+        particle views and combine them into cleaner and less noisy class averages.
+        These averages provide an interpretable representation of the experimental
+        data and are commonly used to evaluate particle quality, detect contaminants,
+        assess structural heterogeneity, and prepare datasets for downstream
+        three-dimensional reconstruction workflows.
 
-    Note that it does have the --parallel option, but a few steps of the
-    iterative process are not parallellised, so don't be surprised if
-    multiple cores are not always active.
-"""
+        In biological cryo-EM practice, 2D classification is one of the most
+        important quality-control stages. Well-defined classes usually indicate that
+        particles are correctly picked, structurally consistent, and suitable for
+        high-resolution refinement. Poor or noisy classes may reveal damaged
+        particles, aggregation, contamination, preferred orientation problems, or
+        alignment instability.
+
+        The protocol uses an iterative strategy that alternates particle alignment,
+        dimensionality reduction, similarity analysis, and class averaging. This
+        iterative refinement progressively improves the quality and consistency of
+        the resulting averages. The workflow is fully automated but still provides
+        extensive control for advanced users working with challenging biological
+        samples.
+
+        Inputs and General Workflow
+
+        The protocol requires a set of input particles extracted from cryo-EM
+        micrographs. Optionally, the user may also provide an initial set of class
+        averages to guide the refinement process. When no initial references are
+        provided, the protocol generates them automatically.
+
+        During execution, the particles are aligned and grouped according to visual
+        similarity. Multiple iterations are typically performed, allowing the
+        averages to become progressively sharper and more biologically meaningful.
+        The resulting classes represent dominant projection views or conformational
+        states present in the dataset.
+
+        The protocol also supports continuation from previous runs. This is useful
+        when additional refinement iterations are required or when exploratory
+        classifications need to be extended after inspecting preliminary results.
+
+        CTF Handling and Particle Preparation
+
+        Correct treatment of the contrast transfer function is biologically important
+        because CTF effects strongly influence image contrast and high-resolution
+        information. The protocol can estimate and apply phase-flipping corrections
+        automatically when required. In most workflows this should remain enabled,
+        especially when processing raw particles that have not already undergone
+        CTF correction within EMAN2.
+
+        Input particles should ideally be reasonably centered and extracted with a
+        box size large enough to contain the full particle signal. Severe
+        mis-centering or highly heterogeneous particle populations can reduce the
+        quality of the classification and produce unstable averages.
+
+        Number of Classes and Dataset Heterogeneity
+
+        One of the most biologically important parameters is the number of class
+        averages to generate. This value determines how finely the structural
+        variability of the dataset is represented.
+
+        Using too few classes may merge distinct particle views or conformations
+        together, masking biologically relevant heterogeneity. Using too many
+        classes may fragment the dataset excessively, producing noisy averages with
+        too few particles per class. In practical cryo-EM work, a reasonable target
+        is often around 10 to 20 particles per class at minimum, although much
+        larger classes are common in large datasets.
+
+        Homogeneous particles with limited conformational variability generally
+        require fewer classes, while flexible assemblies, membrane proteins, or
+        multi-domain complexes may benefit from a larger number of classes in order
+        to separate distinct structural states.
+
+        Iterative Refinement Strategy
+
+        The protocol performs multiple rounds of alignment and classification. Early
+        iterations usually establish broad structural organization, whereas later
+        iterations refine particle assignments and improve class sharpness.
+
+        High-contrast datasets often converge rapidly within a few iterations.
+        Lower-contrast particles, flexible complexes, or particularly noisy data may
+        require substantially more iterations to stabilize. Excessive iterations,
+        however, may sometimes overfit noise or exaggerate minor differences that
+        are not biologically meaningful.
+
+        In practice, users commonly inspect intermediate class averages visually to
+        determine whether convergence has been reached and whether additional
+        refinement is beneficial.
+
+        Alignment and Similarity Optimization
+
+        The protocol provides several configurable alignment and similarity options
+        that influence how particles are compared and grouped. These parameters are
+        especially relevant for difficult datasets involving strong flexibility,
+        low signal-to-noise ratio, or highly anisotropic particle views.
+
+        The alignment procedures attempt to place particles into consistent
+        rotational and translational orientations before similarity comparisons are
+        computed. Accurate alignment is critical because poor centering or angular
+        inconsistency directly reduces the sharpness of the resulting class
+        averages.
+
+        Advanced users may refine similarity metrics, alignment methods, and
+        multistage alignment strategies to optimize performance for specific
+        biological systems. However, the default settings are generally suitable
+        for most standard cryo-EM datasets.
+
+        Dimensionality Reduction and Statistical Analysis
+
+        The protocol uses multivariate statistical analysis to represent particles
+        within a reduced feature space before classification. This approach helps
+        emphasize dominant structural patterns while reducing the impact of noise.
+
+        The number of statistical basis vectors determines how much variability is
+        retained during classification. Too few vectors may oversimplify the data
+        and merge distinct structures, whereas too many may incorporate excessive
+        noise. Flexible or structurally complex particles may benefit from somewhat
+        larger values, although the defaults usually provide a balanced starting
+        point.
+
+        Class Averaging and Particle Retention
+
+        Once particles are assigned to classes, the protocol computes representative
+        averages for each group. These averages enhance common structural features
+        while suppressing random noise through particle averaging.
+
+        Users may control how many particles contribute to each class average. More
+        restrictive retention thresholds produce cleaner and sharper averages but
+        may discard structurally meaningful variability. More permissive thresholds
+        preserve heterogeneity but can reduce visual clarity.
+
+        Sigma-based retention methods can be useful in datasets with variable image
+        quality or inconsistent particle populations. Automated masking options may
+        further improve centering and class stability, particularly for negative
+        stain data or particles with strong surrounding background signal.
+
+        Initial References and Continuation Workflows
+
+        Although the protocol operates in a reference-free manner, optional starting
+        averages can accelerate convergence or stabilize difficult classifications.
+        This can be useful when refining previously characterized datasets or when
+        analyzing particles with known dominant orientations.
+
+        Continuation workflows allow users to resume refinement from earlier
+        classifications without restarting from the beginning. This is especially
+        valuable for large datasets requiring long computational runs or iterative
+        optimization during exploratory structural analysis.
+
+        Outputs and Biological Interpretation
+
+        The protocol produces a set of 2D classes together with representative class
+        averages and aligned particle assignments. Each class ideally corresponds to
+        a distinct projection view, conformational state, or structurally related
+        subset of particles.
+
+        Biologically meaningful classes typically display recognizable structural
+        features with consistent shape and contrast. Classes dominated by noise,
+        contaminants, or poorly aligned particles are usually discarded before
+        downstream reconstruction.
+
+        The resulting class averages are frequently used for particle selection,
+        dataset cleaning, ab initio model generation, heterogeneity analysis, and
+        visualization of dominant structural states. However, they are generally not
+        used directly as substitutes for the original particles during final
+        high-resolution refinement.
+
+        Practical Recommendations
+
+        In routine cryo-EM workflows, it is often advisable to begin with default
+        parameters and a moderate number of classes. Visual inspection of the
+        resulting averages remains one of the most important quality-control steps.
+
+        If classes appear blurry or unstable, increasing the number of iterations,
+        improving particle centering, or adjusting alignment strategies may help.
+        Highly heterogeneous datasets may require more classes to separate distinct
+        conformations effectively.
+
+        For very large datasets, fast initialization strategies can significantly
+        reduce computational cost while still producing biologically useful results.
+        Automated masking may improve robustness for particles embedded in noisy
+        backgrounds or exhibiting weak contrast.
+
+        Final Perspective
+
+        For most cryo-EM studies, 2D classification represents far more than a
+        computational preprocessing step. It provides an essential biological view
+        of dataset quality, structural diversity, and particle behavior. Careful
+        interpretation of class averages often determines whether a dataset is ready
+        for high-resolution reconstruction or whether additional cleaning and data
+        optimization are required.
+
+        Successful use of the protocol depends on balancing classification detail,
+        particle homogeneity, alignment robustness, and biological interpretability.
+        When used thoughtfully, the resulting classes provide a reliable foundation
+        for downstream structural analysis and three-dimensional reconstruction.
+    """
     _label = 'refine 2D'
     _devStatus = PROD
     _possibleOutputs = outputs

@@ -50,25 +50,193 @@ class outputs(Enum):
 
 class EmanProtRefine(ProtRefine3D):
     """
-    This protocol wraps *e2refine_easy.py* EMAN2 program.
+    Performs single-particle 3D refinement using EMAN2 iterative refinement
+    strategies. The protocol reconstructs high-resolution three-dimensional
+    maps from particle images by progressively improving particle alignment,
+    orientation estimation, and volumetric reconstruction consistency.
 
-This is the primary single particle refinement program in EMAN2.1+.
-It replaces earlier programs such as e2refine.py and e2refine_evenodd.py.
+    AI Generated:
 
-Major features of this program:
+    Refine Easy (EmanProtRefine) - User Manual
+        Overview
 
- * While a range of command-line options still exist. You should not
- normally specify more than a few basic requirements. The rest will
- be auto-selected for you.
- * This program will split your data in half and automatically
- refine the halves independently to produce a gold standard resolution
- curve for every step in the refinement.
- * An HTML report file will be generated as this program runs,
- telling you exactly what it decided to do and why, as well as giving
- information about runtime, etc while the job is still running.
- * The gold standard FSC also permits us to automatically filter the
- structure at each refinement step. The resolution you specify is
- a target, NOT the filter resolution.
+        The Refine Easy protocol performs iterative single-particle refinement
+        of cryo-EM datasets using the EMAN2 refinement framework. Its primary
+        objective is to transform a collection of two-dimensional particle
+        projections into an accurate and biologically meaningful three-dimensional
+        reconstruction. The protocol is designed for routine high-resolution
+        cryo-EM refinement workflows and provides automated optimization
+        strategies that simplify many difficult refinement decisions for users.
+
+        In practical biological research, this protocol is commonly used after
+        particle extraction and initial model generation. The refinement process
+        gradually improves the orientation assignments and structural consistency
+        of particles across multiple iterations, leading to progressively higher
+        resolution maps. The workflow also supports gold-standard refinement
+        approaches in which independent particle subsets are refined separately
+        to reduce overfitting and provide reliable resolution estimation.
+
+        Inputs and General Workflow
+
+        The protocol requires a set of input particles and an initial three-
+        dimensional reference volume. The reference serves as the starting
+        structural hypothesis that guides the refinement process. In most
+        biological applications, the initial reference may originate from an
+        ab initio reconstruction, a low-resolution experimental map, or a
+        previously determined structure.
+
+        A good starting model is essential for reliable convergence. Extremely
+        inaccurate or strongly biased references may lead to incorrect structural
+        interpretations. Biological users should therefore ensure that the
+        initial map captures the major structural features of the specimen while
+        avoiding excessive preprocessing or overinterpretation.
+
+        During refinement, particle orientations are iteratively optimized,
+        class averages are generated, and updated three-dimensional maps are
+        reconstructed. The protocol automatically evaluates reconstruction
+        quality across iterations and applies adaptive filtering strategies
+        based on the estimated resolution of the refinement.
+
+        Gold-Standard Refinement and Resolution Estimation
+
+        One of the biologically important aspects of the protocol is the use of
+        independent half-set refinement strategies. The particle dataset is
+        divided into separate subsets that are refined independently throughout
+        the workflow. This approach allows estimation of Fourier shell
+        correlation curves and helps reduce the risk of overfitting.
+
+        From a biological interpretation perspective, this is critical because
+        apparent high-resolution features may sometimes arise from noise or
+        refinement bias rather than genuine structural signal. Independent
+        refinement provides a more reliable estimate of map quality and helps
+        users evaluate the confidence of structural details.
+
+        The target resolution parameter should therefore be interpreted as a
+        refinement objective rather than a guaranteed final resolution. The
+        protocol dynamically determines appropriate filtering and refinement
+        behavior according to the evolving quality of the reconstruction.
+
+        Symmetry and Structural Considerations
+
+        The protocol supports a wide range of symmetry groups commonly used in
+        cryo-EM structural biology. Proper symmetry assignment can dramatically
+        improve reconstruction quality by increasing the effective number of
+        observations contributing to the map.
+
+        Biological caution is nevertheless required. Incorrect symmetry
+        application may artificially distort the reconstruction or hide genuine
+        asymmetry and conformational variability. For complexes with uncertain
+        symmetry or suspected pseudo-symmetry, asymmetric refinement strategies
+        are often preferable during exploratory analyses.
+
+        The protocol also supports pseudosymmetry handling, allowing users to
+        refine structures that contain approximate but not exact symmetry. This
+        capability becomes particularly important for assemblies with flexible
+        domains, partial occupancy, or conformational heterogeneity.
+
+        Contrast Transfer Function Handling
+
+        Accurate handling of the contrast transfer function is an essential
+        component of high-resolution refinement. The protocol can estimate and
+        correct microscope transfer effects as part of the refinement workflow,
+        improving the consistency and interpretability of reconstructed maps.
+
+        In biological practice, proper CTF correction becomes increasingly
+        important as users aim for near-atomic resolution. Datasets processed
+        with inconsistent or poor CTF estimation may converge slowly or produce
+        unstable structural features. The protocol therefore provides integrated
+        support for particle phase correction and spectral normalization.
+
+        Refinement Speed and Precision
+
+        The refinement workflow offers different balances between computational
+        speed and reconstruction precision. Faster settings are useful during
+        exploratory stages, initial model assessment, or low-resolution
+        refinement. More conservative settings are generally preferred during
+        final refinement stages when maximizing structural detail becomes the
+        primary objective.
+
+        Iterative refinement often benefits from staged refinement strategies.
+        Biological users commonly begin with moderate target resolutions and
+        progressively tighten refinement conditions as alignment quality
+        improves. This approach reduces the likelihood of convergence failures
+        and improves stability for difficult datasets.
+
+        Masking and Postprocessing
+
+        The protocol includes options for masking, thresholding, amplitude
+        correction, and postprocessing operations. These controls influence the
+        final appearance and interpretability of reconstructed maps.
+
+        From a biological perspective, masking should be applied carefully.
+        Appropriate masking can improve refinement stability and reduce solvent
+        noise, especially for compact particles. Excessively aggressive masking,
+        however, may exaggerate structural features or artificially inflate
+        resolution estimates.
+
+        Amplitude correction and local filtering options can improve visual map
+        quality and interpretability, particularly in heterogeneous datasets.
+        Nevertheless, users should remain cautious when interpreting highly
+        sharpened regions or strongly filtered maps, especially near flexible
+        domains or low-occupancy regions.
+
+        Continuation and Iterative Workflow Management
+
+        The protocol supports continuation of previous refinement runs. This is
+        particularly useful in long cryo-EM projects where refinement strategies
+        evolve gradually over time. Biological users may continue a refinement
+        with modified parameters, improved masks, or different target
+        resolutions without restarting the workflow from the beginning.
+
+        This iterative strategy is especially valuable when handling challenging
+        datasets, conformational variability, or large macromolecular complexes
+        requiring progressive optimization.
+
+        Outputs and Biological Interpretation
+
+        The protocol produces refined three-dimensional maps together with
+        updated particle alignment information. Final outputs typically include
+        full reconstructions, independently refined half maps, resolution
+        estimation curves, and refined particle orientations.
+
+        The reconstructed map represents the consensus structural state
+        supported by the particle dataset. Biological interpretation should
+        always consider the possibility of structural heterogeneity, preferred
+        orientations, compositional variability, or local flexibility.
+
+        Half maps are particularly important for downstream validation,
+        postprocessing, local resolution analysis, and atomic model refinement.
+        They provide an essential basis for evaluating reconstruction reliability
+        and avoiding overinterpretation of weak structural features.
+
+        Practical Recommendations
+
+        In routine cryo-EM workflows, it is generally advisable to begin with
+        moderate refinement settings and progressively increase refinement
+        precision as convergence improves. Reliable particle cleaning and
+        high-quality initial references often have a larger impact on final map
+        quality than aggressive parameter tuning.
+
+        For difficult biological systems containing flexibility or structural
+        variability, conservative masking and cautious interpretation are highly
+        recommended. Monitoring resolution trends, visual map quality, and
+        consistency between half maps remains essential throughout refinement.
+
+        When approaching near-atomic resolution, users should pay particular
+        attention to symmetry selection, masking behavior, and amplitude
+        correction strategies, since these factors strongly influence the final
+        biological interpretation of the structure.
+
+        Final Perspective
+
+        For cryo-EM structural biology, iterative refinement is one of the most
+        critical stages in transforming noisy particle images into meaningful
+        structural information. Successful refinement depends not only on
+        computational optimization but also on biologically informed decisions
+        regarding symmetry, masking, filtering, and dataset quality. Careful
+        refinement management and cautious interpretation of the resulting maps
+        are essential for obtaining reliable and biologically accurate
+        structural conclusions.
     """
     _label = 'refine easy'
     _devStatus = PROD
