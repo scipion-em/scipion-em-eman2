@@ -149,7 +149,8 @@ class Plugin(pwem.Plugin):
         # try to get CONDA activation command
         installCmds = [
             cls.getCondaActivationCmd(),
-            f'conda create -y -n {ENV_NAME} eman-dev={version} -c cryoem -c conda-forge &&',
+            f'conda create -y -n {ENV_NAME} eman-dev={version} libboost-python-devel>=1.85.0 '
+            f'-c cryoem -c conda-forge &&',
             f'touch {FLAG}'  # Flag installation finished
         ]
         emanCmds = [(" ".join(installCmds), FLAG)]
