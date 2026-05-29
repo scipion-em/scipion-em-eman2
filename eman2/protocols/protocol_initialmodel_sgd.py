@@ -145,9 +145,9 @@ class EmanProtInitModelSGD(ProtInitialVolume):
 
     def _insertAllSteps(self):
         self._prepareDefinition()
-        self._insertFunctionStep('createStackImgsStep')
+        self._insertFunctionStep('createStackImgsStep', needsGPU=False)
         self._insertInitialModelStep()
-        self._insertFunctionStep('createOutputStep')
+        self._insertFunctionStep('createOutputStep', needsGPU=False)
 
     def _insertInitialModelStep(self):
         args = '--ptcls=input_set.spi'
@@ -169,7 +169,8 @@ class EmanProtInitModelSGD(ProtInitialVolume):
         if self.extraParams.hasValue():
             args += " " + self.extraParams.get()
 
-        self._insertFunctionStep('createInitialModelStep', args % self._params)
+        self._insertFunctionStep('createInitialModelStep', args % self._params,
+                                 needsGPU=False)
 
     # --------------------------- STEPS functions -----------------------------
     def createStackImgsStep(self):

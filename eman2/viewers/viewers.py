@@ -60,6 +60,7 @@ class EmanViewer(DataViewer):
     _environments = [DESKTOP_TKINTER]
     _targets = [EmanProtBoxing, EmanProtInitModel,
                 EmanProtInitModelSGD, Image, Volume]
+    _name = "Eman"
 
     def _visualize(self, obj, **args):
         cls = type(obj)

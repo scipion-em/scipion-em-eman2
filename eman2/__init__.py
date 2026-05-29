@@ -31,13 +31,13 @@ logger = logging.getLogger(__name__)
 
 import pwem
 import pyworkflow.utils as pwutils
-from pyworkflow import Config
+from pyworkflow import Config, SPA, TOMO
 
 from .constants import (EMAN2SCRATCHDIR, VERSIONS, EMAN_ENV_ACTIVATION,
                         DEFAULT_ACTIVATION_CMD, EMAN_DEFAULT_VER_NUM)
 
 
-__version__ = '3.6.1'
+__version__ = '3.7.0'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
@@ -45,6 +45,7 @@ _references = ['Tang2007']
 class Plugin(pwem.Plugin):
     _supportedVersions = VERSIONS
     _url = "https://github.com/scipion-em/scipion-em-eman2"
+    _processingField = [SPA, TOMO]
 
     @classmethod
     def _defineVariables(cls):
@@ -148,7 +149,8 @@ class Plugin(pwem.Plugin):
         # try to get CONDA activation command
         installCmds = [
             cls.getCondaActivationCmd(),
-            f'conda create -y -n {ENV_NAME} eman-dev={version} -c cryoem -c conda-forge &&',
+            f'conda create -y -n {ENV_NAME} eman-dev={version} libboost-python-devel>=1.85.0 '
+            f'-c cryoem -c conda-forge &&',
             f'touch {FLAG}'  # Flag installation finished
         ]
         emanCmds = [(" ".join(installCmds), FLAG)]
