@@ -37,7 +37,7 @@ from .constants import (EMAN2SCRATCHDIR, VERSIONS, EMAN_ENV_ACTIVATION,
                         DEFAULT_ACTIVATION_CMD, EMAN_DEFAULT_VER_NUM)
 
 
-__version__ = '3.7.0'
+__version__ = '3.7.1'
 _logo = "eman2_logo.png"
 _references = ['Tang2007']
 
@@ -149,7 +149,8 @@ class Plugin(pwem.Plugin):
         # try to get CONDA activation command
         installCmds = [
             cls.getCondaActivationCmd(),
-            f'conda create -y -n {ENV_NAME} eman-dev={version} -c cryoem -c conda-forge &&',
+            f'conda create -y -n {ENV_NAME} eman-dev={version} libboost-python-devel>=1.85.0 '
+            f'-c cryoem -c conda-forge &&',
             f'touch {FLAG}'  # Flag installation finished
         ]
         emanCmds = [(" ".join(installCmds), FLAG)]
