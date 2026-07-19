@@ -46,16 +46,187 @@ class outputs(Enum):
 
 class EmanProtInitModel(ProtInitialVolume):
     """
-    This protocol wraps *e2initialmodel.py* EMAN2 program.
-
-    It will take a set of class-averages/projections and build a set
-    of 3-D models suitable for use as initial models in single
-    particle reconstruction. The output set is theoretically sorted
-    in order of quality (best one is numbered 1), though it's best
-    to look at the other answers as well.
-
-    See more details in:
+    Generates initial 3D models for single-particle cryo-EM analysis using
+    EMAN2 ab initio reconstruction strategies. The protocol is designed to
+    transform a collection of 2D class averages or averaged particle images
+    into one or more candidate 3D volumes suitable for downstream refinement
+    and structural interpretation. Multiple independent models can be created
+    in parallel to increase the probability of obtaining a biologically
+    meaningful starting structure. More info:
     https://blake.bcm.edu/emanwiki/EMAN2/Programs/e2initialmodel
+
+    AI Generated:
+
+    Initial Model Generation (EmanProtInitModel) - User Manual
+        Overview
+
+        The Initial Model protocol provides an entry point for ab initio
+        three-dimensional reconstruction in cryo-EM workflows. Its purpose is
+        to estimate one or several plausible 3D maps directly from 2D class
+        averages or averaged particle projections, without requiring a prior
+        structural reference. This stage is one of the most biologically
+        important moments in single-particle analysis because the quality and
+        reliability of the initial model strongly influence all subsequent
+        refinement and interpretation steps.
+
+        The protocol is especially useful when studying macromolecular
+        assemblies whose structure is unknown or when validating whether a
+        reconstruction can emerge consistently from the experimental data
+        itself. By generating multiple candidate maps, the procedure allows
+        users to compare alternative structural solutions and identify the
+        most stable or biologically realistic reconstruction.
+
+        Inputs and Biological Context
+
+        The protocol accepts either 2D class averages or sets of averaged
+        particle projections. In practice, these inputs should already
+        represent meaningful structural views with reduced noise and improved
+        signal quality. Well-defined classes with broad angular coverage are
+        critical for successful model generation.
+
+        From a biological perspective, the quality of the input data often
+        determines the interpretability of the resulting volumes more than any
+        advanced parameter adjustment. Poorly aligned classes, preferred
+        orientations, or strong structural heterogeneity may produce unstable
+        or ambiguous initial models. For this reason, users are encouraged to
+        inspect class averages carefully before attempting ab initio
+        reconstruction.
+
+        Symmetry and Structural Assumptions
+
+        The protocol supports several symmetry groups commonly encountered in
+        cryo-EM studies, including cyclic, dihedral, tetrahedral, octahedral,
+        and icosahedral symmetries. Correct symmetry assignment is biologically
+        essential because it constrains the reconstruction and strongly
+        influences the resulting map quality.
+
+        Applying the correct symmetry can dramatically improve signal and
+        structural consistency. However, imposing an incorrect symmetry may
+        introduce artificial features or distort biologically meaningful
+        asymmetries. When uncertainty exists, it is generally safer to begin
+        with low symmetry assumptions and increase constraints only after
+        validation.
+
+        Highly symmetric particles such as viral capsids or symmetric protein
+        cages benefit particularly from dedicated reconstruction strategies.
+        These systems often converge more rapidly and produce cleaner maps due
+        to the large amount of redundant structural information provided by
+        symmetry.
+
+        Iterative Model Exploration
+
+        The protocol can generate multiple candidate models through repeated
+        reconstruction attempts. This strategy is valuable because ab initio
+        reconstruction may converge toward different structural solutions,
+        particularly when the experimental data are noisy or structurally
+        heterogeneous.
+
+        Producing several models allows the user to compare consistency across
+        independent reconstructions. If multiple runs converge toward similar
+        volumes, confidence in the biological validity of the structure
+        increases substantially. Conversely, strong variability among models
+        may indicate insufficient angular coverage, excessive heterogeneity,
+        or poor data quality.
+
+        The number of iterations controls how extensively the protocol refines
+        candidate structures. Increasing iterations may improve convergence,
+        but excessive refinement at this early stage can sometimes reinforce
+        noise or overfit unstable features.
+
+        Shrink Factor and Computational Efficiency
+
+        The protocol supports optional downsampling of the input images before
+        reconstruction. This approach is commonly used when working with large
+        particle boxes because low-resolution structural information is often
+        sufficient for generating an initial model.
+
+        Biologically, shrinking is usually acceptable during early exploratory
+        reconstruction because the goal is to establish the overall molecular
+        architecture rather than recover fine structural detail. Reduced image
+        sizes also decrease computational cost and improve convergence speed.
+
+        However, excessive downsampling may remove weak but biologically
+        relevant features, particularly in flexible complexes or assemblies
+        with small domains. Users should therefore balance computational
+        efficiency against the structural complexity of the target system.
+
+        Randomization and Model Diversity
+
+        The protocol can introduce randomized orientation strategies during
+        model initialization. This helps avoid reconstruction bias and
+        encourages broader exploration of possible structural solutions.
+
+        In practical cryo-EM analysis, this option is especially useful when
+        the orientation distribution of the particles is incomplete or when
+        the data contain substantial uncertainty. Randomization may increase
+        robustness against local convergence artifacts, although it can also
+        produce greater variability between candidate maps.
+
+        Biological users should interpret model diversity carefully. Consistent
+        convergence across randomized attempts often indicates that the data
+        contain strong structural information. Highly divergent solutions may
+        suggest heterogeneity, preferred orientations, or insufficient data
+        quality.
+
+        Mask Expansion and Peripheral Features
+
+        Advanced masking controls help preserve peripheral densities and avoid
+        truncation of extended structural regions. This becomes particularly
+        important for elongated assemblies, membrane-associated complexes, or
+        flexible macromolecular systems where biologically relevant densities
+        may extend toward the edges of the reconstruction.
+
+        Appropriate mask expansion improves continuity of peripheral regions
+        while reducing the risk of artificially clipping flexible domains.
+        Nevertheless, excessively permissive masking may retain noise and
+        destabilize convergence.
+
+        Outputs and Interpretation
+
+        The protocol produces one or more candidate initial volumes that can
+        be inspected, validated, and used as starting references for later
+        refinement procedures. The generated maps are typically ranked by
+        overall reconstruction quality, although users are encouraged to
+        examine all candidate solutions rather than relying exclusively on the
+        first result.
+
+        From a biological perspective, the initial model should be evaluated
+        based on structural plausibility, internal consistency, and agreement
+        with known biochemical information. Features such as unrealistic
+        disconnected densities, strong directional artifacts, or unstable
+        conformations may indicate unreliable reconstruction.
+
+        Initial models are not final biological structures. Instead, they
+        serve as starting hypotheses that guide subsequent high-resolution
+        refinement and validation workflows.
+
+        Practical Recommendations
+
+        In routine cryo-EM workflows, users should begin with carefully
+        selected class averages that cover the widest possible range of
+        orientations. Generating several candidate models is generally
+        recommended, particularly for novel targets or heterogeneous samples.
+
+        Moderate downsampling is often beneficial for large particles, while
+        highly symmetric systems should always use the appropriate symmetry
+        definition to maximize reconstruction quality. When results appear
+        unstable, increasing the diversity of reconstruction attempts may help
+        identify reproducible structural features.
+
+        Visual inspection remains critical throughout the process. The most
+        biologically meaningful model is not always the numerically highest
+        ranked one, especially in difficult datasets containing flexibility or
+        compositional variability.
+
+        Final Perspective
+
+        Initial model generation represents the transition from two-dimensional
+        experimental observations to a three-dimensional structural hypothesis.
+        The quality of this transition strongly affects all downstream cryo-EM
+        analysis steps. Careful selection of input averages, appropriate
+        symmetry assumptions, and critical interpretation of candidate models
+        are essential for obtaining reliable and biologically meaningful
+        reconstructions.
     """
 
     _label = 'initial model'

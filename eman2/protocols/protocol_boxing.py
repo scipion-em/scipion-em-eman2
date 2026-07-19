@@ -41,7 +41,156 @@ from ..convert import readSetOfCoordinates
 
 
 class EmanProtBoxing(ProtParticlePicking):
-    """ Semi-automated particle picker for SPA. Uses EMAN2 e2boxer.py.
+    """
+    Provides a semi-automated particle picking environment for single particle
+    analysis workflows using the EMAN2 boxing framework. The protocol is intended
+    to help users identify and extract particle coordinates from cryo-EM
+    micrographs through an interactive graphical interface that combines manual
+    supervision with neural-network-assisted particle detection.
+
+    AI Generated:
+
+    EMAN Boxer Particle Picking (EmanProtBoxing) - User Manual
+        Overview
+
+        The EMAN Boxer protocol is designed for the interactive selection of
+        particle coordinates from cryo-EM micrographs prior to particle extraction
+        and downstream reconstruction workflows. In single particle analysis,
+        particle picking is one of the most biologically influential preprocessing
+        steps because the quality of the selected particles directly determines
+        the quality of all subsequent analyses, including classification,
+        refinement, and three-dimensional reconstruction.
+
+        This protocol provides a semi-automated environment in which the user can
+        combine manual expertise with machine-assisted picking strategies. Rather
+        than relying entirely on automated detection, the workflow encourages
+        iterative visual inspection and refinement, allowing the user to maintain
+        biological control over the particle selection process.
+
+        Inputs and General Workflow
+
+        The protocol requires a set of input micrographs representing the raw or
+        preprocessed cryo-EM images from which particles will be selected. These
+        micrographs should ideally possess good contrast, accurate calibration,
+        and limited contamination. While automated methods can tolerate moderate
+        levels of noise, extremely poor micrograph quality or strong ice
+        contamination can significantly reduce picking reliability.
+
+        During execution, the protocol launches an interactive graphical
+        interface where particles can be selected manually, automatically, or
+        through iterative neural-network-assisted training. The user may begin by
+        selecting representative particles and contaminants, allowing the system
+        to learn the appearance of true particles relative to background noise or
+        artifacts.
+
+        In practical biological workflows, users often alternate between manual
+        correction and automated prediction until the selected coordinates
+        adequately represent the particle population across the dataset.
+
+        Particle and Box Size Selection
+
+        Two biologically important parameters are the particle size and the box
+        size. The particle size should correspond approximately to the largest
+        visible dimension of the molecular complex in the micrograph. Accurate
+        estimation improves particle centering and helps the picking algorithms
+        distinguish true particles from contaminants or ice features.
+
+        The box size defines the region extracted around each selected particle.
+        A box that is too small may truncate peripheral structural information,
+        while a box that is too large introduces unnecessary background noise and
+        increases computational cost. In most cryo-EM workflows, the selected box
+        should comfortably enclose the particle together with a margin of solvent
+        around it.
+
+        Biological users should verify that the chosen dimensions remain
+        appropriate across the full dataset, particularly when particles display
+        multiple orientations or variable conformations.
+
+        Interactive and Neural-Network-Assisted Picking
+
+        One of the strengths of the protocol is its support for iterative
+        learning-based picking strategies. The user can provide examples of good
+        particles, bad particles, and background regions, enabling the system to
+        improve particle discrimination progressively.
+
+        This approach is especially valuable for challenging datasets containing
+        heterogeneous particle populations, low contrast, preferred orientations,
+        or strong contamination. In such cases, fully automated methods may
+        generate large numbers of false positives or miss biologically relevant
+        particles entirely.
+
+        The interactive nature of the workflow allows the user to continuously
+        evaluate the biological validity of the detected particles. Careful human
+        supervision remains essential because even sophisticated automated methods
+        may preferentially select contaminants, carbon edges, ice crystals, or
+        aggregated particles if not properly trained.
+
+        Device Selection and Computational Considerations
+
+        The protocol allows execution on either CPU or GPU hardware. GPU-based
+        execution is particularly advantageous during neural-network training and
+        prediction because it substantially accelerates iterative optimization.
+        For large cryo-EM datasets, GPU acceleration can reduce picking time from
+        hours to minutes.
+
+        Nevertheless, CPU execution remains suitable for smaller projects,
+        exploratory analyses, or environments without dedicated accelerators.
+        Biological users should balance computational speed with resource
+        availability within their local infrastructure.
+
+        Coordinate System Considerations
+
+        Different microscopy image formats occasionally exhibit differences in
+        coordinate orientation, particularly along the vertical axis. The protocol
+        therefore provides an option to invert Y coordinates when necessary.
+        This becomes important when importing coordinates into downstream Scipion
+        workflows or external cryo-EM software packages.
+
+        Users should always inspect the resulting particle positions visually
+        after picking to confirm that the coordinates correctly overlay the
+        biological particles in the original micrographs.
+
+        Outputs and Their Interpretation
+
+        The main output of the protocol is a validated set of particle
+        coordinates associated with the input micrographs. These coordinates
+        define the particle centers that will later be used for particle
+        extraction and refinement.
+
+        Biologically meaningful outputs depend not only on the quantity of picked
+        particles but also on their quality and diversity. Overly aggressive
+        picking strategies may include contaminants and reduce reconstruction
+        quality, whereas excessively conservative picking may discard rare but
+        important structural states.
+
+        Users should therefore evaluate both particle purity and structural
+        diversity before proceeding to downstream classification and refinement.
+
+        Practical Recommendations
+
+        In routine cryo-EM workflows, it is often advisable to begin with a small
+        subset of representative micrographs and manually inspect the initial
+        picks carefully. Once reliable particle examples are established,
+        automated or neural-network-assisted picking can be expanded to the full
+        dataset.
+
+        For heterogeneous or low-contrast datasets, repeated cycles of manual
+        correction and retraining usually produce substantially better results
+        than fully unsupervised picking. It is also recommended to inspect picks
+        near carbon edges, contamination regions, and crowded particle areas,
+        where false positives are most common.
+
+        Users should verify that particles remain centered and fully enclosed by
+        the selected box size before committing to large-scale extraction.
+
+        Final Perspective
+
+        Particle picking is not simply a technical preprocessing step but a
+        biologically critical selection process that determines which molecular
+        observations contribute to the final reconstruction. Careful supervision,
+        realistic particle sizing, and iterative validation are essential for
+        obtaining reliable cryo-EM datasets suitable for high-quality structural
+        interpretation.
     """
     _label = 'boxer'
     _devStatus = PROD

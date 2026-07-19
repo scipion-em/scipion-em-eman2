@@ -41,9 +41,202 @@ from ..convert import writeSetOfParticles
 
 class EmanProtTiltValidate(ProtAnalysis3D):
     """
-    This protocol wraps the *e2tiltvalidate.py* EMAN2 program.
-    It performs tilt validation using
-    the method described in Rosenthal and Henderson, JMB (2003).
+    Validates cryo-EM tilt pair data against a reconstructed 3D volume
+    using EMAN2 tilt geometry analysis methods derived from the approach
+    described by Rosenthal and Henderson. The protocol evaluates whether
+    experimentally observed tilted and untilted particle projections are
+    geometrically consistent with the provided reconstruction, helping
+    assess the reliability and angular correctness of the map.
+
+    AI Generated:
+
+    Tilt Validate (EmanProtTiltValidate) - User Manual
+        Overview
+
+        The Tilt Validate protocol performs angular validation of a 3D
+        reconstruction by comparing experimental tilt pair particles
+        against projections derived from an input volume. In cryo-EM,
+        tilt pair analysis is an important strategy for independently
+        confirming that a reconstruction possesses the correct handedness,
+        angular assignment consistency, and overall orientation accuracy.
+
+        The protocol is especially valuable in workflows where the
+        reliability of orientation determination must be carefully
+        verified, such as during initial model validation, publication
+        preparation, or the analysis of challenging datasets with low
+        signal-to-noise ratios. By comparing tilted and untilted particle
+        images against projections from the reconstructed map, the method
+        provides an experimental consistency check that is independent of
+        many assumptions used during refinement.
+
+        Biological and Experimental Context
+
+        In single-particle cryo-EM, tilt pair experiments involve imaging
+        the same particles at two known specimen tilts. Because the
+        relative orientation between the tilted and untilted images is
+        experimentally constrained, these data provide a powerful way to
+        verify whether the reconstructed volume and its assigned particle
+        orientations are physically meaningful.
+
+        From a biological perspective, tilt validation increases
+        confidence that structural features observed in the reconstruction
+        correspond to real molecular organization rather than alignment
+        artifacts or reconstruction bias. This is particularly important
+        for asymmetric complexes, flexible assemblies, or datasets
+        reconstructed near the limits of achievable resolution.
+
+        Inputs and General Workflow
+
+        The protocol requires two main inputs: a reconstructed 3D volume
+        and a set of experimentally paired tilted and untilted particles.
+        The volume acts as the structural reference against which the
+        particle orientations are evaluated.
+
+        During processing, the protocol generates projections from the
+        volume and compares them with the experimental particle images
+        across a defined angular search space. The agreement between
+        predicted and observed tilt relationships is then analyzed to
+        determine whether the reconstruction is geometrically consistent
+        with the experimental tilt data.
+
+        For best results, the input particles should correspond closely
+        to the particles used during reconstruction. Significant
+        heterogeneity, poor particle quality, or inaccurate particle
+        pairing may reduce the reliability of the validation.
+
+        Symmetry Considerations
+
+        The protocol allows the user to define the symmetry of the input
+        reconstruction. Correct symmetry assignment is biologically
+        critical because symmetry directly influences the interpretation
+        of angular relationships between projections.
+
+        Symmetric complexes such as viral capsids or highly ordered
+        oligomers benefit from the use of the appropriate symmetry group,
+        since it improves the consistency of orientation comparisons.
+        However, assigning incorrect symmetry can artificially improve or
+        distort validation statistics. When uncertainty exists regarding
+        the true symmetry of the specimen, conservative choices are often
+        preferable.
+
+        Tilt Geometry and Angular Constraints
+
+        The maximum tilt angle parameter determines the allowable angular
+        range during validation. This should reflect the experimental
+        acquisition conditions as closely as possible. Excessively broad
+        ranges may introduce ambiguous matches, whereas overly narrow
+        limits can exclude valid solutions.
+
+        The angular projection step controls the sampling precision used
+        during orientation comparison. Smaller angular increments improve
+        precision but increase computational cost. For exploratory
+        analyses, moderate angular sampling is often sufficient, while
+        publication-quality validation may benefit from finer searches.
+
+        Quaternion-Based Orientation Analysis
+
+        The protocol optionally supports quaternion-based angular
+        calculations. Quaternion representations can improve numerical
+        stability and provide smoother orientation handling in complex
+        rotational searches. This option is particularly useful in cases
+        where conventional angular parameterizations may introduce
+        ambiguities or discontinuities.
+
+        In most routine workflows, standard orientation handling is
+        adequate, but advanced users working with difficult angular
+        distributions or highly heterogeneous datasets may benefit from
+        quaternion analysis.
+
+        Particle Shrinking and Computational Efficiency
+
+        For large datasets or preliminary analyses, particles may be
+        computationally reduced in size before similarity evaluation.
+        This can significantly accelerate validation while preserving the
+        overall angular trends necessary for interpretation.
+
+        Biological users should recognize that aggressive shrinking may
+        reduce sensitivity to fine structural details. Therefore, coarse
+        analyses may be appropriate during parameter exploration, whereas
+        final validation is generally more reliable when performed with
+        minimally reduced data.
+
+        Similarity Metrics and Alignment Strategies
+
+        The protocol supports multiple comparison metrics and alignment
+        strategies for evaluating particle similarity. These options
+        influence how projections are matched against experimental
+        particles and can affect robustness under different imaging
+        conditions.
+
+        Cross-correlation based approaches are commonly suitable for most
+        cryo-EM datasets and provide a good balance between sensitivity
+        and computational efficiency. More advanced refinement or
+        alignment methods may improve performance in difficult datasets
+        containing noise, partial occupancy, or substantial orientation
+        uncertainty.
+
+        In practice, default comparison settings are often sufficient for
+        routine validation. Advanced optimization is generally reserved
+        for specialized analyses or problematic datasets.
+
+        Contour Plot Analysis
+
+        The protocol optionally produces contour plots similar to those
+        traditionally used in tilt pair validation studies. These plots
+        provide a visual representation of angular consistency across the
+        dataset and can help identify systematic orientation deviations
+        or reconstruction problems.
+
+        From a biological interpretation standpoint, well-defined contour
+        distributions generally indicate good agreement between the
+        reconstruction and experimental tilt geometry. Broad or irregular
+        distributions may suggest alignment instability, preferred
+        orientation artifacts, incorrect symmetry assignment, or particle
+        heterogeneity.
+
+        Outputs and Interpretation
+
+        The protocol produces validation measurements describing the
+        agreement between the input volume and the experimental tilt pair
+        particles. These results can be used to assess angular accuracy,
+        reconstruction consistency, and overall map reliability.
+
+        When contour visualization is enabled, additional graphical
+        outputs are generated to facilitate interpretation of angular
+        distributions and tilt agreement quality.
+
+        Validation results should always be interpreted together with
+        complementary cryo-EM quality indicators such as FSC curves,
+        angular distribution analysis, local resolution estimation, and
+        visual inspection of reconstructed features.
+
+        Practical Recommendations
+
+        For most biological applications, it is advisable to begin with
+        conservative angular sampling and standard similarity metrics.
+        Once stable behavior is confirmed, finer angular searches and
+        advanced alignment refinements may be introduced if necessary.
+
+        Correct pairing of tilted and untilted particles is essential for
+        meaningful validation. Datasets with substantial heterogeneity,
+        particle damage, or strong preferred orientation effects may
+        produce weaker validation statistics even when the reconstruction
+        itself is accurate.
+
+        In difficult cases, careful inspection of contour distributions,
+        symmetry assignments, and tilt angle constraints often provides
+        the most useful diagnostic information.
+
+        Final Perspective
+
+        Tilt pair validation provides an experimentally grounded
+        assessment of cryo-EM reconstruction reliability. Rather than
+        relying solely on internal refinement statistics, this approach
+        tests whether the reconstructed volume is consistent with known
+        experimental geometry. For many cryo-EM studies, especially those
+        involving novel structures or challenging datasets, tilt
+        validation represents an important step toward ensuring
+        biologically trustworthy structural interpretation.
     """
 
     _label = 'tilt validate'

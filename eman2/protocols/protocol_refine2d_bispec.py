@@ -48,21 +48,216 @@ class outputs(Enum):
 
 class EmanProtRefine2DBispec(ProtClassify2D):
     """
-    This protocol wraps *e2refine2d_bispec.py* EMAN2 program.
+    Performs reference-free 2D classification of cryo-EM particle images
+    using bispectrum-based invariants within the EMAN2 framework. The
+    protocol generates representative class averages from heterogeneous
+    particle populations, allowing researchers to evaluate data quality,
+    identify structural variability, and obtain biologically meaningful
+    views of macromolecular complexes without requiring an initial
+    structural reference. These class averages are commonly used during
+    exploratory stages of single-particle analysis and can support the
+    generation of initial 3D models or the interpretation of conformational
+    diversity. More info:
+    https://blake.bcm.edu/emanwiki/EMAN2
 
-    This program is used to produce reference-free class averages
-    from a population of mixed, unaligned particle images. These averages
-    can be used to generate initial models or assess the structural
-    variability of the data. They are not normally themselves used as part
-    of the single particle reconstruction refinement process, which
-    uses the raw particles in a reference-based classification
-    approach. However, with a good structure, projections of the
-    final 3-D model should be consistent with the results of
-    this reference-free analysis.
+    AI Generated:
 
-    This variant of the program uses rotational/translational
-    invariants derived from the bispectrum of each particle.
-"""
+    Refine 2D Bispectrum Classification (EmanProtRefine2DBispec) —
+        User Manual
+
+        Overview
+
+        The Refine 2D Bispectrum Classification protocol performs
+        reference-free classification of particle images using the
+        EMAN2 bispectrum-based refinement strategy. Its primary goal
+        is to organize heterogeneous particle datasets into groups of
+        structurally similar views while avoiding dependence on an
+        external reference model. This makes the protocol especially
+        valuable during the early stages of cryo-EM processing, when
+        the quality, homogeneity, and orientation distribution of the
+        dataset are still being evaluated.
+
+        Unlike reference-based refinement approaches, this protocol
+        relies on rotational and translational invariants derived from
+        particle bispectra. These mathematical descriptors help compare
+        particles independently of their initial orientation, allowing
+        robust classification even when the dataset contains strongly
+        misaligned images or multiple structural states. From a
+        biological perspective, this enables the identification of
+        dominant particle views, contaminants, damaged particles, or
+        flexible conformations without introducing model bias.
+
+        Inputs and Biological Context
+
+        The protocol requires particles that have already undergone
+        CTF estimation and bispectrum preprocessing through a compatible
+        EMAN2 workflow. These particles are typically extracted from
+        cryo-EM micrographs and may represent multiple orientations,
+        conformational states, or compositional assemblies.
+
+        In practical biological workflows, the resulting class averages
+        serve several important purposes. They help determine whether
+        the dataset contains recognizable structural features, whether
+        particles are sufficiently homogeneous for high-resolution
+        refinement, and whether additional cleaning or classification
+        steps are required. Researchers frequently inspect the classes
+        visually to identify preferred orientations, flexibility,
+        aggregation, or the presence of contaminants.
+
+        Since the classification is reference free, the protocol is
+        particularly suitable for novel macromolecular complexes,
+        poorly characterized assemblies, or datasets where avoiding
+        reference bias is essential.
+
+        Number of Classes and Dataset Balance
+
+        One of the most biologically important parameters is the number
+        of class averages to generate. This choice determines how the
+        structural variability of the dataset will be represented.
+
+        Using too few classes may merge distinct particle views or
+        conformations into overly broad averages, potentially masking
+        important biological heterogeneity. Conversely, using too many
+        classes can fragment the dataset excessively, producing noisy
+        averages with insufficient particle support.
+
+        In routine cryo-EM practice, the optimal number of classes
+        depends on dataset size and structural complexity. Large and
+        heterogeneous datasets often benefit from a larger number of
+        classes, while smaller or highly homogeneous datasets usually
+        require fewer classes to maintain strong signal quality.
+
+        Bispectrum and Invariant-Based Classification
+
+        The defining characteristic of this protocol is its use of
+        bispectrum-derived invariants. These descriptors reduce the
+        sensitivity of classification to rotational and translational
+        differences between particles. Biologically, this is useful
+        because particles in cryo-EM datasets are rarely perfectly
+        aligned during the initial stages of processing.
+
+        By emphasizing invariant image features, the protocol can more
+        effectively identify structurally related particles even in
+        noisy datasets. This improves the robustness of exploratory
+        classification and can reveal underlying structural organization
+        before precise alignment procedures are introduced.
+
+        However, users should remember that invariant-based approaches
+        prioritize classification robustness rather than final alignment
+        precision. The resulting classes are intended primarily for
+        structural interpretation and dataset assessment rather than
+        direct high-resolution refinement.
+
+        Multivariate Analysis and Basis Selection
+
+        The protocol uses multivariate statistical analysis to project
+        particle images into a lower-dimensional feature space. The
+        number of basis vectors controls how much structural information
+        is retained during this representation.
+
+        From a biological perspective, increasing the number of basis
+        vectors may improve sensitivity to subtle conformational
+        differences or fine structural details. However, excessively
+        large values can also increase sensitivity to noise, especially
+        in low-quality datasets.
+
+        For most routine cryo-EM datasets, moderate values provide a
+        good balance between discrimination power and robustness.
+        Highly heterogeneous or exceptionally large datasets may benefit
+        from more detailed representations.
+
+        Alignment and Sorting of Class Averages
+
+        The protocol optionally aligns and sorts the resulting class
+        averages according to their mutual similarity. This operation
+        improves visual interpretability and facilitates downstream
+        analysis by organizing related views together.
+
+        Biologically, sorted classes can reveal smooth angular coverage
+        of the particle or expose missing orientations and preferred
+        views. This information is often critical when evaluating
+        whether the dataset is suitable for isotropic 3D reconstruction.
+
+        Alignment of class averages also improves the interpretability
+        of flexible assemblies by emphasizing shared structural regions.
+        Nevertheless, users should interpret highly variable or weakly
+        populated classes cautiously, since apparent structural features
+        may sometimes reflect noise or alignment instability.
+
+        Centering and Averaging Strategies
+
+        The protocol provides multiple centering and averaging options
+        that influence the appearance and stability of the final class
+        averages. Proper centering is especially important for elongated,
+        asymmetric, or flexible particles where automatic centering may
+        otherwise drift toward solvent regions or peripheral density.
+
+        Different averaging strategies can also affect how structural
+        variability is represented. Conservative averaging approaches
+        tend to preserve only strongly reproducible features, whereas
+        more permissive approaches may retain weaker or more flexible
+        densities.
+
+        In biological practice, users often compare several averaging
+        configurations when working with difficult datasets to determine
+        which settings best preserve meaningful structural information.
+
+        Outputs and Interpretation
+
+        The protocol produces a set of 2D class averages together with
+        particle assignments for each class. These outputs provide a
+        compact visual summary of the structural content of the dataset.
+
+        Strong class averages with recognizable secondary-structure
+        features generally indicate good particle quality and alignment
+        potential. Conversely, diffuse or poorly resolved classes may
+        suggest excessive heterogeneity, inaccurate particle picking,
+        ice contamination, or insufficient signal-to-noise ratio.
+
+        The classes generated by this protocol are not intended as the
+        final step of refinement. Instead, they serve as an intermediate
+        biological interpretation tool that guides subsequent processing
+        decisions such as particle cleaning, initial model generation,
+        or selection of homogeneous subsets for high-resolution
+        reconstruction.
+
+        Practical Recommendations
+
+        In routine workflows, it is often advisable to begin with a
+        moderate number of classes and inspect the results visually.
+        If the classes appear overly broad or contain mixed views,
+        increasing the class count may reveal additional heterogeneity.
+        If classes become excessively noisy, reducing the number of
+        classes or increasing particle counts may improve stability.
+
+        Datasets containing strong preferred orientations may produce
+        many highly similar classes, whereas highly flexible complexes
+        may generate diffuse or structurally inconsistent averages.
+        In these situations, additional particle cleaning or focused
+        classification strategies may be required.
+
+        When evaluating the results, users should prioritize biological
+        interpretability rather than numerical metrics alone. The most
+        useful class averages are those that reveal reproducible
+        structural features and meaningful conformational organization.
+
+        Final Perspective
+
+        Reference-free 2D classification is one of the most important
+        exploratory stages in cryo-EM single-particle analysis because
+        it provides the first direct visualization of structural
+        reproducibility within the dataset. The bispectrum-based
+        strategy implemented in this protocol offers a robust approach
+        for organizing heterogeneous particle populations while reducing
+        sensitivity to initial particle orientation.
+
+        For most cryo-EM researchers, the quality and interpretability
+        of the resulting class averages strongly influence downstream
+        decisions regarding dataset quality, structural heterogeneity,
+        and refinement strategy. Careful selection of classification
+        parameters and thoughtful biological interpretation are therefore
+        essential for obtaining reliable and meaningful results.
+    """
     _label = 'refine 2D bispec'
     _devStatus = PROD
     _possibleOutputs = outputs

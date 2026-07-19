@@ -45,11 +45,200 @@ class outputs(Enum):
 
 class EmanProtInitModelSGD(ProtInitialVolume):
     """
-    This protocol wraps *e2initialmodel_sgd.py* EMAN2 program.
+    Generates initial 3D cryo-EM models from particle images or class
+    averages using a stochastic gradient descent strategy implemented in
+    EMAN2. The protocol is intended for ab initio structure determination
+    when no reliable starting reference is available and provides multiple
+    candidate volumes for exploratory structural analysis.
 
-    This program makes initial models using a (kind of) stochastic gradient
-    descent approach. It is recommended that the box size of
-    particles is around 100.
+    AI Generated:
+
+    Initial Model SGD (EmanProtInitModelSGD) — User Manual
+        Overview
+
+        The Initial Model SGD protocol creates three-dimensional initial
+        models from cryo-EM particle images or two-dimensional class
+        averages using a stochastic gradient descent optimization strategy.
+        Its main purpose is to generate plausible low-resolution structural
+        references that can serve as starting points for downstream
+        refinement and classification workflows.
+
+        In single-particle cryo-EM, obtaining a reliable initial model is
+        often one of the most critical and challenging stages of the entire
+        reconstruction process. A good initial volume helps guide later
+        refinement toward biologically meaningful solutions, while poor or
+        biased starting models may lead to incorrect structural
+        interpretations. This protocol is designed to reduce reference bias
+        by constructing models directly from experimental image data.
+
+        Inputs and General Workflow
+
+        The protocol accepts either particle images or class averages as
+        input. Class averages are often preferred because they contain
+        improved signal-to-noise ratio and partially reduce image
+        heterogeneity. However, particles may also be used directly when
+        averaging has not yet been performed or when preserving structural
+        diversity is important.
+
+        During execution, the protocol repeatedly samples subsets of the
+        input data and incrementally updates candidate three-dimensional
+        models. Multiple independent models can be generated in parallel,
+        allowing users to compare alternative structural solutions and
+        identify reproducible features across reconstructions.
+
+        This strategy is particularly valuable in difficult datasets where
+        orientation assignment is uncertain or where the specimen may contain
+        flexible or heterogeneous conformations.
+
+        Stochastic Gradient Descent Strategy
+
+        The reconstruction process relies on iterative optimization in which
+        the current model is gradually adjusted according to information
+        extracted from randomly selected image subsets. This stochastic
+        behavior helps avoid strong dependence on any individual subset of
+        particles and can improve convergence stability in noisy cryo-EM
+        datasets.
+
+        The batch size determines how many particles contribute to each
+        optimization step. Smaller batches introduce more stochastic
+        variation and may help explore a broader solution space, whereas
+        larger batches generally produce more stable but potentially less
+        exploratory convergence behavior.
+
+        The number of iterations controls how extensively the optimization is
+        refined. More iterations may improve convergence quality, although
+        excessive refinement at the initial-model stage is rarely necessary
+        because subsequent high-resolution refinement protocols will further
+        optimize the reconstruction.
+
+        Multiple Initial Models
+
+        One of the biologically important features of this protocol is the
+        ability to generate several independent initial models during the
+        same execution. This approach is highly recommended in exploratory
+        cryo-EM projects because it helps assess reconstruction robustness
+        and detect potential convergence artifacts.
+
+        When multiple independently generated models converge toward similar
+        structural features, confidence in the biological validity of the
+        reconstruction increases substantially. Conversely, strongly
+        different outcomes may indicate insufficient data quality,
+        orientation bias, structural heterogeneity, or optimization
+        instability.
+
+        In practical cryo-EM workflows, users often compare these candidate
+        models visually and select the most biologically plausible structure
+        for downstream refinement.
+
+        Symmetry Considerations
+
+        The protocol supports symmetry imposition during initial model
+        generation. Correct symmetry specification can significantly improve
+        reconstruction quality by reinforcing equivalent structural views and
+        increasing effective signal strength.
+
+        Common biological examples include cyclic symmetry in ring-like
+        assemblies, dihedral symmetry in multimeric complexes, or
+        icosahedral symmetry in viral particles. Applying the correct
+        symmetry often accelerates convergence and improves structural
+        consistency.
+
+        However, users should apply symmetry carefully. Incorrect symmetry
+        assumptions may artificially distort the reconstruction, obscure
+        asymmetric features, or create misleading structural artifacts. When
+        structural asymmetry or compositional variability is suspected,
+        reconstructing without symmetry is usually the safest initial
+        strategy.
+
+        Resolution and Shrinking
+
+        The target resolution parameter defines the approximate resolution
+        goal for the generated models. Since initial models are intended only
+        as low-resolution starting references, aggressive high-resolution
+        reconstruction is generally unnecessary at this stage.
+
+        The protocol also allows shrinking the particle images before
+        reconstruction. Reducing image size substantially decreases
+        computational cost and often improves optimization stability,
+        especially for large particle boxes. In many practical workflows,
+        moderate shrinking is beneficial for rapid exploratory model
+        generation.
+
+        Biologically, shrinking sacrifices fine structural detail but
+        preserves the large-scale architecture required for reliable initial
+        orientation estimation and downstream refinement initialization.
+
+        Learning Rate and Optimization Stability
+
+        The learning rate determines how strongly the model changes during
+        each optimization step. Larger values accelerate convergence but may
+        increase instability, while smaller values provide smoother but
+        slower optimization.
+
+        Learning decay gradually reduces the update magnitude over time,
+        helping stabilize convergence as the reconstruction progresses. This
+        behavior is often beneficial when approaching a consistent structural
+        solution.
+
+        The protocol also allows the addition of controlled noise during
+        optimization. Although counterintuitive from a biological
+        perspective, introducing noise can sometimes improve convergence
+        robustness by preventing optimization from becoming trapped in poor
+        local solutions.
+
+        Orientation Coverage
+
+        The protocol includes an option to assume broad orientation coverage
+        within the dataset. This assumption may improve performance for
+        relatively featureless particles when the input images sample most
+        orientations evenly.
+
+        However, this strategy becomes less reliable when the dataset
+        contains substantial contamination, incorrect particles, or severe
+        preferred orientation effects. In such cases, more conservative
+        reconstruction assumptions are generally safer.
+
+        Outputs and Interpretation
+
+        The protocol produces one or more initial three-dimensional volumes
+        representing candidate structural solutions derived from the input
+        images. These volumes are typically low to intermediate resolution
+        and are intended primarily for subsequent refinement rather than
+        direct biological interpretation.
+
+        Biologically meaningful features at this stage usually include global
+        shape, major domains, overall symmetry, and large conformational
+        organization. Fine structural details should not be overinterpreted
+        because the models remain highly dependent on limited orientation
+        accuracy and low-resolution optimization.
+
+        Practical Recommendations
+
+        For most cryo-EM datasets, class averages provide more stable inputs
+        than raw particles and are often the preferred starting point for
+        initial model generation. Using moderate shrinking and generating
+        multiple candidate models are generally recommended practices.
+
+        Users should carefully compare independent models and verify that
+        major structural features remain reproducible across solutions before
+        proceeding to high-resolution refinement. Visual inspection and
+        biological plausibility remain essential evaluation criteria at this
+        stage.
+
+        In difficult datasets with preferred orientations or substantial
+        heterogeneity, reducing optimization aggressiveness and increasing
+        the diversity of candidate models may improve robustness.
+
+        Final Perspective
+
+        Initial model generation is one of the most biologically sensitive
+        stages in cryo-EM processing because it establishes the structural
+        framework for all subsequent refinement. Reliable initial models
+        emerge not only from computational optimization but also from careful
+        experimental data selection, thoughtful symmetry assumptions, and
+        critical biological interpretation. Producing multiple reproducible
+        candidate structures is often the best strategy for ensuring robust
+        and trustworthy cryo-EM reconstructions.
     """
 
     _label = 'initial model SGD'
