@@ -25,18 +25,31 @@
 # **************************************************************************
 
 import os
+import threading
 
 from pyworkflow.protocol.params import (IntParam, FloatParam,
                                         EnumParam, PointerParam,
                                         StringParam, USE_GPU,
                                         GPU_LIST, BooleanParam)
-from pyworkflow.utils import makePath, createLink
+from pyworkflow.utils import makePath, createLink, cleanPath
 from pyworkflow.constants import PROD
+from pwem.objects import Micrograph
 from pwem.protocols import ProtParticlePickingAuto
 
 from .. import Plugin
 from ..convert import readSetOfCoordinates, convertReferences
 from ..constants import AUTO_CONVNET, AUTO_GAUSS
+
+# The micrographs whose picking failed, as a durable list in extra/: a
+# micrograph with no coordinates is otherwise indistinguishable from one
+# without particles, and Continue picks the listed ones again.
+FAILED_PICKING_LIST = 'FAILED_picking.TXT'
+# Each picking step returns one file per micrograph here as its result
+# files. On Continue, pyworkflow keeps a finished step finished only while
+# its result files exist, so removing the ones of failed micrographs makes
+# their steps run again.
+STEP_RESULTS_DIR = 'STEP_RESULTS'
+_failedListLock = threading.Lock()
 
 
 class EmanProtAutopick(ProtParticlePickingAuto):
@@ -155,6 +168,10 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         form.addParallelSection(threads=1, mpi=0)
 
     # --------------------------- INSERT steps functions ----------------------
+    def _insertAllSteps(self):
+        self._prepareFailedForRetry()
+        ProtParticlePickingAuto._insertAllSteps(self)
+
     def _insertInitialSteps(self):
         self._createFilenameTemplates()
         initId = self._insertFunctionStep('convertInputStep', needsGPU=False)
@@ -209,7 +226,134 @@ class EmanProtAutopick(ProtParticlePickingAuto):
         params += ' %s' % micFile
         program = Plugin.getProgram('e2boxer.py')
 
-        self.runJob(program, params, cwd=self.getCoordsDir())
+        try:
+            self.runJob(program, params, cwd=self.getCoordsDir())
+        except Exception as e:
+            # Not raised: the step would fail and take the whole run with
+            # it. The micrograph is left out, and Continue picks it again.
+            self.error("e2boxer failed for micrograph %s: %s"
+                       % (mic.getObjId(), e))
+            self._recordFailedPicking([mic.getObjId()])
+            return
+
+        self._forgetFailedPicking([mic.getObjId()])
+
+    # ------------------------- failed micrographs ------------------------
+    # pwem counts a micrograph done by its DONE marker, failed or not, and
+    # the run only ends once every one is: a failed one keeps it during the
+    # run, and loses it when the next one starts (_prepareFailedForRetry).
+    def pickMicrographStep(self, micName, *args):
+        ProtParticlePickingAuto.pickMicrographStep(self, micName, *args)
+
+        return self._pickingStepResults([micName])
+
+    def pickMicrographListStep(self, micNameList, *args):
+        ProtParticlePickingAuto.pickMicrographListStep(self, micNameList,
+                                                       *args)
+
+        return self._pickingStepResults(micNameList)
+
+    def _stepResultPath(self, micId):
+        return self._getExtraPath(STEP_RESULTS_DIR, '%06d.TXT' % micId)
+
+    def _pickingStepResults(self, micNames):
+        """Result files of a picking step, one per micrograph it picked,
+        whatever became of it: a failed one has its file removed when the
+        next run starts."""
+        makePath(self._getExtraPath(STEP_RESULTS_DIR))
+        paths = []
+
+        for micName in micNames:
+            mic = self.micDict.get(micName)
+
+            if mic is not None:
+                path = self._stepResultPath(mic.getObjId())
+                open(path, 'a').close()
+                paths.append(path)
+
+        return paths
+
+    def _prepareFailedForRetry(self):
+        """Have Continue pick again the micrographs that failed.
+
+        pyworkflow does not run a finished step again, and pwem counts a
+        micrograph done by its DONE marker and its line in DONE/all.TXT:
+        all three go for the failed ones.
+        """
+        failedIds = self._failedPickingMicIds()
+
+        if not failedIds:
+            return
+
+        for micId in failedIds:
+            cleanPath(self._stepResultPath(micId))
+            mic = Micrograph()
+            mic.setObjId(micId)
+            cleanPath(self._getMicDone(mic))
+
+        doneFile = self._getAllDone()
+
+        if os.path.exists(doneFile):
+            doneIds = [micId for micId in self._readDoneList()
+                       if micId not in failedIds]
+
+            with open(doneFile, 'w') as handle:
+                handle.writelines('%d\n' % micId for micId in doneIds)
+
+    def _failedPickingMicIds(self):
+        """Ids of the micrographs whose picking failed, from extra/."""
+        cached = getattr(self, '_failedPickingMicIdsCache', None)
+
+        if cached is None:
+            cached = set()
+            path = self._getExtraPath(FAILED_PICKING_LIST)
+
+            if os.path.exists(path):
+                with open(path) as handle:
+                    cached = {int(line) for line in handle if line.strip()}
+
+            self._failedPickingMicIdsCache = cached
+
+        return set(cached)
+
+    def _writeFailedPicking(self, micIds):
+        with open(self._getExtraPath(FAILED_PICKING_LIST), 'w') as handle:
+            handle.writelines('%d\n' % micId for micId in sorted(micIds))
+
+        self._failedPickingMicIdsCache = set(micIds)
+
+    def _recordFailedPicking(self, micIds):
+        with _failedListLock:
+            failed = self._failedPickingMicIds()
+
+            if not set(micIds) <= failed:
+                self._writeFailedPicking(failed | set(micIds))
+
+    def _forgetFailedPicking(self, micIds):
+        """Picked well now: no longer listed as failed."""
+        with _failedListLock:
+            failed = self._failedPickingMicIds()
+
+            if failed & set(micIds):
+                self._writeFailedPicking(failed - set(micIds))
+
+    def _checkNewOutput(self):
+        ProtParticlePickingAuto._checkNewOutput(self)
+
+        if getattr(self, 'finished', False):
+            self._failIfEveryMicrographFailed()
+
+    def _failIfEveryMicrographFailed(self):
+        """A failed micrograph is left out; the run fails only when that
+        happened to every micrograph."""
+        output = getattr(self, 'outputCoordinates', None)
+
+        if (self._failedPickingMicIds()
+                and (output is None or output.getSize() == 0)):
+            raise Exception("e2boxer failed for every one of the %d "
+                            "micrographs; see the errors above. Continue "
+                            "picks them again."
+                            % len(self._failedPickingMicIds()))
 
     def createOutputStep(self):
         pass
@@ -233,4 +377,41 @@ class EmanProtAutopick(ProtParticlePickingAuto):
 
     def readCoordsFromMics(self, workingDir, micList, coordSet):
         coordSet.setBoxSize(self.boxSize.get())
-        readSetOfCoordinates(workingDir, micList, coordSet)
+        failedIds = self._failedPickingMicIds()
+
+        for mic in micList:
+            if mic.getObjId() in failedIds:
+                continue
+
+            # A micrograph is published whole or not at all: its rows are
+            # kept apart until its whole file has been read.
+            micCoords = _Collected()
+
+            try:
+                readSetOfCoordinates(workingDir, [mic], micCoords)
+            except Exception as e:
+                self.error("Could not read the coordinates of micrograph "
+                           "%s: %s" % (mic.getObjId(), e))
+                self._recordFailedPicking([mic.getObjId()])
+                continue
+
+            for coord in micCoords.items:
+                coordSet.append(coord)
+
+            # As before: the box size e2boxer recorded wins.
+            if micCoords.boxSize is not None:
+                coordSet.setBoxSize(micCoords.boxSize)
+
+
+class _Collected:
+    """Holds what a reader appends, to be published only if it all reads."""
+
+    def __init__(self):
+        self.items = []
+        self.boxSize = None
+
+    def append(self, item):
+        self.items.append(item)
+
+    def setBoxSize(self, boxSize):
+        self.boxSize = boxSize
